@@ -3871,6 +3871,7 @@
 //           password: _passCtrl.text,
 //           department: null,
 //           designation: null,
+//           district: 'null',
 //         );
 
 //     if (ok) invalidateUserProviders(ref);
@@ -6094,6 +6095,7 @@
 //     );
 //   }
 // }
+
 import 'package:amal_tracker/features/auth/providers/provider_reset.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
