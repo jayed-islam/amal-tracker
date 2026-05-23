@@ -1,99 +1,3 @@
-// class UserModel {
-//   final String id;
-//   final String name;
-//   final String email;
-//   final String role;
-//   final String? department;
-//   final String? designation;
-//   final String? avatar;
-//   final bool isActive;
-//   final bool isVerified;
-//   final DateTime? lastLogin;
-//   final DateTime createdAt;
-
-//   const UserModel({
-//     required this.id,
-//     required this.name,
-//     required this.email,
-//     required this.role,
-//     this.department,
-//     this.designation,
-//     this.avatar,
-//     required this.isActive,
-//     required this.isVerified,
-//     this.lastLogin,
-//     required this.createdAt,
-//   });
-
-//   bool get isAdmin => role == 'admin';
-//   bool get isAdminOrMod => role == 'admin' || role == 'moderator';
-
-//   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
-//         id: json['_id'] ?? json['id'] ?? '',
-//         name: json['name'] ?? '',
-//         email: json['email'] ?? '',
-//         role: json['role'] ?? 'user',
-//         department: json['department'],
-//         designation: json['designation'],
-//         avatar: json['avatar'],
-//         isActive: json['isActive'] ?? true,
-//         isVerified: json['isVerified'] ?? false,
-//         lastLogin: json['lastLogin'] != null ? DateTime.tryParse(json['lastLogin']) : null,
-//         createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
-//       );
-
-//   Map<String, dynamic> toJson() => {
-//         '_id': id,
-//         'name': name,
-//         'email': email,
-//         'role': role,
-//         'department': department,
-//         'designation': designation,
-//         'avatar': avatar,
-//         'isActive': isActive,
-//         'isVerified': isVerified,
-//         'lastLogin': lastLogin?.toIso8601String(),
-//         'createdAt': createdAt.toIso8601String(),
-//       };
-
-//   UserModel copyWith({
-//     String? name,
-//     String? department,
-//     String? designation,
-//     String? avatar,
-//   }) =>
-//       UserModel(
-//         id: id,
-//         name: name ?? this.name,
-//         email: email,
-//         role: role,
-//         department: department ?? this.department,
-//         designation: designation ?? this.designation,
-//         avatar: avatar ?? this.avatar,
-//         isActive: isActive,
-//         isVerified: isVerified,
-//         lastLogin: lastLogin,
-//         createdAt: createdAt,
-//       );
-// }
-
-// class AuthResponse {
-//   final String accessToken;
-//   final String refreshToken;
-//   final UserModel user;
-
-//   AuthResponse({
-//     required this.accessToken,
-//     required this.refreshToken,
-//     required this.user,
-//   });
-
-//   factory AuthResponse.fromJson(Map<String, dynamic> json) => AuthResponse(
-//         accessToken: json['accessToken'] ?? '',
-//         refreshToken: json['refreshToken'] ?? '',
-//         user: UserModel.fromJson(json['user'] ?? {}),
-//       );
-// }
 class UserModel {
   final String id;
   final String serialId; // New field
@@ -133,8 +37,8 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['_id'] ?? json['id'] ?? '',
-      serialId: json['id'] ?? 0,
+      id: json['_id'] ?? json['_id'] ?? '',
+      serialId: json['id'] ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       department: json['department'],

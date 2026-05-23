@@ -1,4 +1,5 @@
 import 'package:amal_tracker/features/auth/providers/provider_reset.dart';
+import 'package:amal_tracker/features/home/widgets/profile_sheet.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -104,7 +105,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => _ProfileSheet(
+      builder: (_) => ProfileSheet(
         user: user,
       ),
     );
@@ -1342,11 +1343,11 @@ class _NavItem {
 // PROFILE SHEET
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ProfileSheet extends ConsumerWidget {
+class _ProfileSheet2 extends ConsumerWidget {
   // ← was StatelessWidget
   final dynamic user;
 
-  const _ProfileSheet({this.user}); // ← no 'ref' param
+  const _ProfileSheet2({this.user}); // ← no 'ref' param
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

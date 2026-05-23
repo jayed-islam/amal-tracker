@@ -109,7 +109,10 @@ class DailyEntryNotifier extends StateNotifier<DailyEntryState> {
     }
   }
 
-  Future<bool> saveEntryFromUpdates(List<EntryUpdate> updates) async {
+  Future<bool> saveEntryFromUpdates(
+    List<EntryUpdate> updates, {
+    bool isExemptDay = false, // ← new param
+  }) async {
     state = state.copyWith(isSaving: true, error: null);
     try {
       final payload = updates.map((u) => u.toJson()).toList();
@@ -117,6 +120,7 @@ class DailyEntryNotifier extends StateNotifier<DailyEntryState> {
           await _api.post<Map<String, dynamic>>('/tracker/entry', data: {
         'date': _dateStr,
         'entries': payload,
+        'isExemptDay': isExemptDay,
       });
       final data = res['data'];
       state = state.copyWith(

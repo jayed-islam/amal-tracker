@@ -302,7 +302,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:amal_tracker/core/providers/connectivity_provider.dart';
-import 'package:amal_tracker/core/router/app_router.dart';
 import 'package:amal_tracker/features/home/screens/home_screen.dart'
     show ColorT;
 import 'package:amal_tracker/shared/widgets/offline_banner.dart';

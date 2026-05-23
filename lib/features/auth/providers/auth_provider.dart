@@ -228,7 +228,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         final user = UserModel.fromJson(jsonDecode(userJson));
         state = AuthState(user: user, isAuthenticated: true);
       }
-    } catch (_) {
+    } catch (e) {
+      print('[AUTH] _loadFromStorage error: $e');
       state = const AuthState();
     }
   }
@@ -250,34 +251,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  // Future<bool> register({
-  //   required String name,
-  //   required String email,
-  //   required String password,
-  //   String? department,
-  //   String? designation,
-  // }) async {
-  //   state = state.copyWith(isLoading: true, error: null);
-  //   try {
-  //     final response = await _api.post<Map<String, dynamic>>(
-  //       '/auth/register',
-  //       data: {
-  //         'name': name,
-  //         'email': email,
-  //         'password': password,
-  //         if (department != null) 'department': department,
-  //         if (designation != null) 'designation': designation,
-  //       },
-  //     );
-  //     final authResponse = AuthResponse.fromJson(response['data']);
-  //     await _saveTokens(authResponse);
-  //     state = AuthState(user: authResponse.user, isAuthenticated: true);
-  //     return true;
-  //   } on ApiException catch (e) {
-  //     state = state.copyWith(isLoading: false, error: e.message);
-  //     return false;
-  //   }
-  // }
   Future<bool> register({
     required String name,
     required String email,
@@ -317,25 +290,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  // ── THE FIX ──────────────────────────────────────────────────────────────
-  //
-  // BEFORE (slow — 1-2 sec delay):
-  //   await _api.post('/auth/logout')  ← blocks here
-  //   storage.deleteAll()
-  //   state = const AuthState()        ← router only redirects NOW
-  //
-  // AFTER (instant):
-  //   storage.deleteAll()              ─┐ these two run immediately
-  //   state = const AuthState()        ─┘ router redirects to login at once
-  //   _api.post('/auth/logout').ignore()  ← background, no await needed
-  //
-  // WHY it's safe to not await the API call:
-  //   The access token is already gone from storage. Even if the server call
-  //   fails, the token expires on its own. Local state is the source of truth.
-  //
-  // ALSO: never call _ref.invalidate() inside a notifier on providers that
-  //   watch this notifier — that creates a CircularDependencyError.
-  //   Invalidate downstream providers from the UI layer after logout() returns.
   // ─────────────────────────────────────────────────────────────────────────
   Future<void> logout() async {
     // 1. Wipe local storage synchronously
@@ -373,6 +327,39 @@ class AuthNotifier extends StateNotifier<AuthState> {
       return true;
     } on ApiException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
+      return false;
+    }
+  }
+
+  Future<bool> updateProfile(Map<String, dynamic> changes) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final response = await _api.patch<Map<String, dynamic>>(
+        '/auth/profile',
+        data: changes,
+      );
+
+      final updatedUser = UserModel.fromJson(response['data']);
+
+      final storage = _ref.read(secureStorageProvider);
+      await storage.write(
+        key: AppConstants.userKey,
+        value: jsonEncode(updatedUser.toJson()),
+      );
+
+      state = AuthState(
+        user: updatedUser,
+        isAuthenticated: true,
+        isLoading: false,
+      );
+
+      return true;
+    } on ApiException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+      return false;
+    } catch (e) {
+      state = state.copyWith(
+          isLoading: false, error: 'প্রোফাইল আপডেট করতে ব্যর্থ হয়েছে');
       return false;
     }
   }

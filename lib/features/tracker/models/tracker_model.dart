@@ -1,3 +1,29 @@
+// enum AmalInputType { binary, counter, duration }
+
+// extension AmalInputTypeExt on AmalInputType {
+//   String get value {
+//     switch (this) {
+//       case AmalInputType.binary:
+//         return 'binary';
+//       case AmalInputType.counter:
+//         return 'counter';
+//       case AmalInputType.duration:
+//         return 'duration';
+//     }
+//   }
+
+//   static AmalInputType fromString(String? s) {
+//     switch (s) {
+//       case 'counter':
+//         return AmalInputType.counter;
+//       case 'duration':
+//         return AmalInputType.duration;
+//       default:
+//         return AmalInputType.binary; // safe fallback
+//     }
+//   }
+// }
+
 // // ─── Amal Category ───────────────────────────────────────────────────────────
 
 // class AmalCategory {
@@ -15,6 +41,13 @@
 //   final String? description;
 //   final String? icon;
 
+//   // ── New: input type & counter config (all from backend) ──────────────────
+//   final AmalInputType inputType; // "binary" | "counter" | "duration"
+//   final double? pointsPerUnit; // points per unit for counter/duration
+//   final String? unit; // "ayah" | "day" | "person" | "minute" | null
+//   final int? minValue; // minimum allowed value (null = 0)
+//   final int? maxValue; // maximum allowed value (null = unlimited)
+
 //   const AmalCategory({
 //     required this.id,
 //     required this.key,
@@ -29,6 +62,11 @@
 //     required this.isActive,
 //     this.description,
 //     this.icon,
+//     this.inputType = AmalInputType.binary,
+//     this.pointsPerUnit,
+//     this.unit,
+//     this.minValue,
+//     this.maxValue,
 //   });
 
 //   factory AmalCategory.fromJson(Map<String, dynamic> json) => AmalCategory(
@@ -45,7 +83,23 @@
 //         isActive: json['isActive'] ?? true,
 //         description: json['description'],
 //         icon: json['icon'],
+//         // New fields — safe fallback to binary / null if backend omits them
+//         inputType: AmalInputTypeExt.fromString(json['inputType']),
+//         pointsPerUnit: (json['pointsPerUnit'] as num?)?.toDouble(),
+//         unit: json['unit'],
+//         minValue: (json['minValue'] as num?)?.toInt(),
+//         maxValue: (json['maxValue'] as num?)?.toInt(),
 //       );
+
+//   /// Effective points-per-unit: falls back to basePoints if backend omits it.
+//   /// Use this in point calculation instead of accessing pointsPerUnit directly.
+//   double get effectivePointsPerUnit => pointsPerUnit ?? basePoints.toDouble();
+
+//   /// Whether this category uses incremental counting (not a simple checkbox).
+//   bool get isCounter => inputType == AmalInputType.counter;
+
+//   /// Whether a maximum value cap is enforced.
+//   bool get isBounded => maxValue != null;
 // }
 
 // // ─── Prayer Mode ──────────────────────────────────────────────────────────────
@@ -104,38 +158,27 @@
 //     this.points = 0,
 //   });
 
-//   // factory DailyEntryItem.fromJson(Map<String, dynamic> json) => DailyEntryItem(
-//   //       categoryId: json['categoryId']?['_id'] ?? json['categoryId'] ?? '',
-//   //       completed: json['completed'] ?? false,
-//   //       prayerMode: json['prayerMode'] != null
-//   //           ? PrayerModeExt.fromString(json['prayerMode'])
-//   //           : null,
-//   //       count: json['count'] ?? 0,
-//   //       points: json['points'] ?? 0,
-//   //     );
 //   factory DailyEntryItem.fromJson(Map<String, dynamic> json) {
-//     // categoryId safely extract করা
+//     // categoryId — handles String, populated object, or anything else
 //     String categoryId = '';
-//     final categoryIdRaw = json['categoryId'];
-
-//     if (categoryIdRaw == null) {
+//     final raw = json['categoryId'];
+//     if (raw == null) {
 //       categoryId = '';
-//     } else if (categoryIdRaw is String) {
-//       categoryId = categoryIdRaw;
-//     } else if (categoryIdRaw is Map<String, dynamic>) {
-//       categoryId = categoryIdRaw['_id']?.toString() ?? '';
+//     } else if (raw is String) {
+//       categoryId = raw;
+//     } else if (raw is Map<String, dynamic>) {
+//       categoryId = raw['_id']?.toString() ?? '';
 //     } else {
-//       categoryId = categoryIdRaw.toString();
+//       categoryId = raw.toString();
 //     }
 
-//     // prayerMode safely extract করা
+//     // prayerMode — handles String or object shape
 //     PrayerMode? prayerMode;
-//     final prayerModeRaw = json['prayerMode'];
-//     if (prayerModeRaw != null && prayerModeRaw is String) {
-//       prayerMode = PrayerModeExt.fromString(prayerModeRaw);
-//     } else if (prayerModeRaw != null && prayerModeRaw is Map) {
-//       // যদি object হয়
-//       prayerMode = PrayerModeExt.fromString(prayerModeRaw['value']?.toString());
+//     final pmRaw = json['prayerMode'];
+//     if (pmRaw is String) {
+//       prayerMode = PrayerModeExt.fromString(pmRaw);
+//     } else if (pmRaw is Map) {
+//       prayerMode = PrayerModeExt.fromString(pmRaw['value']?.toString());
 //     }
 
 //     return DailyEntryItem(
@@ -327,8 +370,6 @@
 //         weeklyPoints: json['weeklyPoints'] ?? 0,
 //       );
 // }
-// ─── Amal Input Type ─────────────────────────────────────────────────────────
-
 enum AmalInputType { binary, counter, duration }
 
 extension AmalInputTypeExt on AmalInputType {
@@ -365,6 +406,7 @@ class AmalCategory {
   final String section;
   final String type;
   final bool isPrayer;
+  final bool isFard; // NEW: whether this is a Fard (obligatory) category
   final int basePoints;
   final int congregationPoints;
   final int order;
@@ -387,6 +429,7 @@ class AmalCategory {
     required this.section,
     required this.type,
     required this.isPrayer,
+    required this.isFard, // NEW
     required this.basePoints,
     required this.congregationPoints,
     required this.order,
@@ -408,6 +451,7 @@ class AmalCategory {
         section: json['section'] ?? '',
         type: json['type'] ?? 'daily',
         isPrayer: json['isPrayer'] ?? false,
+        isFard: json['isFard'] ?? false, // NEW - defaults to false
         basePoints: json['basePoints'] ?? 1,
         congregationPoints: json['congregationPoints'] ?? 2,
         order: json['order'] ?? 0,
@@ -540,6 +584,7 @@ class DailyEntry {
   final int day;
   final List<DailyEntryItem> entries;
   final int totalPoints;
+  final bool isExemptDay; // NEW: whether this day is exempted from tracking
 
   DailyEntry({
     required this.id,
@@ -550,6 +595,7 @@ class DailyEntry {
     required this.day,
     required this.entries,
     required this.totalPoints,
+    required this.isExemptDay, // NEW
   });
 
   factory DailyEntry.fromJson(Map<String, dynamic> json) => DailyEntry(
@@ -563,7 +609,20 @@ class DailyEntry {
             .map((e) => DailyEntryItem.fromJson(e))
             .toList(),
         totalPoints: json['totalPoints'] ?? 0,
+        isExemptDay: json['isExemptDay'] ?? false, // NEW - defaults to false
       );
+
+  Map<String, dynamic> toJson() => {
+        '_id': id,
+        'userId': userId,
+        'date': date.toIso8601String(),
+        'year': year,
+        'month': month,
+        'day': day,
+        'entries': entries.map((e) => e.toJson()).toList(),
+        'totalPoints': totalPoints,
+        'isExemptDay': isExemptDay, // NEW
+      };
 }
 
 // ─── Monthly Tracker ──────────────────────────────────────────────────────────

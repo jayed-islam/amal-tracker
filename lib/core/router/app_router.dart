@@ -1,4 +1,8 @@
 import 'package:amal_tracker/core/router/route_notifier.dart';
+import 'package:amal_tracker/features/settings/screens/settings_screen.dart';
+import 'package:amal_tracker/features/user/screen/how_its_work_screen.dart';
+import 'package:amal_tracker/features/user/screen/password_change_screen.dart';
+import 'package:amal_tracker/features/user/screen/profile_edit_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,6 +24,10 @@ class AppRoutes {
   static const tracker = '/tracker';
   static const monthlyView = '/monthly';
   static const leaderboard = '/leaderboard';
+  static const profileEdit = '/profile/edit';
+  static const howItWorks = '/how-it-works';
+  static const settings = '/settings';
+  static const changePassword = '/change-password';
 }
 
 // ── Navigator keys — declared at top level so they are NEVER recreated ─────
@@ -75,6 +83,46 @@ final routerProvider = Provider<GoRouter>((ref) {
             )),
             child: child,
           ),
+        ),
+      ),
+
+      GoRoute(
+        path: AppRoutes.profileEdit,
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const ProfileEditScreen(),
+          transitionsBuilder: (_, animation, __, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+
+      GoRoute(
+        path: AppRoutes.howItWorks,
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const HowItWorksScreen(),
+          transitionsBuilder: (_, animation, __, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+
+      GoRoute(
+        path: AppRoutes.settings,
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const SettingsScreen(),
+          transitionsBuilder: (_, animation, __, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+
+      GoRoute(
+        path: AppRoutes.changePassword,
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const ChangePasswordScreen(),
+          transitionsBuilder: (_, animation, __, child) =>
+              FadeTransition(opacity: animation, child: child),
         ),
       ),
 
