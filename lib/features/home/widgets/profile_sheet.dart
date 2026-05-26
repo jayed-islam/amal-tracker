@@ -212,7 +212,7 @@ class _ProfileHero extends StatelessWidget {
     final name = user?.name ?? 'ব্যবহারকারী';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
     final email = user?.email ?? '';
-    final serialId = user?.serialId;
+    final id = user?.id;
     final district = user?.district;
 
     return Container(
@@ -310,7 +310,7 @@ class _ProfileHero extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
-                          if (serialId != null || district != null) ...[
+                          if (id != null || district != null) ...[
                             const SizedBox(height: 6),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -324,7 +324,7 @@ class _ProfileHero extends StatelessWidget {
                               ),
                               child: Text(
                                 [
-                                  if (serialId != null) 'ID: $serialId',
+                                  if (id != null) 'ID: $id',
                                   if (district != null) district,
                                 ].join(' • '),
                                 style: const TextStyle(

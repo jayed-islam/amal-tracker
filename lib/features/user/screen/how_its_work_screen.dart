@@ -1,3 +1,4 @@
+import 'package:amal_tracker/features/user/widgets/app_silver_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -38,11 +39,24 @@ class _C {
 // SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
 
-class HowItWorksScreen extends ConsumerWidget {
+class HowItWorksScreen extends ConsumerStatefulWidget {
   const HowItWorksScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HowItWorksScreen> createState() => _HowItWorksScreenState();
+}
+
+class _HowItWorksScreenState extends ConsumerState<HowItWorksScreen> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     final isFemale = user?.gender?.toLowerCase() == 'female';
     final size = MediaQuery.of(context).size;
@@ -52,75 +66,16 @@ class HowItWorksScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: _C.bg,
       body: CustomScrollView(
+        controller: _scrollController,
         physics: const BouncingScrollPhysics(),
         slivers: [
           // ── App bar ───────────────────────────────────────────────
-          SliverAppBar(
-            pinned: true,
-            backgroundColor: _C.darkGreen,
-            surfaceTintColor: Colors.transparent,
-            systemOverlayStyle: SystemUiOverlayStyle.light,
-            expandedHeight: 120,
-            leading: GestureDetector(
-              onTap: () => context.pop(),
-              child: Container(
-                margin: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.arrow_back_ios_rounded,
-                    color: Colors.white, size: 16),
-              ),
-            ),
-            flexibleSpace: FlexibleSpaceBar(
-              collapseMode: CollapseMode.pin,
-              background: Container(
-                color: _C.darkGreen,
-                child: Stack(
-                  children: [
-                    Positioned(
-                      top: -30,
-                      right: -30,
-                      child: Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.05),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 16,
-                      left: hPad,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            'কীভাবে কাজ করে?',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          Text(
-                            'পয়েন্ট ও র‍্যাংকিং পদ্ধতি',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.5),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          AppSliverBar(
+            scrollController: _scrollController,
+            title: 'কীভাবে কাজ করে?',
+            subtitle: 'পয়েন্ট ও র‍্যাংকিং পদ্ধতি',
+            icon: Icons.trending_up_rounded,
+            color: _C.darkGreen,
           ),
 
           // ── Body ─────────────────────────────────────────────────

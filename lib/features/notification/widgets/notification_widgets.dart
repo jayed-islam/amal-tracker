@@ -1,14 +1,73 @@
-// ============================================================
-// notification_widgets.dart
-// Drop-in widgets: bell icon with badge, permission prompt
-// ============================================================
-
+import 'package:amal_tracker/core/router/app_router.dart';
+import 'package:amal_tracker/features/home/screens/home_screen.dart';
 import 'package:amal_tracker/features/notification/provider/notification_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// Drop this in your AppBar actions or anywhere in the nav bar.
 /// Shows live unread badge. Taps open the notification center.
+// class NotificationBellWidget extends ConsumerWidget {
+//   const NotificationBellWidget({super.key});
+
+// Container(
+//               width: 36,
+//               height: 36,
+//               decoration: BoxDecoration(
+//                 color: ColorT.pageBg,
+//                 borderRadius: BorderRadius.circular(10),
+//                 border: Border.all(color: ColorT.border, width: 0.5),
+//               ),
+//               child: const Icon(
+//                 Icons.notifications_none_rounded,
+//                 color: ColorT.textSecondary,
+//                 size: 18,
+//               ),
+//             ),
+
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     final unread = ref.watch(unreadNotificationCountProvider);
+
+//     return IconButton(
+//       tooltip: 'নোটিফিকেশন',
+//       onPressed: () {
+//         context.push(AppRoutes.notifications);
+//         // Or if you want to replace instead of push:
+//         // context.go(AppRoutes.notifications);
+//       },
+//       icon: Stack(
+//         clipBehavior: Clip.none,
+//         children: [
+//           const Icon(Icons.notifications_outlined,
+//               color: Color(0xFF1A2E2A), size: 24),
+//           if (unread > 0)
+//             Positioned(
+//               top: -3,
+//               right: -3,
+//               child: Container(
+//                 width: 16,
+//                 height: 16,
+//                 decoration: const BoxDecoration(
+//                     color: Color(0xFF2E7D5E), shape: BoxShape.circle),
+//                 child: Center(
+//                   child: Text(
+//                     unread > 99 ? '99+' : '$unread',
+//                     style: const TextStyle(
+//                         fontFamily: 'Poppins',
+//                         fontWeight: FontWeight.w700,
+//                         fontSize: 8.5,
+//                         color: Colors.white),
+//                   ),
+//                 ),
+//               ),
+//             ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
 class NotificationBellWidget extends ConsumerWidget {
   const NotificationBellWidget({super.key});
 
@@ -16,14 +75,27 @@ class NotificationBellWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final unread = ref.watch(unreadNotificationCountProvider);
 
-    return IconButton(
-      tooltip: 'নোটিফিকেশন',
-      onPressed: () => Navigator.pushNamed(context, '/notifications'),
-      icon: Stack(
+    return GestureDetector(
+      onTap: () {
+        context.push(AppRoutes.notifications);
+      },
+      child: Stack(
         clipBehavior: Clip.none,
         children: [
-          const Icon(Icons.notifications_outlined,
-              color: Color(0xFF1A2E2A), size: 24),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: ColorT.pageBg,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: ColorT.border, width: 0.5),
+            ),
+            child: const Icon(
+              Icons.notifications_none_rounded,
+              color: ColorT.textSecondary,
+              size: 18,
+            ),
+          ),
           if (unread > 0)
             Positioned(
               top: -3,
@@ -48,6 +120,41 @@ class NotificationBellWidget extends ConsumerWidget {
         ],
       ),
     );
+
+    // IconButton(
+    //   tooltip: 'নোটিফিকেশন',
+    //   onPressed: () {
+    //     context.push(AppRoutes.notifications); // Now this will work
+    //   },
+    //   icon: Stack(
+    //     clipBehavior: Clip.none,
+    //     children: [
+    //       const Icon(Icons.notifications_outlined,
+    //           color: Color(0xFF1A2E2A), size: 24),
+    //       if (unread > 0)
+    //         Positioned(
+    //           top: -3,
+    //           right: -3,
+    //           child: Container(
+    //             width: 16,
+    //             height: 16,
+    //             decoration: const BoxDecoration(
+    //                 color: Color(0xFF2E7D5E), shape: BoxShape.circle),
+    //             child: Center(
+    //               child: Text(
+    //                 unread > 99 ? '99+' : '$unread',
+    //                 style: const TextStyle(
+    //                     fontFamily: 'Poppins',
+    //                     fontWeight: FontWeight.w700,
+    //                     fontSize: 8.5,
+    //                     color: Colors.white),
+    //               ),
+    //             ),
+    //           ),
+    //         ),
+    //     ],
+    //   ),
+    // );
   }
 }
 

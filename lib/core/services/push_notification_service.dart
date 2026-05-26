@@ -455,22 +455,23 @@ class PushNotificationService {
   // Callback: foreground message received
   void Function(RemoteMessage)? onForegroundMessage;
 
+  // void Function(RemoteMessage)? onMessageOpenedApp;
+  // void Function(RemoteMessage)? onForegroundMessage;
+
   // ── Initialize ─────────────────────────────────────────────
   Future<void> initialize() async {
-    // Set background handler BEFORE anything else
-    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    // REMOVED: Do not set backgroundMessage here. It's already handled in main.dart.
+    // Setting it twice can override listeners or cause issues in background isolates.
 
     // Request permission (iOS / Android 13+)
     await _requestPermission();
 
-    // Subscribe to default topic
-    await _fcm.subscribeToTopic('all_users');
-
-    // Get and save FCM token
+    // Get and save FCM token first to ensure connection state is warming up
     await _refreshAndSaveToken();
 
-    // Listen for token refresh
-    _fcm.onTokenRefresh.listen(_onTokenRefresh);
+    // Fire off the topic subscription in a non-blocking background loop
+    // so it won't crash your main app startup if Google Play Services lags.
+    _subscribeToDefaultTopicWithRetry();
 
     // Foreground message handler
     FirebaseMessaging.onMessage.listen(_onForegroundMessage);
@@ -484,6 +485,76 @@ class PushNotificationService {
     debugPrint('[PushService] Initialized');
   }
 
+  // ── Robust Topic Subscription Loop ──────────────────────────
+  Future<void> _subscribeToDefaultTopicWithRetry() async {
+    int retryCount = 0;
+    const int maxRetries = 3;
+
+    while (retryCount < maxRetries) {
+      try {
+        await _fcm.subscribeToTopic('all_users');
+        debugPrint('[PushService] Successfully subscribed to topic: all_users');
+        break;
+      } catch (e) {
+        retryCount++;
+        debugPrint(
+            '[PushService] Topic subscription failed (Attempt $retryCount/$maxRetries): $e');
+        if (retryCount >= maxRetries) {
+          debugPrint(
+              '[PushService] Giving up on initial topic subscription. FCM will retry automatically in background.');
+          break;
+        }
+        // Wait 5 seconds before retrying to give the network interface a chance to wake up
+        await Future.delayed(const Duration(seconds: 5));
+      }
+    }
+  }
+
+  Future<void> subscribeToTopic(String topic) async {
+    try {
+      await _fcm.subscribeToTopic(topic);
+    } catch (e) {
+      debugPrint('[PushService] Dynamic subscription failed for $topic: $e');
+    }
+  }
+
+  Future<void> unsubscribeFromTopic(String topic) async {
+    try {
+      await _fcm.unsubscribeFromTopic(topic);
+    } catch (e) {
+      debugPrint('[PushService] Unsubscription failed for $topic: $e');
+    }
+  }
+
+  // // ── Initialize ─────────────────────────────────────────────
+  // Future<void> initialize() async {
+  //   // Set background handler BEFORE anything else
+  //   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  //   // Request permission (iOS / Android 13+)
+  //   await _requestPermission();
+
+  //   // Subscribe to default topic
+  //   await _fcm.subscribeToTopic('all_users');
+
+  //   // Get and save FCM token
+  //   await _refreshAndSaveToken();
+
+  //   // Listen for token refresh
+  //   _fcm.onTokenRefresh.listen(_onTokenRefresh);
+
+  //   // Foreground message handler
+  //   FirebaseMessaging.onMessage.listen(_onForegroundMessage);
+
+  //   // App opened from background state via notification
+  //   FirebaseMessaging.onMessageOpenedApp.listen(_onMessageOpenedApp);
+
+  //   // Check if app was opened from terminated state
+  //   await _checkInitialMessage();
+
+  //   debugPrint('[PushService] Initialized');
+  // }
+
   // ── Get FCM Token ──────────────────────────────────────────
   Future<String?> getFCMToken() async {
     try {
@@ -494,14 +565,14 @@ class PushNotificationService {
     }
   }
 
-  // ── Subscribe / Unsubscribe Topics ────────────────────────
-  Future<void> subscribeToTopic(String topic) async {
-    await _fcm.subscribeToTopic(topic);
-  }
+  // // ── Subscribe / Unsubscribe Topics ────────────────────────
+  // Future<void> subscribeToTopic(String topic) async {
+  //   await _fcm.subscribeToTopic(topic);
+  // }
 
-  Future<void> unsubscribeFromTopic(String topic) async {
-    await _fcm.unsubscribeFromTopic(topic);
-  }
+  // Future<void> unsubscribeFromTopic(String topic) async {
+  //   await _fcm.unsubscribeFromTopic(topic);
+  // }
 
   // ── Private ────────────────────────────────────────────────
   Future<void> _requestPermission() async {

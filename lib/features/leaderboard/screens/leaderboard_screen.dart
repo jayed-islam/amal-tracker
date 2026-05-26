@@ -365,10 +365,10 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
 /// Small serial ID tag — e.g. "BD-001"
 /// Used inside rank tiles on a dark or light background.
 class _SerialBadge extends StatelessWidget {
-  final String serialId;
+  final String id;
   final bool onDark;
 
-  const _SerialBadge({required this.serialId, this.onDark = false});
+  const _SerialBadge({required this.id, this.onDark = false});
 
   @override
   Widget build(BuildContext context) {
@@ -383,7 +383,7 @@ class _SerialBadge extends StatelessWidget {
         ),
       ),
       child: Text(
-        serialId,
+        id,
         style: TextStyle(
           color: onDark ? Colors.white.withOpacity(0.55) : _C.serialText,
           fontSize: 8.5,
@@ -528,7 +528,7 @@ class _HeroBand extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MY RANK CARD  — now shows serialId + district
+// MY RANK CARD  — now shows id + district
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _MyRankCard extends StatelessWidget {
@@ -634,14 +634,14 @@ class _MyRankCard extends StatelessWidget {
                     ],
                   ],
                 ),
-                // ── NEW: serialId + district row ───────────────────────────
+                // ── NEW: id + district row ───────────────────────────
                 // const SizedBox(height: 5),
                 // Wrap(
                 //   spacing: 5,
                 //   runSpacing: 4,
                 //   children: [
-                //     if (data.serialId != null)
-                //       _SerialBadge(serialId: data.serialId!, onDark: true),
+                //     if (data.id != null)
+                //       _SerialBadge(id: data.id!, onDark: true),
                 //     if (data.district != null)
                 //       _DistrictPill(district: data.district!, onDark: true),
                 //   ],
@@ -1021,10 +1021,10 @@ class _PodiumPillar extends StatelessWidget {
           _DistrictPill(district: entry.district!, compact: true),
         ],
 
-        if (entry.serialId != null) ...[
+        if (entry.id != null) ...[
           const SizedBox(height: 3),
           _SerialBadge(
-            serialId: entry.serialId!,
+            id: entry.id!,
           ),
         ],
 
@@ -1079,7 +1079,7 @@ class _PodiumPillar extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// RANK TILE  — serialId badge left of rank, district in subtitle row
+// RANK TILE  — id badge left of rank, district in subtitle row
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _RankTile extends StatelessWidget {
@@ -1109,138 +1109,226 @@ class _RankTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isTop10 = entry.rank <= 10;
     final isWinner = entry.isWinner;
+    final canView = entry.isProfilePublic;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-      decoration: BoxDecoration(
-        color: isWinner ? _C.goldPale : Colors.transparent,
-        borderRadius: isLast
-            ? const BorderRadius.vertical(bottom: Radius.circular(16))
-            : null,
-        border: isLast
-            ? null
-            : const Border(
-                bottom: BorderSide(color: _C.border, width: 0.5),
+    return GestureDetector(
+      onTap: canView
+          ? () {
+              HapticFeedback.selectionClick();
+              _openProfile(context);
+            }
+          : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        decoration: BoxDecoration(
+          color: isWinner ? _C.goldPale : Colors.transparent,
+          borderRadius: isLast
+              ? const BorderRadius.vertical(bottom: Radius.circular(16))
+              : null,
+          border: isLast
+              ? null
+              : const Border(
+                  bottom: BorderSide(color: _C.border, width: 0.5),
+                ),
+        ),
+        child: Row(
+          children: [
+            // ── Rank + optional id stacked ──────────────────────────────
+            SizedBox(
+              width: 36,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '#${entry.rank}',
+                    style: TextStyle(
+                      color: isTop10 ? _C.darkGreen : _C.textHint,
+                      fontWeight: FontWeight.w800,
+                      fontSize: isTop10 ? 14 : 12,
+                      height: 1,
+                    ),
+                  ),
+                  // if (entry.id != null) ...[
+                  //   const SizedBox(height: 3),
+                  //   _SerialBadge(id: entry.id!),
+                  // ],
+                ],
               ),
-      ),
-      child: Row(
-        children: [
-          // ── Rank + optional serialId stacked ──────────────────────────────
-          SizedBox(
-            width: 36,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+            ),
+
+            const SizedBox(width: 6),
+
+            // Avatar
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isTop10 ? _avatarColor : _C.textHint.withOpacity(0.4),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Center(
+                child: Text(
+                  entry.name.isNotEmpty ? entry.name[0].toUpperCase() : 'U',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 10),
+
+            // Name + meta row (dept · district · streak)
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Name row
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          entry.name,
+                          style: const TextStyle(
+                            color: _C.textPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (isWinner) ...[
+                        const SizedBox(width: 4),
+                        const Text('🏆', style: TextStyle(fontSize: 11)),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  // ── NEW: dept · district · streak ─────────────────────────
+                  _MetaRow(entry: entry),
+                ],
+              ),
+            ),
+
+            const SizedBox(width: 8),
+
+            // Points + completion %
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '#${entry.rank}',
+                  '${entry.totalPoints}',
                   style: TextStyle(
-                    color: isTop10 ? _C.darkGreen : _C.textHint,
-                    fontWeight: FontWeight.w800,
-                    fontSize: isTop10 ? 14 : 12,
+                    color: isWinner
+                        ? _C.gold
+                        : isTop10
+                            ? _C.darkGreen
+                            : _C.textPrimary,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
                     height: 1,
                   ),
                 ),
-                // if (entry.serialId != null) ...[
-                //   const SizedBox(height: 3),
-                //   _SerialBadge(serialId: entry.serialId!),
-                // ],
-              ],
-            ),
-          ),
-
-          const SizedBox(width: 6),
-
-          // Avatar
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: isTop10 ? _avatarColor : _C.textHint.withOpacity(0.4),
-              borderRadius: BorderRadius.circular(11),
-            ),
-            child: Center(
-              child: Text(
-                entry.name.isNotEmpty ? entry.name[0].toUpperCase() : 'U',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
+                const SizedBox(height: 2),
+                Text(
+                  '${entry.completionPercentage.toInt()}%',
+                  style: const TextStyle(
+                    color: _C.textHint,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-            ),
-          ),
 
-          const SizedBox(width: 10),
-
-          // Name + meta row (dept · district · streak)
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Name row
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        entry.name,
-                        style: const TextStyle(
-                          color: _C.textPrimary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (isWinner) ...[
-                      const SizedBox(width: 4),
-                      const Text('🏆', style: TextStyle(fontSize: 11)),
-                    ],
-                  ],
-                ),
                 const SizedBox(height: 4),
-                // ── NEW: dept · district · streak ─────────────────────────
-                _MetaRow(entry: entry),
+                // ── Profile view indicator ──────────────────────────
+                _ProfileBadge(isPublic: canView),
               ],
             ),
-          ),
+          ],
+        ),
+      )
+          .animate(delay: Duration(milliseconds: delay))
+          .fadeIn(duration: 260.ms)
+          .slideX(begin: 0.04, curve: Curves.easeOut),
+    );
+  }
 
-          const SizedBox(width: 8),
+  void _openProfile(BuildContext context) {
+    final now = DateTime.now();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _PublicProfileSheet(
+        entry: entry,
+        year: now.year,
+        month: now.month,
+      ),
+    );
+  }
+}
 
-          // Points + completion %
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${entry.totalPoints}',
-                style: TextStyle(
-                  color: isWinner
-                      ? _C.gold
-                      : isTop10
-                          ? _C.darkGreen
-                          : _C.textPrimary,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                  height: 1,
-                ),
+class _ProfileBadge extends StatelessWidget {
+  final bool isPublic;
+  const _ProfileBadge({required this.isPublic});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isPublic) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF4F6F1),
+          borderRadius: BorderRadius.circular(5),
+          border: Border.all(color: _C.border, width: 0.5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.lock_outline_rounded, size: 8, color: _C.textHint),
+            SizedBox(width: 2),
+            Text(
+              'Private',
+              style: TextStyle(
+                color: _C.textHint,
+                fontSize: 8,
+                fontWeight: FontWeight.w500,
               ),
-              const SizedBox(height: 2),
-              Text(
-                '${entry.completionPercentage.toInt()}%',
-                style: const TextStyle(
-                  color: _C.textHint,
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE0F2FE),
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(
+          color: const Color(0xFF0891B2).withOpacity(0.3),
+          width: 0.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Icon(Icons.visibility_outlined, size: 8, color: Color(0xFF0891B2)),
+          SizedBox(width: 2),
+          Text(
+            'দেখুন',
+            style: TextStyle(
+              color: Color(0xFF0891B2),
+              fontSize: 8,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
-    )
-        .animate(delay: Duration(milliseconds: delay))
-        .fadeIn(duration: 260.ms)
-        .slideX(begin: 0.04, curve: Curves.easeOut);
+    );
   }
 }
 
@@ -1254,7 +1342,7 @@ class _MetaRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasSerialId = entry.serialId != null;
+    final hasid = entry.id != null;
     final hasDistrict = entry.district != null;
     final hasStreak = entry.streakDays > 0;
 
@@ -1264,9 +1352,9 @@ class _MetaRow extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         // Department text
-        if (hasSerialId)
+        if (hasid)
           Text(
-            'ID: ${entry.serialId!}',
+            'ID: ${entry.id!}',
             style: const TextStyle(
               color: _C.textSecondary,
               fontSize: 10,
@@ -1274,7 +1362,7 @@ class _MetaRow extends StatelessWidget {
           ),
 
         // Dot separator before district (only if dept exists)
-        if (hasSerialId && hasDistrict)
+        if (hasid && hasDistrict)
           const Text(
             '·',
             style: TextStyle(color: _C.textHint, fontSize: 10),
@@ -1284,7 +1372,7 @@ class _MetaRow extends StatelessWidget {
         if (hasDistrict) _DistrictPill(district: entry.district!),
 
         // Dot separator before streak
-        if ((hasSerialId || hasDistrict) && hasStreak)
+        if ((hasid || hasDistrict) && hasStreak)
           const Text(
             '·',
             style: TextStyle(color: _C.textHint, fontSize: 10),
@@ -1652,7 +1740,7 @@ class _EmptyCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SINGLE ENTRY CARD  — shows district + serialId below department
+// SINGLE ENTRY CARD  — shows district + id below department
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _SingleEntryCard extends StatelessWidget {
@@ -1712,16 +1800,15 @@ class _SingleEntryCard extends StatelessWidget {
             ),
           ],
 
-          // ── NEW: serialId + district ───────────────────────────────────
-          if (entry.serialId != null || entry.district != null) ...[
+          // ── NEW: id + district ───────────────────────────────────
+          if (entry.id != null || entry.district != null) ...[
             const SizedBox(height: 8),
             Wrap(
               spacing: 6,
               runSpacing: 5,
               alignment: WrapAlignment.center,
               children: [
-                if (entry.serialId != null)
-                  _SerialBadge(serialId: entry.serialId!),
+                if (entry.id != null) _SerialBadge(id: entry.id!),
                 if (entry.district != null)
                   _DistrictPill(district: entry.district!),
               ],
@@ -2023,6 +2110,808 @@ class _MyRankErrorCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PublicProfileSheet extends ConsumerWidget {
+  final LeaderboardEntry entry;
+  final int year;
+  final int month;
+
+  const _PublicProfileSheet({
+    required this.entry,
+    required this.year,
+    required this.month,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final detail = ref.watch(publicProfileProvider((
+      userId: entry.userId,
+      year: year,
+      month: month,
+    )));
+
+    final size = MediaQuery.of(context).size;
+
+    return Container(
+      height: size.height * 0.88,
+      decoration: const BoxDecoration(
+        color: _C.pageBg,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        children: [
+          // Drag handle
+          Padding(
+            padding: const EdgeInsets.only(top: 12, bottom: 4),
+            child: Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: _C.border,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+            ),
+          ),
+
+          // Content
+          Expanded(
+            child: detail.when(
+              loading: () => const _ProfileSheetSkeleton(),
+              error: (e, _) => _ProfileSheetError(
+                onRetry: () => ref.invalidate(publicProfileProvider((
+                  userId: entry.userId,
+                  year: year,
+                  month: month,
+                ))),
+              ),
+              data: (d) => _ProfileSheetContent(
+                detail: d,
+                year: year,
+                month: month,
+                entry: entry,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROFILE SHEET CONTENT
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ProfileSheetContent extends StatelessWidget {
+  final PublicMonthlyDetail detail;
+  final int year, month;
+  final LeaderboardEntry entry;
+
+  const _ProfileSheetContent({
+    required this.detail,
+    required this.year,
+    required this.month,
+    required this.entry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tracker = detail.tracker;
+    final isFemale = detail.gender?.toLowerCase() == 'female';
+
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Hero card ─────────────────────────────────────────────
+          _ProfileHeroCard(
+            detail: detail,
+            entry: entry,
+            year: year,
+            month: month,
+            isFemale: isFemale,
+          ).animate().fadeIn(duration: 260.ms).slideY(begin: 0.04),
+
+          const SizedBox(height: 16),
+
+          // ── Stats grid ────────────────────────────────────────────
+          if (tracker != null) ...[
+            _StatsGrid(tracker: tracker, isFemale: isFemale)
+                .animate()
+                .fadeIn(delay: 80.ms)
+                .slideY(begin: 0.04),
+            const SizedBox(height: 16),
+          ],
+
+          // ── Daily calendar ────────────────────────────────────────
+          _DailyCalendar(
+            entries: detail.entries,
+            year: year,
+            month: month,
+            isFemale: isFemale,
+          ).animate().fadeIn(delay: 120.ms).slideY(begin: 0.04),
+
+          const SizedBox(height: 16),
+
+          // ── Inspiration note ──────────────────────────────────────
+          _InspirationNote(name: detail.name).animate().fadeIn(delay: 160.ms),
+
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HERO CARD
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ProfileHeroCard extends StatelessWidget {
+  final PublicMonthlyDetail detail;
+  final LeaderboardEntry entry;
+  final int year, month;
+  final bool isFemale;
+
+  const _ProfileHeroCard({
+    required this.detail,
+    required this.entry,
+    required this.year,
+    required this.month,
+    required this.isFemale,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = detail.name.isNotEmpty ? detail.name[0].toUpperCase() : 'U';
+    final monthLabel = AppConstants.bengaliMonths[month - 1];
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [_C.darkGreen, _C.midGreen],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // Avatar
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                      color: Colors.white.withOpacity(0.25), width: 1.5),
+                ),
+                child: Center(
+                  child: Text(
+                    initial,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            detail.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (isFemale) ...[
+                          const SizedBox(width: 5),
+                          const Text('🌸', style: TextStyle(fontSize: 13)),
+                        ],
+                        if (entry.isWinner) ...[
+                          const SizedBox(width: 5),
+                          const Text('🏆', style: TextStyle(fontSize: 13)),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    // ID + District
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        _DarkBadge(
+                          icon: Icons.tag_rounded,
+                          label: detail.id,
+                        ),
+                        _DarkBadge(
+                          icon: Icons.location_on_rounded,
+                          label: detail.district,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Rank badge
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _C.gold,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      '#${entry.rank}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
+                        height: 1,
+                      ),
+                    ),
+                    Text(
+                      'র‍্যাংক',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 8,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          // Month label
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white.withOpacity(0.15)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.calendar_month_rounded,
+                    size: 13, color: Colors.white.withOpacity(0.6)),
+                const SizedBox(width: 6),
+                Text(
+                  '$monthLabel $year এর আমলনামা',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DarkBadge extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _DarkBadge({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.15), width: 0.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 9, color: Colors.white.withOpacity(0.6)),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.85),
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATS GRID
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _StatsGrid extends StatelessWidget {
+  final MonthlyTracker tracker;
+  final bool isFemale;
+
+  const _StatsGrid({required this.tracker, required this.isFemale});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SheetSectionLabel(label: 'মাসিক সারসংক্ষেপ'),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _C.border, width: 0.5),
+          ),
+          child: Column(
+            children: [
+              // Row 1
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatCell(
+                      emoji: '⭐',
+                      value: '${tracker.totalPoints}',
+                      label: 'মোট পয়েন্ট',
+                      isFirst: true,
+                    ),
+                  ),
+                  _VertDivider(),
+                  Expanded(
+                    child: _StatCell(
+                      emoji: '✅',
+                      value: '${tracker.completionPercentage.toInt()}%',
+                      label: 'ফরজ আদায়',
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 0.5, thickness: 0.5, color: _C.border),
+              // Row 2
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatCell(
+                      emoji: '🔥',
+                      value: '${tracker.streakDays} দিন',
+                      label: 'ধারাবাহিক',
+                      isFirst: true,
+                    ),
+                  ),
+                  _VertDivider(),
+                  Expanded(
+                    child: _StatCell(
+                      emoji: '📅',
+                      value: '${tracker.daysCompleted}',
+                      label: 'সম্পন্ন দিন',
+                    ),
+                  ),
+                ],
+              ),
+              // // Female exempt days — শুধু female হলে দেখাবে
+              // if (isFemale && tracker.exemptDays > 0) ...[
+              //   const Divider(height: 0.5, thickness: 0.5, color: _C.border),
+              //   _StatCell(
+              //     emoji: '🌸',
+              //     value: '${tracker.exemptDays} দিন',
+              //     label: 'মাফ দিন (হায়েজ)',
+              //     isFirst: true,
+              //     fullWidth: true,
+              //   ),
+              // ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatCell extends StatelessWidget {
+  final String emoji, value, label;
+  final bool isFirst;
+  final bool fullWidth;
+
+  const _StatCell({
+    required this.emoji,
+    required this.value,
+    required this.label,
+    this.isFirst = false,
+    this.fullWidth = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding:
+          EdgeInsets.fromLTRB(isFirst ? 16 : 0, 14, fullWidth ? 16 : 0, 14),
+      child: Row(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 20)),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  color: _C.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  height: 1,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: _C.textHint,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VertDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(width: 0.5, height: 50, color: _C.border);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DAILY CALENDAR — মাসের কোন দিন আমল হয়েছে
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _DailyCalendar extends StatelessWidget {
+  final List<DailyEntry> entries;
+  final int year, month;
+  final bool isFemale;
+
+  const _DailyCalendar({
+    required this.entries,
+    required this.year,
+    required this.month,
+    required this.isFemale,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+
+    // Map: day → entry
+    final entryMap = <int, DailyEntry>{};
+    for (final e in entries) {
+      entryMap[e.day] = e;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SheetSectionLabel(label: 'দৈনিক আমল'),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _C.border, width: 0.5),
+          ),
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            children: [
+              // Legend
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  _LegendDot(color: _C.darkGreen, label: 'আমল হয়েছে'),
+                  const SizedBox(width: 12),
+                  if (isFemale)
+                    _LegendDot(
+                        color: const Color(0xFFEC4899), label: 'মাফ দিন'),
+                  if (isFemale) const SizedBox(width: 12),
+                  _LegendDot(color: _C.border, label: 'নেই'),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Grid
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  crossAxisSpacing: 5,
+                  mainAxisSpacing: 5,
+                  childAspectRatio: 1,
+                ),
+                itemCount: daysInMonth,
+                itemBuilder: (_, i) {
+                  final day = i + 1;
+                  final entry = entryMap[day];
+                  final hasPoints = entry != null && entry.totalPoints > 0;
+                  final isExempt = entry != null && entry.isExemptDay;
+
+                  Color bgColor;
+                  Color textColor;
+
+                  if (isExempt) {
+                    bgColor = const Color(0xFFFCE7F3);
+                    textColor = const Color(0xFFEC4899);
+                  } else if (hasPoints) {
+                    bgColor = _C.darkGreen;
+                    textColor = Colors.white;
+                  } else {
+                    bgColor = const Color(0xFFF4F6F1);
+                    textColor = _C.textHint;
+                  }
+
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$day',
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 11,
+                          fontWeight: hasPoints || isExempt
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+  const _LegendDot({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            color: _C.textSecondary,
+            fontSize: 10,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INSPIRATION NOTE
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _InspirationNote extends StatelessWidget {
+  final String name;
+  const _InspirationNote({required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8E7),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: _C.gold.withOpacity(0.3),
+          width: 0.5,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('💡', style: TextStyle(fontSize: 16)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '${name.split(' ').first} ভাই/বোন তাঁর আমলের তথ্য শেয়ার করেছেন যাতে আপনি অনুপ্রাণিত হতে পারেন। আল্লাহ তাঁর আমল কবুল করুন।',
+              style: const TextStyle(
+                color: Color(0xFF92400E),
+                fontSize: 12,
+                height: 1.55,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION LABEL
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SheetSectionLabel extends StatelessWidget {
+  final String label;
+  const _SheetSectionLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label.toUpperCase(),
+      style: const TextStyle(
+        color: _C.textHint,
+        fontSize: 10,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.8,
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SKELETON + ERROR
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ProfileSheetSkeleton extends StatelessWidget {
+  const _ProfileSheetSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Column(
+        children: [
+          _shimmer(height: 140, radius: 22),
+          const SizedBox(height: 16),
+          _shimmer(height: 120, radius: 16),
+          const SizedBox(height: 16),
+          _shimmer(height: 240, radius: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _shimmer({required double height, required double radius}) {
+    return Container(
+      width: double.infinity,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: _C.border, width: 0.5),
+      ),
+    ).animate(onPlay: (c) => c.repeat()).shimmer(
+      duration: 1200.ms,
+      colors: const [
+        Colors.white,
+        Color(0xFFE8ECE8),
+        Colors.white,
+      ],
+    );
+  }
+}
+
+class _ProfileSheetError extends StatelessWidget {
+  final VoidCallback onRetry;
+  const _ProfileSheetError({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: const Icon(Icons.lock_outline_rounded,
+                  color: Color(0xFFDC2626), size: 28),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'প্রোফাইল দেখা যাচ্ছে না',
+              style: TextStyle(
+                color: _C.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'এই ব্যবহারকারী তাঁর প্রোফাইল বন্ধ করে দিয়েছেন',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: _C.textSecondary, fontSize: 13),
+            ),
+            const SizedBox(height: 20),
+            GestureDetector(
+              onTap: onRetry,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5EE),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'আবার চেষ্টা করুন',
+                  style: TextStyle(
+                    color: _C.darkGreen,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

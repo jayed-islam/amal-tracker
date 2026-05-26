@@ -294,7 +294,7 @@
 //   final int rank;
 //   final String userId;
 //   final String name;
-//   final String serialId;
+//   final String id;
 //   final String district;
 //   final String? department;
 //   final String? designation;
@@ -308,7 +308,7 @@
 //   LeaderboardEntry({
 //     required this.rank,
 //     required this.userId,
-//     required this.serialId,
+//     required this.id,
 //     required this.district,
 //     required this.name,
 //     this.department,
@@ -327,7 +327,7 @@
 //       rank: rank,
 //       userId: json['userId']?.toString() ?? '',
 //       name: user['name'] ?? '',
-//       serialId: user['id'] ?? '',
+//       id: user['id'] ?? '',
 //       district: user['district'] ?? '',
 //       department: user['department'],
 //       designation: user['designation'],
@@ -684,7 +684,7 @@ class LeaderboardEntry {
   final int rank;
   final String userId;
   final String name;
-  final String serialId;
+  final String id;
   final String district;
   final String? department;
   final String? designation;
@@ -694,22 +694,25 @@ class LeaderboardEntry {
   final int streakDays;
   final bool isWinner;
   final String? winnerCategory;
+  final bool isProfilePublic; // নতুন — details দেখা যাবে কিনা
+  final String? gender; // নতুন — female badge এর জন্য
 
-  LeaderboardEntry({
-    required this.rank,
-    required this.userId,
-    required this.serialId,
-    required this.district,
-    required this.name,
-    this.department,
-    this.designation,
-    this.avatar,
-    required this.totalPoints,
-    required this.completionPercentage,
-    required this.streakDays,
-    required this.isWinner,
-    this.winnerCategory,
-  });
+  LeaderboardEntry(
+      {required this.rank,
+      required this.userId,
+      required this.id,
+      required this.district,
+      required this.name,
+      this.department,
+      this.designation,
+      this.avatar,
+      required this.totalPoints,
+      required this.completionPercentage,
+      required this.streakDays,
+      required this.isWinner,
+      this.winnerCategory,
+      required this.isProfilePublic,
+      this.gender});
 
   factory LeaderboardEntry.fromJson(Map<String, dynamic> json, int rank) {
     final user = json['user'] ?? {};
@@ -717,7 +720,7 @@ class LeaderboardEntry {
       rank: rank,
       userId: json['userId']?.toString() ?? '',
       name: user['name'] ?? '',
-      serialId: user['id'] ?? '',
+      id: user['id'] ?? '',
       district: user['district'] ?? '',
       department: user['department'],
       designation: user['designation'],
@@ -727,6 +730,8 @@ class LeaderboardEntry {
       streakDays: json['streakDays'] ?? 0,
       isWinner: json['isWinner'] ?? false,
       winnerCategory: json['winnerCategory'],
+      isProfilePublic: user['shareProfile']?['isPublic'] ?? false,
+      gender: user['gender'],
     );
   }
 }
@@ -759,4 +764,39 @@ class ProgressSummary {
             : null,
         weeklyPoints: json['weeklyPoints'] ?? 0,
       );
+}
+
+// নতুন model — public profile detail
+class PublicMonthlyDetail {
+  final String name;
+  final String id;
+  final String district;
+  final String? gender;
+  final MonthlyTracker? tracker;
+  final List<DailyEntry> entries;
+
+  PublicMonthlyDetail({
+    required this.name,
+    required this.id,
+    required this.district,
+    this.gender,
+    this.tracker,
+    required this.entries,
+  });
+
+  factory PublicMonthlyDetail.fromJson(Map<String, dynamic> json) {
+    final user = json['user'] ?? {};
+    return PublicMonthlyDetail(
+      name: user['name'] ?? '',
+      id: user['id'] ?? '',
+      district: user['district'] ?? '',
+      gender: user['gender'],
+      tracker: json['tracker'] != null
+          ? MonthlyTracker.fromJson(json['tracker'])
+          : null,
+      entries: (json['entries'] as List<dynamic>? ?? [])
+          .map((e) => DailyEntry.fromJson(e))
+          .toList(),
+    );
+  }
 }

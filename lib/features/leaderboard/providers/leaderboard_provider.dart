@@ -86,109 +86,6 @@ class LeaderboardNotifier extends StateNotifier<LeaderboardState> {
 
   LeaderboardNotifier(this._api) : super(const LeaderboardState());
 
-  // Future<void> load(LeaderboardFilter filter, {bool refresh = false}) async {
-  //   if (refresh) {
-  //     state = state.copyWith(isLoading: true, error: null, entries: []);
-  //   } else if (filter.page > 1) {
-  //     state = state.copyWith(isLoadingMore: true);
-  //   } else {
-  //     state = state.copyWith(isLoading: true, error: null);
-  //   }
-
-  //   try {
-  //     final params = <String, dynamic>{
-  //       'year': filter.year,
-  //       'month': filter.month,
-  //       'page': filter.page,
-  //       'limit': filter.limit,
-  //       if (filter.department != null) 'department': filter.department,
-  //     };
-
-  //     final response = await _api.get<Map<String, dynamic>>('/leaderboard',
-  //         queryParams: params);
-  //     final List data = response['data'] ?? [];
-  //     final pagination = response['pagination'] ?? {};
-
-  //     final newEntries = data
-  //         .asMap()
-  //         .entries
-  //         .map((e) => LeaderboardEntry.fromJson(
-  //             e.value, ((filter.page - 1) * filter.limit) + e.key + 1))
-  //         .toList();
-
-  //     state = state.copyWith(
-  //       entries:
-  //           filter.page == 1 ? newEntries : [...state.entries, ...newEntries],
-  //       isLoading: false,
-  //       isLoadingMore: false,
-  //       totalPages: pagination['totalPages'] ?? 1,
-  //       currentPage: filter.page,
-  //       total: pagination['total'] ?? 0,
-  //     );
-  //   } on ApiException catch (e) {
-  //     state = state.copyWith(
-  //         isLoading: false, isLoadingMore: false, error: e.message);
-  //   }
-  // }
-  // Future<void> load(LeaderboardFilter filter, {bool refresh = false}) async {
-  //   if (refresh) {
-  //     state =
-  //         const LeaderboardState(isLoading: true); // ← full reset, not copyWith
-  //   } else if (filter.page > 1) {
-  //     state = state.copyWith(isLoadingMore: true, error: null);
-  //   } else {
-  //     state = state.copyWith(isLoading: true, error: null, entries: []);
-  //   }
-
-  //   try {
-  //     final params = <String, dynamic>{
-  //       'year': filter.year,
-  //       'month': filter.month,
-  //       'page': filter.page,
-  //       'limit': filter.limit,
-  //       if (filter.department != null) 'department': filter.department,
-  //     };
-
-  //     final response = await _api.get<Map<String, dynamic>>(
-  //       '/leaderboard',
-  //       queryParams: params,
-  //     );
-  //     final List data = response['data'] ?? [];
-  //     final pagination = response['pagination'] ?? {};
-
-  //     final newEntries = data
-  //         .asMap()
-  //         .entries
-  //         .map((e) => LeaderboardEntry.fromJson(
-  //             e.value, ((filter.page - 1) * filter.limit) + e.key + 1))
-  //         .toList();
-
-  //     state = state.copyWith(
-  //       entries:
-  //           filter.page == 1 ? newEntries : [...state.entries, ...newEntries],
-  //       isLoading: false,
-  //       isLoadingMore: false,
-  //       totalPages: pagination['totalPages'] ?? 1,
-  //       currentPage: filter.page,
-  //       total: pagination['total'] ?? 0,
-  //     );
-  //   } on ApiException catch (e) {
-  //     state = state.copyWith(
-  //       isLoading: false,
-  //       isLoadingMore: false,
-  //       entries: refresh ? [] : state.entries, // explicit on refresh
-  //       error: e.message,
-  //     );
-  //   } catch (e) {
-  //     // ← was completely missing — any non-ApiException left isLoading: true forever
-  //     state = state.copyWith(
-  //       isLoading: false,
-  //       isLoadingMore: false,
-  //       entries: refresh ? [] : state.entries,
-  //       error: e.toString(),
-  //     );
-  //   }
-  // }
   Future<void> load(LeaderboardFilter filter, {bool refresh = false}) async {
     // ── Set loading state ────────────────────────────────────────────────────
     if (refresh || filter.page == 1) {
@@ -333,5 +230,16 @@ final winnersProvider =
       queryParams: {'year': params.year, 'month': params.month},
     );
     return response['data'] ?? [];
+  },
+);
+
+final publicProfileProvider = FutureProvider.autoDispose
+    .family<PublicMonthlyDetail, ({String userId, int year, int month})>(
+  (ref, params) async {
+    final api = ref.read(apiServiceProvider);
+    final response = await api.get<Map<String, dynamic>>(
+      '/tracker/profile/${params.userId}/${params.year}/${params.month}',
+    );
+    return PublicMonthlyDetail.fromJson(response['data'] ?? {});
   },
 );

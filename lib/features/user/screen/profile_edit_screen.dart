@@ -206,7 +206,7 @@
 //                     initial: initial,
 //                     name: name,
 //                     email: user?.email,
-//                     serialId: user?.serialId,
+//                     id: user?.id,
 //                     district: user?.district,
 //                     gender: user?.gender,
 //                   ),
@@ -283,10 +283,10 @@
 //                               value: user?.district ?? '-',
 //                               icon: Icons.location_on_outlined,
 //                             ),
-//                             if (user?.serialId != null)
+//                             if (user?.id != null)
 //                               _ReadonlyField(
 //                                 label: 'সিরিয়াল আইডি',
-//                                 value: user!.serialId.toString(),
+//                                 value: user!.id.toString(),
 //                                 icon: Icons.tag_rounded,
 //                               ),
 //                             _ReadonlyField(
@@ -334,13 +334,13 @@
 
 // class _AvatarHero extends StatelessWidget {
 //   final String initial, name;
-//   final String? email, serialId, district, gender;
+//   final String? email, id, district, gender;
 
 //   const _AvatarHero({
 //     required this.initial,
 //     required this.name,
 //     this.email,
-//     this.serialId,
+//     this.id,
 //     this.district,
 //     this.gender,
 //   });
@@ -1182,7 +1182,7 @@
 //                     initial: initial,
 //                     name: name,
 //                     email: user?.email,
-//                     serialId: user?.serialId,
+//                     id: user?.id,
 //                   ),
 
 //                   // ── Stats ribbon ───────────────────────────────────
@@ -1248,10 +1248,10 @@
 //                                       : user?.gender ?? '-',
 //                               icon: Icons.person_pin_outlined,
 //                             ),
-//                             if (user?.serialId != null)
+//                             if (user?.id != null)
 //                               _ReadonlyField(
 //                                 label: 'সিরিয়াল আইডি',
-//                                 value: '#${user!.serialId}',
+//                                 value: '#${user!.id}',
 //                                 icon: Icons.tag_rounded,
 //                               ),
 //                           ],
@@ -1290,13 +1290,13 @@
 // class _AvatarHero extends StatelessWidget {
 //   final String initial, name;
 //   final String? email;
-//   final dynamic serialId; // int or String
+//   final dynamic id; // int or String
 
 //   const _AvatarHero({
 //     required this.initial,
 //     required this.name,
 //     this.email,
-//     this.serialId,
+//     this.id,
 //   });
 
 //   @override
@@ -1359,7 +1359,7 @@
 //           ),
 
 //           // Serial ID — shown directly under name
-//           if (serialId != null) ...[
+//           if (id != null) ...[
 //             const SizedBox(height: 4),
 //             Container(
 //               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
@@ -1370,7 +1370,7 @@
 //                     color: Colors.white.withOpacity(0.2), width: 0.5),
 //               ),
 //               child: Text(
-//                 '#$serialId',
+//                 '#$id',
 //                 style: TextStyle(
 //                   color: Colors.white.withOpacity(0.75),
 //                   fontSize: 11,
@@ -2573,7 +2573,7 @@
 //                     initial: initial,
 //                     name: name,
 //                     email: user?.email,
-//                     serialId: user?.serialId,
+//                     id: user?.id,
 //                   ),
 
 //                   // ── Stats ribbon ───────────────────────────────────
@@ -2640,10 +2640,10 @@
 //                                       : user?.gender ?? '-',
 //                               icon: Icons.person_pin_outlined,
 //                             ),
-//                             if (user?.serialId != null)
+//                             if (user?.id != null)
 //                               _ReadonlyField(
 //                                 label: 'সিরিয়াল আইডি',
-//                                 value: '#${user!.serialId}',
+//                                 value: '#${user!.id}',
 //                                 icon: Icons.tag_rounded,
 //                               ),
 //                           ],
@@ -2682,13 +2682,13 @@
 // class _AvatarHero extends StatelessWidget {
 //   final String initial, name;
 //   final String? email;
-//   final dynamic serialId; // int or String
+//   final dynamic id; // int or String
 
 //   const _AvatarHero({
 //     required this.initial,
 //     required this.name,
 //     this.email,
-//     this.serialId,
+//     this.id,
 //   });
 
 //   @override
@@ -2751,7 +2751,7 @@
 //           ),
 
 //           // Serial ID — shown directly under name
-//           if (serialId != null) ...[
+//           if (id != null) ...[
 //             const SizedBox(height: 4),
 //             Container(
 //               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
@@ -2762,7 +2762,7 @@
 //                     color: Colors.white.withOpacity(0.2), width: 0.5),
 //               ),
 //               child: Text(
-//                 '#$serialId',
+//                 '#$id',
 //                 style: TextStyle(
 //                   color: Colors.white.withOpacity(0.75),
 //                   fontSize: 11,
@@ -3616,6 +3616,7 @@
 //     );
 //   }
 // }
+import 'package:amal_tracker/features/user/widgets/app_silver_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -3733,6 +3734,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _phoneCtrl;
 
+  final _scrollController = ScrollController();
+
   bool _saving = false;
   bool _hasChanges = false;
 
@@ -3757,6 +3760,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
     super.dispose();
@@ -4045,36 +4049,18 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         hasChanges: _hasChanges,
       ),
       body: CustomScrollView(
+        controller: _scrollController,
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         physics: const BouncingScrollPhysics(),
         slivers: [
           // ── App Bar ───────────────────────────────────────────────
-          SliverAppBar(
-            pinned: true,
-            backgroundColor: _C.darkGreen,
-            surfaceTintColor: Colors.transparent,
-            systemOverlayStyle: SystemUiOverlayStyle.light,
-            leading: GestureDetector(
-              onTap: () => context.pop(),
-              child: Container(
-                margin: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.arrow_back_ios_rounded,
-                    color: Colors.white, size: 16),
-              ),
-            ),
-            title: const Text(
-              'প্রোফাইল সম্পাদনা',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.3,
-              ),
-            ),
+
+          AppSliverBar(
+            scrollController: _scrollController,
+            title: 'প্রোফাইল সম্পাদনা',
+            subtitle: 'নিরাপদ থাকতে নিয়মিত পরিবর্তন করুন',
+            icon: Icons.lock_reset_rounded,
+            color: _C.darkGreen,
             actions: [
               GestureDetector(
                 onTap: (_saving || !_hasChanges) ? null : _save,
@@ -4113,6 +4099,70 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               ).animate().fadeIn(duration: 200.ms).slideX(begin: 0.2),
             ],
           ),
+          // SliverAppBar(
+          //   pinned: true,
+          //   backgroundColor: _C.darkGreen,
+          //   surfaceTintColor: Colors.transparent,
+          //   systemOverlayStyle: SystemUiOverlayStyle.light,
+          //   leading: GestureDetector(
+          //     onTap: () => context.pop(),
+          //     child: Container(
+          //       margin: const EdgeInsets.all(10),
+          //       decoration: BoxDecoration(
+          //         color: Colors.white.withOpacity(0.1),
+          //         borderRadius: BorderRadius.circular(10),
+          //       ),
+          //       child: const Icon(Icons.arrow_back_ios_rounded,
+          //           color: Colors.white, size: 16),
+          //     ),
+          //   ),
+          //   title: const Text(
+          //     'প্রোফাইল সম্পাদনা',
+          //     style: TextStyle(
+          //       color: Colors.white,
+          //       fontSize: 16,
+          //       fontWeight: FontWeight.w800,
+          //       letterSpacing: -0.3,
+          //     ),
+          //   ),
+          //   actions: [
+          //     GestureDetector(
+          //       onTap: (_saving || !_hasChanges) ? null : _save,
+          //       child: Container(
+          //         margin: const EdgeInsets.fromLTRB(0, 10, 14, 10),
+          //         padding:
+          //             const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          //         decoration: BoxDecoration(
+          //           color: (_saving || !_hasChanges)
+          //               ? _C.gold.withOpacity(0.4)
+          //               : _C.gold,
+          //           borderRadius: BorderRadius.circular(10),
+          //         ),
+          //         child: _saving
+          //             ? const SizedBox(
+          //                 width: 14,
+          //                 height: 14,
+          //                 child: CircularProgressIndicator(
+          //                     color: Colors.white, strokeWidth: 2),
+          //               )
+          //             : !_hasChanges
+          //                 ? const Icon(
+          //                     Icons.check_rounded,
+          //                     color: Colors.white70,
+          //                     size: 16,
+          //                   )
+          //                 : const Text(
+          //                     'সেভ',
+          //                     style: TextStyle(
+          //                       color: Colors.white,
+          //                       fontWeight: FontWeight.w700,
+          //                       fontSize: 13,
+          //                     ),
+          //                   ),
+          //       ),
+          //     ).animate().fadeIn(duration: 200.ms).slideX(begin: 0.2),
+          //   ],
+          // ),
 
           SliverToBoxAdapter(
             child: Form(
@@ -4129,7 +4179,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                   //   initial: initial,
                   //   name: name,
                   //   email: user?.email,
-                  //   serialId: user?.serialId,
+                  //   id: user?.id,
                   // ),
 
                   // ── Stats ribbon ───────────────────────────────────
@@ -4193,10 +4243,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                                       : user?.gender ?? '-',
                               icon: Icons.person_pin_outlined,
                             ),
-                            if (user?.serialId != null)
+                            if (user?.id != null)
                               _ReadonlyField(
                                 label: 'সিরিয়াল আইডি',
-                                value: '#${user!.serialId}',
+                                value: '#${user!.id}',
                                 icon: Icons.tag_rounded,
                               ),
                           ],
@@ -4234,13 +4284,13 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 class _AvatarHero extends StatelessWidget {
   final String initial, name;
   final String? email;
-  final dynamic serialId;
+  final dynamic id;
 
   const _AvatarHero({
     required this.initial,
     required this.name,
     this.email,
-    this.serialId,
+    this.id,
   });
 
   @override
@@ -4297,7 +4347,7 @@ class _AvatarHero extends StatelessWidget {
               letterSpacing: -0.4,
             ),
           ),
-          if (serialId != null) ...[
+          if (id != null) ...[
             const SizedBox(height: 4),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
@@ -4308,7 +4358,7 @@ class _AvatarHero extends StatelessWidget {
                     color: Colors.white.withOpacity(0.2), width: 0.5),
               ),
               child: Text(
-                '#$serialId',
+                '#$id',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.75),
                   fontSize: 11,
@@ -5217,7 +5267,7 @@ class _ProfileHero extends StatelessWidget {
     final name = user?.name ?? 'ব্যবহারকারী';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
     final email = user?.email ?? '';
-    final serialId = user?.serialId;
+    final id = user?.id;
     final district = user?.district;
 
     return Container(
@@ -5315,7 +5365,7 @@ class _ProfileHero extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
-                          if (serialId != null || district != null) ...[
+                          if (id != null || district != null) ...[
                             const SizedBox(height: 6),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -5329,7 +5379,7 @@ class _ProfileHero extends StatelessWidget {
                               ),
                               child: Text(
                                 [
-                                  if (serialId != null) 'ID: $serialId',
+                                  if (id != null) 'ID: $id',
                                   if (district != null) district,
                                 ].join(' • '),
                                 style: const TextStyle(

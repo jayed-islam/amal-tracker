@@ -1,5 +1,6 @@
 import 'package:amal_tracker/features/auth/providers/provider_reset.dart';
 import 'package:amal_tracker/features/home/widgets/profile_sheet.dart';
+import 'package:amal_tracker/features/notification/widgets/notification_widgets.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -293,20 +294,21 @@ class _TopBar extends StatelessWidget implements PreferredSizeWidget {
               const Spacer(),
 
               // Notification bell
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: ColorT.pageBg,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: ColorT.border, width: 0.5),
-                ),
-                child: const Icon(
-                  Icons.notifications_none_rounded,
-                  color: ColorT.textSecondary,
-                  size: 18,
-                ),
-              ),
+              const NotificationBellWidget(),
+              // Container(
+              //   width: 36,
+              //   height: 36,
+              //   decoration: BoxDecoration(
+              //     color: ColorT.pageBg,
+              //     borderRadius: BorderRadius.circular(10),
+              //     border: Border.all(color: ColorT.border, width: 0.5),
+              //   ),
+              //   child: const Icon(
+              //     Icons.notifications_none_rounded,
+              //     color: ColorT.textSecondary,
+              //     size: 18,
+              //   ),
+              // ),
               const SizedBox(width: 8),
 
               // Avatar
@@ -1145,10 +1147,9 @@ class _LeaderboardList extends StatelessWidget {
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (entry?.serialId != null ||
-                          entry?.district != null) ...[
+                      if (entry?.id != null || entry?.district != null) ...[
                         Text(
-                          'ID: ${entry?.serialId ?? ''} • ${entry?.district ?? ''}',
+                          'ID: ${entry?.id ?? ''} • ${entry?.district ?? ''}',
                           style: const TextStyle(
                             color: ColorT.textSecondary,
                             fontSize: 9.5,
@@ -1490,7 +1491,7 @@ class _ProfileSheet2 extends ConsumerWidget {
           //   ),
           // ),
 
-          if (user?.serialId != null || user?.district != null) ...[
+          if (user?.id != null || user?.district != null) ...[
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -1499,7 +1500,7 @@ class _ProfileSheet2 extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(99),
               ),
               child: Text(
-                'ID: ${user?.serialId ?? ''} • ${user?.district ?? ''}',
+                'ID: ${user?.id ?? ''} • ${user?.district ?? ''}',
                 style: const TextStyle(
                   color: ColorT.darkGreen,
                   fontSize: 12,

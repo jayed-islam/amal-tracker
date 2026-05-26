@@ -219,6 +219,32 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _loadFromStorage();
   }
 
+  // Future<void> _loadFromStorage() async {
+  //   try {
+  //     final storage = _ref.read(secureStorageProvider);
+  //     final userJson = await storage.read(key: AppConstants.userKey);
+
+  //     if (userJson != null) {
+  //       print('=== LOADING USER DATA ===');
+  //       print('Raw JSON: $userJson');
+
+  //       final Map<String, dynamic> jsonMap = jsonDecode(userJson);
+  //       print('Parsed JSON: $jsonMap');
+  //       print('Has "id" field? ${jsonMap.containsKey('id')}');
+  //       print('Has "_id" field? ${jsonMap.containsKey('_id')}');
+  //       print('Has "id" field? ${jsonMap.containsKey('id')}');
+
+  //       final user = UserModel.fromJson(jsonMap);
+  //       print(
+  //           'Loaded id: ${user.id}'); // ← এখানে null আসছে কিনা দেখুন
+
+  //       state = AuthState(user: user, isAuthenticated: true);
+  //     }
+  //   } catch (e) {
+  //     print('Error: $e');
+  //   }
+  // }
+
   Future<void> _loadFromStorage() async {
     try {
       final storage = _ref.read(secureStorageProvider);
@@ -365,6 +391,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   void clearError() => state = state.copyWith(error: null);
+
+  // Future<void> _saveTokens(AuthResponse auth) async {
+  //   final storage = _ref.read(secureStorageProvider);
+  //   final userJson = jsonEncode(auth.user.toJson());
+
+  //   // ডিবাগ: দেখুন কি সেভ হচ্ছে
+  //   print('=== SAVING USER DATA ===');
+  //   print('User object: ${auth.user}');
+  //   print('id: ${auth.user.id}');
+  //   print('toJson output: $userJson');
+
+  //   await Future.wait([
+  //     storage.write(key: AppConstants.accessTokenKey, value: auth.accessToken),
+  //     storage.write(
+  //         key: AppConstants.refreshTokenKey, value: auth.refreshToken),
+  //     storage.write(key: AppConstants.userKey, value: userJson),
+  //   ]);
+  // }
 
   Future<void> _saveTokens(AuthResponse auth) async {
     final storage = _ref.read(secureStorageProvider);

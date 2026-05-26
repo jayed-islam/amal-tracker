@@ -1,4 +1,6 @@
 import 'package:amal_tracker/core/router/route_notifier.dart';
+import 'package:amal_tracker/features/notification/screen/notification_screen.dart';
+import 'package:amal_tracker/features/notification/screen/notification_settings_screen.dart';
 import 'package:amal_tracker/features/settings/screens/settings_screen.dart';
 import 'package:amal_tracker/features/user/screen/how_its_work_screen.dart';
 import 'package:amal_tracker/features/user/screen/password_change_screen.dart';
@@ -28,6 +30,8 @@ class AppRoutes {
   static const howItWorks = '/how-it-works';
   static const settings = '/settings';
   static const changePassword = '/change-password';
+  static const notifications = '/notifications';
+  static const notificationSettings = '/notification-settings';
 }
 
 // ── Navigator keys — declared at top level so they are NEVER recreated ─────
@@ -121,6 +125,27 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (_, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const ChangePasswordScreen(),
+          transitionsBuilder: (_, animation, __, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+
+      // ── Notification routes ─────────────────────────────────────────────
+      GoRoute(
+        path: AppRoutes.notifications,
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const NotificationScreen(),
+          transitionsBuilder: (_, animation, __, child) =>
+              FadeTransition(opacity: animation, child: child),
+        ),
+      ),
+
+      GoRoute(
+        path: AppRoutes.notificationSettings,
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const NotificationSettingsScreen(),
           transitionsBuilder: (_, animation, __, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
