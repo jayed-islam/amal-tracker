@@ -406,6 +406,7 @@ class AmalCategory {
   final String section;
   final String type;
   final bool isPrayer;
+  final bool isFasting;
   final bool isFard; // NEW: whether this is a Fard (obligatory) category
   final int basePoints;
   final int congregationPoints;
@@ -429,6 +430,7 @@ class AmalCategory {
     required this.section,
     required this.type,
     required this.isPrayer,
+    required this.isFasting,
     required this.isFard, // NEW
     required this.basePoints,
     required this.congregationPoints,
@@ -451,6 +453,7 @@ class AmalCategory {
         section: json['section'] ?? '',
         type: json['type'] ?? 'daily',
         isPrayer: json['isPrayer'] ?? false,
+        isFasting: json['isFasting'] ?? false,
         isFard: json['isFard'] ?? false, // NEW - defaults to false
         basePoints: json['basePoints'] ?? 1,
         congregationPoints: json['congregationPoints'] ?? 2,
@@ -475,6 +478,8 @@ class AmalCategory {
 
   /// Whether a maximum value cap is enforced.
   bool get isBounded => maxValue != null;
+
+  bool get isExemptDuringPeriod => isPrayer || isFasting;
 }
 
 // ─── Prayer Mode ──────────────────────────────────────────────────────────────

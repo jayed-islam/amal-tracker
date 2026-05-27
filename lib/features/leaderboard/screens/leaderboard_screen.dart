@@ -1,3 +1,5 @@
+import 'package:amal_tracker/features/leaderboard/widgets/public_profile_sheet.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -250,7 +252,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
               // ── Zone 4: BODY ──────────────────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                sliver: _buildBody(state),
+                sliver: _buildBody(state, filter),
               ),
             ],
           ),
@@ -259,7 +261,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
     );
   }
 
-  Widget _buildBody(LeaderboardState state) {
+  Widget _buildBody(LeaderboardState state, LeaderboardFilter filter) {
     if (state.isLoading) {
       return SliverToBoxAdapter(
         child: _LeaderboardSkeleton()
@@ -299,7 +301,10 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
         ).animate().fadeIn(delay: 100.ms),
         const SizedBox(height: 12),
         if (top3.length >= 2)
-          _PodiumCard(top3: top3)
+          _PodiumCard(
+            top3: top3, year: filter.year, // ← add
+            month: filter.month,
+          ) // ← add)
               .animate()
               .fadeIn(delay: 120.ms, duration: 320.ms)
               .slideY(begin: 0.08, curve: Curves.easeOut),
@@ -329,6 +334,8 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
                   entry: entry,
                   isLast: isLast,
                   delay: 180 + i * 40,
+                  year: filter.year, // ← filter এখানে আছেই
+                  month: filter.month,
                 );
               }),
             ),
@@ -826,7 +833,14 @@ class _SectionHeader extends StatelessWidget {
 
 class _PodiumCard extends StatelessWidget {
   final List<LeaderboardEntry> top3;
-  const _PodiumCard({required this.top3});
+  final int year; // নতুন
+  final int month;
+
+  const _PodiumCard({
+    required this.top3,
+    required this.year,
+    required this.month,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -877,6 +891,8 @@ class _PodiumCard extends StatelessWidget {
                   fontSize: 20,
                   barWidth: 90,
                   rankFontSize: 18,
+                  year: year,
+                  month: month,
                 ),
                 const SizedBox(width: 20),
                 _PodiumPillar(
@@ -890,6 +906,8 @@ class _PodiumCard extends StatelessWidget {
                   barWidth: 100,
                   rankFontSize: 22,
                   isFirst: true,
+                  year: year,
+                  month: month,
                 ),
               ],
             )
@@ -908,6 +926,8 @@ class _PodiumCard extends StatelessWidget {
                   fontSize: 18,
                   barWidth: 68,
                   rankFontSize: 17,
+                  year: year,
+                  month: month,
                 ),
                 _PodiumPillar(
                   entry: first,
@@ -920,6 +940,8 @@ class _PodiumCard extends StatelessWidget {
                   barWidth: 80,
                   rankFontSize: 20,
                   isFirst: true,
+                  year: year,
+                  month: month,
                 ),
                 if (third != null)
                   _PodiumPillar(
@@ -932,6 +954,8 @@ class _PodiumCard extends StatelessWidget {
                     fontSize: 16,
                     barWidth: 64,
                     rankFontSize: 15,
+                    year: year,
+                    month: month,
                   )
                 else
                   const SizedBox(width: 64),
@@ -950,6 +974,8 @@ class _PodiumPillar extends StatelessWidget {
   final String emoji;
   final double barHeight, avatarSize, fontSize, barWidth, rankFontSize;
   final bool isFirst;
+  final int year; // নতুন
+  final int month;
 
   const _PodiumPillar({
     required this.entry,
@@ -961,119 +987,945 @@ class _PodiumPillar extends StatelessWidget {
     required this.fontSize,
     required this.barWidth,
     required this.rankFontSize,
+    required this.year,
+    required this.month,
     this.isFirst = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(emoji, style: TextStyle(fontSize: fontSize)).animate().scale(
-              delay: Duration(milliseconds: rank * 100),
-              duration: 400.ms,
-              curve: Curves.elasticOut,
-            ),
-
-        const SizedBox(height: 6),
-
-        // Avatar circle
-        Container(
-          width: avatarSize,
-          height: avatarSize,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.12),
-            shape: BoxShape.circle,
-            border: Border.all(color: color, width: 2.5),
-          ),
-          child: Center(
-            child: Text(
-              entry.name.isNotEmpty ? entry.name[0].toUpperCase() : 'U',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                color: color,
-                fontSize: isFirst ? 24 : 18,
+    final canView = entry.isProfilePublic;
+    return GestureDetector(
+      onTap: canView
+          ? () {
+              HapticFeedback.selectionClick();
+              showPublicProfileSheet(
+                context,
+                entry: entry,
+                year: year,
+                month: month,
+              );
+            }
+          : null,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(emoji, style: TextStyle(fontSize: fontSize)).animate().scale(
+                delay: Duration(milliseconds: rank * 100),
+                duration: 400.ms,
+                curve: Curves.elasticOut,
               ),
-            ),
-          ),
-        ),
 
-        const SizedBox(height: 5),
+          const SizedBox(height: 6),
 
-        // First name
-        SizedBox(
-          width: barWidth,
-          child: Text(
-            entry.name.split(' ').first,
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: _C.textPrimary,
-              fontWeight: FontWeight.w700,
-              fontSize: 10.5,
-            ),
-          ),
-        ),
-
-        // ── NEW: district pill under name ──────────────────────────────────
-        if (entry.district != null) ...[
-          const SizedBox(height: 3),
-          _DistrictPill(district: entry.district!, compact: true),
-        ],
-
-        if (entry.id != null) ...[
-          const SizedBox(height: 3),
-          _SerialBadge(
-            id: entry.id!,
-          ),
-        ],
-
-        const SizedBox(height: 4),
-
-        // Podium bar
-        Container(
-          width: barWidth,
-          height: barHeight,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.07),
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(8),
-            ),
-            border: Border(
-              top: BorderSide(color: color, width: 2),
-            ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          // Avatar circle
+          // Container(
+          //   width: avatarSize,
+          //   height: avatarSize,
+          //   decoration: BoxDecoration(
+          //     color: color.withOpacity(0.12),
+          //     shape: BoxShape.circle,
+          //     border: Border.all(color: color, width: 2.5),
+          //   ),
+          //   child: Center(
+          //     child: Text(
+          //       entry.name.isNotEmpty ? entry.name[0].toUpperCase() : 'U',
+          //       style: TextStyle(
+          //         fontWeight: FontWeight.w900,
+          //         color: color,
+          //         fontSize: isFirst ? 24 : 18,
+          //       ),
+          //     ),
+          //   ),
+          // ),
+          Stack(
+            clipBehavior: Clip.none,
             children: [
-              Text(
-                '#$rank',
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w900,
-                  fontSize: rankFontSize,
+              Container(
+                width: avatarSize,
+                height: avatarSize,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: canView ? color : color.withOpacity(0.35),
+                    width: canView ? 2.5 : 1.5,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    entry.name.isNotEmpty ? entry.name[0].toUpperCase() : 'U',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: color,
+                      fontSize: isFirst ? 24 : 18,
+                    ),
+                  ),
                 ),
               ),
-              Text(
-                '${entry.totalPoints}',
-                style: TextStyle(
-                  color: color.withOpacity(0.8),
-                  fontWeight: FontWeight.w700,
-                  fontSize: isFirst ? 13 : 11,
-                ),
-              ),
-              const Text(
-                'pts',
-                style: TextStyle(
-                  color: _C.textHint,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w500,
+
+              // Public/Private indicator — avatar এর bottom-right এ
+              Positioned(
+                bottom: -2,
+                right: -2,
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: canView
+                        ? const Color(0xFF0891B2)
+                        : const Color(0xFFABBAAE),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: _C.cardBg, width: 1.5),
+                  ),
+                  child: Icon(
+                    canView ? Icons.visibility_rounded : Icons.lock_rounded,
+                    size: 8,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
           ),
+
+          const SizedBox(height: 5),
+
+          // First name
+          SizedBox(
+            width: barWidth,
+            child: Text(
+              entry.name.split(' ').first,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: _C.textPrimary,
+                fontWeight: FontWeight.w700,
+                fontSize: 10.5,
+              ),
+            ),
+          ),
+
+          // ── NEW: district pill under name ──────────────────────────────────
+          if (entry.district != null) ...[
+            const SizedBox(height: 3),
+            _DistrictPill(district: entry.district!, compact: true),
+          ],
+
+          if (entry.id != null) ...[
+            const SizedBox(height: 3),
+            _SerialBadge(
+              id: entry.id!,
+            ),
+          ],
+
+          // "দেখুন" বা "Private" label
+          // const SizedBox(height: 4),
+          // Container(
+          //   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+          //   decoration: BoxDecoration(
+          //     color:
+          //         canView ? const Color(0xFFE0F2FE) : const Color(0xFFF4F6F1),
+          //     borderRadius: BorderRadius.circular(4),
+          //     border: Border.all(
+          //       color: canView
+          //           ? const Color(0xFF0891B2).withOpacity(0.3)
+          //           : _C.border,
+          //       width: 0.5,
+          //     ),
+          //   ),
+          //   child: Text(
+          //     canView ? 'দেখুন →' : '🔒 Private',
+          //     style: TextStyle(
+          //       color: canView ? const Color(0xFF0891B2) : _C.textHint,
+          //       fontSize: 8,
+          //       fontWeight: FontWeight.w600,
+          //     ),
+          //   ),
+          // ),
+
+          const SizedBox(height: 4),
+
+          // Podium bar
+          Container(
+            width: barWidth,
+            height: barHeight,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.07),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(8),
+              ),
+              border: Border(
+                top: BorderSide(color: color, width: 2),
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '#$rank',
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w900,
+                    fontSize: rankFontSize,
+                  ),
+                ),
+                Text(
+                  '${entry.totalPoints}',
+                  style: TextStyle(
+                    color: color.withOpacity(0.8),
+                    fontWeight: FontWeight.w700,
+                    fontSize: isFirst ? 13 : 11,
+                  ),
+                ),
+                const Text(
+                  'pts',
+                  style: TextStyle(
+                    color: _C.textHint,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// leaderboard_screen.dart
+// শুধু _PodiumCard এবং _PodiumPillar replace করো
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PODIUM CARD  — premium redesign
+// ─────────────────────────────────────────────────────────────────────────────
+
+// class _PodiumCard extends StatelessWidget {
+//   final List<LeaderboardEntry> top3;
+//   final int year;
+//   final int month;
+
+//   const _PodiumCard({
+//     required this.top3,
+//     required this.year,
+//     required this.month,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final first = top3[0];
+//     final second = top3[1];
+//     final third = top3.length > 2 ? top3[2] : null;
+
+//     return Container(
+//       decoration: BoxDecoration(
+//         color: _C.cardBg,
+//         borderRadius: BorderRadius.circular(20),
+//         border: Border.all(color: _C.border, width: 0.5),
+//       ),
+//       child: Column(
+//         children: [
+//           // ── Header ──────────────────────────────────────────────────
+//           Padding(
+//             padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+//             child: Row(
+//               mainAxisAlignment: MainAxisAlignment.center,
+//               children: [
+//                 Text(
+//                   '🌟',
+//                   style: const TextStyle(fontSize: 13),
+//                 ),
+//                 const SizedBox(width: 6),
+//                 Text(
+//                   top3.length == 2
+//                       ? 'এই মাসের শীর্ষ দুইজন'
+//                       : 'এই মাসের শীর্ষ তিনজন',
+//                   style: const TextStyle(
+//                     color: _C.textSecondary,
+//                     fontSize: 11,
+//                     fontWeight: FontWeight.w600,
+//                     letterSpacing: 0.2,
+//                   ),
+//                 ),
+//                 const SizedBox(width: 6),
+//                 Text(
+//                   '🌟',
+//                   style: const TextStyle(fontSize: 13),
+//                 ),
+//               ],
+//             ),
+//           ),
+
+//           const SizedBox(height: 20),
+
+//           // ── Podium pillars ───────────────────────────────────────────
+//           Padding(
+//             padding: const EdgeInsets.symmetric(horizontal: 8),
+//             child: top3.length == 2
+//                 ? Row(
+//                     mainAxisAlignment: MainAxisAlignment.center,
+//                     crossAxisAlignment: CrossAxisAlignment.end,
+//                     children: [
+//                       _PodiumPillar(
+//                         entry: second,
+//                         rank: 2,
+//                         barHeight: 90,
+//                         year: year,
+//                         month: month,
+//                       ),
+//                       const SizedBox(width: 12),
+//                       _PodiumPillar(
+//                         entry: first,
+//                         rank: 1,
+//                         barHeight: 124,
+//                         isFirst: true,
+//                         year: year,
+//                         month: month,
+//                       ),
+//                     ],
+//                   )
+//                 : Row(
+//                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//                     crossAxisAlignment: CrossAxisAlignment.end,
+//                     children: [
+//                       _PodiumPillar(
+//                         entry: second,
+//                         rank: 2,
+//                         barHeight: 84,
+//                         year: year,
+//                         month: month,
+//                       ),
+//                       _PodiumPillar(
+//                         entry: first,
+//                         rank: 1,
+//                         barHeight: 116,
+//                         isFirst: true,
+//                         year: year,
+//                         month: month,
+//                       ),
+//                       if (third != null)
+//                         _PodiumPillar(
+//                           entry: third,
+//                           rank: 3,
+//                           barHeight: 64,
+//                           year: year,
+//                           month: month,
+//                         )
+//                       else
+//                         const SizedBox(width: 80),
+//                     ],
+//                   ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PODIUM PILLAR  — premium compact design
+// ─────────────────────────────────────────────────────────────────────────────
+
+// class _PodiumPillar extends StatelessWidget {
+//   final LeaderboardEntry entry;
+//   final int rank;
+//   final double barHeight;
+//   final bool isFirst;
+//   final int year;
+//   final int month;
+
+//   const _PodiumPillar({
+//     required this.entry,
+//     required this.rank,
+//     required this.barHeight,
+//     required this.year,
+//     required this.month,
+//     this.isFirst = false,
+//   });
+
+//   Color get _rankColor => rank == 1
+//       ? _C.rankGold
+//       : rank == 2
+//           ? _C.rankSilver
+//           : _C.rankBronze;
+
+//   String get _rankEmoji => rank == 1
+//       ? '🥇'
+//       : rank == 2
+//           ? '🥈'
+//           : '🥉';
+
+//   // avatar size
+//   double get _avatarSize => isFirst
+//       ? 64.0
+//       : rank == 2
+//           ? 54.0
+//           : 48.0;
+
+//   // pillar width
+//   double get _pillarWidth => isFirst
+//       ? 88.0
+//       : rank == 2
+//           ? 78.0
+//           : 70.0;
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final canView = entry.isProfilePublic;
+//     final initial = entry.name.isNotEmpty ? entry.name[0].toUpperCase() : 'U';
+//     final firstName = entry.name.split(' ').first;
+
+//     return GestureDetector(
+//       onTap: canView
+//           ? () {
+//               HapticFeedback.selectionClick();
+//               showPublicProfileSheet(
+//                 context,
+//                 entry: entry,
+//                 year: year,
+//                 month: month,
+//               );
+//             }
+//           : null,
+//       behavior: HitTestBehavior.opaque,
+//       child: SizedBox(
+//         width: _pillarWidth,
+//         child: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           children: [
+//             // ── Medal emoji ────────────────────────────────────────
+//             Text(
+//               _rankEmoji,
+//               style: TextStyle(fontSize: isFirst ? 22 : 18),
+//             ).animate().scale(
+//                   delay: Duration(milliseconds: rank * 80),
+//                   duration: 380.ms,
+//                   curve: Curves.elasticOut,
+//                 ),
+
+//             const SizedBox(height: 8),
+
+//             // ── Avatar with overlays ───────────────────────────────
+//             Stack(
+//               clipBehavior: Clip.none,
+//               alignment: Alignment.center,
+//               children: [
+//                 // Glow ring — only for rank 1
+//                 if (isFirst)
+//                   Container(
+//                     width: _avatarSize + 8,
+//                     height: _avatarSize + 8,
+//                     decoration: BoxDecoration(
+//                       shape: BoxShape.circle,
+//                       border: Border.all(
+//                         color: _rankColor.withOpacity(0.25),
+//                         width: 3,
+//                       ),
+//                     ),
+//                   ),
+
+//                 // Avatar circle
+//                 Container(
+//                   width: _avatarSize,
+//                   height: _avatarSize,
+//                   decoration: BoxDecoration(
+//                     color: _rankColor.withOpacity(0.1),
+//                     shape: BoxShape.circle,
+//                     border: Border.all(
+//                       color: _rankColor,
+//                       width: isFirst ? 2.5 : 2,
+//                     ),
+//                   ),
+//                   child: Center(
+//                     child: Text(
+//                       initial,
+//                       style: TextStyle(
+//                         color: _rankColor,
+//                         fontSize: isFirst
+//                             ? 26
+//                             : rank == 2
+//                                 ? 20
+//                                 : 18,
+//                         fontWeight: FontWeight.w900,
+//                       ),
+//                     ),
+//                   ),
+//                 ),
+
+//                 // Public/Private dot — top right
+//                 Positioned(
+//                   top: isFirst ? -2 : -1,
+//                   right: isFirst ? -2 : -1,
+//                   child: Container(
+//                     width: 18,
+//                     height: 18,
+//                     decoration: BoxDecoration(
+//                       color: canView ? const Color(0xFF0891B2) : _C.textHint,
+//                       shape: BoxShape.circle,
+//                       border: Border.all(color: _C.cardBg, width: 2),
+//                     ),
+//                     child: Icon(
+//                       canView ? Icons.visibility_rounded : Icons.lock_rounded,
+//                       size: 9,
+//                       color: Colors.white,
+//                     ),
+//                   ),
+//                 ),
+//               ],
+//             ),
+
+//             const SizedBox(height: 10),
+
+//             // ── Name ───────────────────────────────────────────────
+//             Text(
+//               firstName,
+//               textAlign: TextAlign.center,
+//               maxLines: 1,
+//               overflow: TextOverflow.ellipsis,
+//               style: TextStyle(
+//                 color: _C.textPrimary,
+//                 fontSize: isFirst ? 13 : 11.5,
+//                 fontWeight: FontWeight.w700,
+//                 letterSpacing: -0.2,
+//               ),
+//             ),
+
+//             const SizedBox(height: 4),
+
+//             // ── Compact info chip — ID • District merged ────────────
+//             _CompactInfoChip(entry: entry),
+
+//             const SizedBox(height: 10),
+
+//             // ── Podium bar ─────────────────────────────────────────
+//             Container(
+//               width: _pillarWidth,
+//               height: barHeight,
+//               decoration: BoxDecoration(
+//                 color: _rankColor.withOpacity(0.06),
+//                 borderRadius: const BorderRadius.vertical(
+//                   top: Radius.circular(10),
+//                 ),
+//                 border: Border(
+//                   top: BorderSide(color: _rankColor, width: 2),
+//                   left: BorderSide(
+//                       color: _rankColor.withOpacity(0.2), width: 0.5),
+//                   right: BorderSide(
+//                       color: _rankColor.withOpacity(0.2), width: 0.5),
+//                 ),
+//               ),
+//               child: Column(
+//                 mainAxisAlignment: MainAxisAlignment.center,
+//                 children: [
+//                   // Points
+//                   Text(
+//                     '${entry.totalPoints}',
+//                     style: TextStyle(
+//                       color: _rankColor,
+//                       fontWeight: FontWeight.w900,
+//                       fontSize: isFirst
+//                           ? 18
+//                           : rank == 2
+//                               ? 15
+//                               : 13,
+//                       height: 1,
+//                     ),
+//                   ),
+//                   const SizedBox(height: 2),
+//                   Text(
+//                     'pts',
+//                     style: TextStyle(
+//                       color: _rankColor.withOpacity(0.6),
+//                       fontSize: 9,
+//                       fontWeight: FontWeight.w600,
+//                     ),
+//                   ),
+//                   const SizedBox(height: 6),
+//                   // Completion %
+//                   Container(
+//                     padding:
+//                         const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+//                     decoration: BoxDecoration(
+//                       color: _rankColor.withOpacity(0.12),
+//                       borderRadius: BorderRadius.circular(20),
+//                     ),
+//                     child: Text(
+//                       '${entry.completionPercentage.toInt()}%',
+//                       style: TextStyle(
+//                         color: _rankColor,
+//                         fontSize: 9,
+//                         fontWeight: FontWeight.w700,
+//                       ),
+//                     ),
+//                   ),
+//                   // Streak — only if space (rank 1 or 2)
+//                   if (entry.streakDays > 0 && rank <= 2) ...[
+//                     const SizedBox(height: 4),
+//                     Row(
+//                       mainAxisAlignment: MainAxisAlignment.center,
+//                       mainAxisSize: MainAxisSize.min,
+//                       children: [
+//                         const Text('🔥', style: TextStyle(fontSize: 9)),
+//                         const SizedBox(width: 2),
+//                         Text(
+//                           '${entry.streakDays}',
+//                           style: TextStyle(
+//                             color: _rankColor.withOpacity(0.7),
+//                             fontSize: 9,
+//                             fontWeight: FontWeight.w600,
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                   ],
+//                 ],
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PODIUM PILLAR — fixed
+// ─────────────────────────────────────────────────────────────────────────────
+
+// class _PodiumPillar extends StatelessWidget {
+//   final LeaderboardEntry entry;
+//   final int rank;
+//   final double barHeight;
+//   final bool isFirst;
+//   final int year;
+//   final int month;
+
+//   const _PodiumPillar({
+//     required this.entry,
+//     required this.rank,
+//     required this.barHeight,
+//     required this.year,
+//     required this.month,
+//     this.isFirst = false,
+//   });
+
+//   Color get _rankColor => rank == 1
+//       ? _C.rankGold
+//       : rank == 2
+//           ? _C.rankSilver
+//           : _C.rankBronze;
+
+//   String get _rankEmoji => rank == 1
+//       ? '🥇'
+//       : rank == 2
+//           ? '🥈'
+//           : '🥉';
+
+//   double get _avatarSize => isFirst
+//       ? 64.0
+//       : rank == 2
+//           ? 54.0
+//           : 48.0;
+
+//   // ── Pillar width বাড়ানো হয়েছে — content fit হবে ──────────────────────────
+//   double get _pillarWidth => isFirst
+//       ? 100.0
+//       : rank == 2
+//           ? 88.0
+//           : 80.0;
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final canView = entry.isProfilePublic;
+//     final initial = entry.name.isNotEmpty ? entry.name[0].toUpperCase() : 'U';
+//     final firstName = entry.name.split(' ').first;
+
+//     return GestureDetector(
+//       onTap: canView
+//           ? () {
+//               HapticFeedback.selectionClick();
+//               showPublicProfileSheet(
+//                 context,
+//                 entry: entry,
+//                 year: year,
+//                 month: month,
+//               );
+//             }
+//           : null,
+//       behavior: HitTestBehavior.opaque,
+//       child: SizedBox(
+//         width: _pillarWidth,
+//         child: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           children: [
+//             // ── Medal emoji ──────────────────────────────────────────
+//             Text(
+//               _rankEmoji,
+//               style: TextStyle(fontSize: isFirst ? 22 : 18),
+//             ).animate().scale(
+//                   delay: Duration(milliseconds: rank * 80),
+//                   duration: 380.ms,
+//                   curve: Curves.elasticOut,
+//                 ),
+
+//             const SizedBox(height: 8),
+
+//             // ── Avatar ───────────────────────────────────────────────
+//             Stack(
+//               clipBehavior: Clip.none,
+//               alignment: Alignment.center,
+//               children: [
+//                 if (isFirst)
+//                   Container(
+//                     width: _avatarSize + 8,
+//                     height: _avatarSize + 8,
+//                     decoration: BoxDecoration(
+//                       shape: BoxShape.circle,
+//                       border: Border.all(
+//                         color: _rankColor.withOpacity(0.25),
+//                         width: 3,
+//                       ),
+//                     ),
+//                   ),
+//                 Container(
+//                   width: _avatarSize,
+//                   height: _avatarSize,
+//                   decoration: BoxDecoration(
+//                     color: _rankColor.withOpacity(0.1),
+//                     shape: BoxShape.circle,
+//                     border: Border.all(
+//                       color: _rankColor,
+//                       width: isFirst ? 2.5 : 2,
+//                     ),
+//                   ),
+//                   child: Center(
+//                     child: Text(
+//                       initial,
+//                       style: TextStyle(
+//                         color: _rankColor,
+//                         fontSize: isFirst
+//                             ? 26
+//                             : rank == 2
+//                                 ? 20
+//                                 : 18,
+//                         fontWeight: FontWeight.w900,
+//                       ),
+//                     ),
+//                   ),
+//                 ),
+//                 // Public/Private dot
+//                 Positioned(
+//                   top: isFirst ? -2 : -1,
+//                   right: isFirst ? -2 : -1,
+//                   child: Container(
+//                     width: 18,
+//                     height: 18,
+//                     decoration: BoxDecoration(
+//                       color: canView ? const Color(0xFF0891B2) : _C.textHint,
+//                       shape: BoxShape.circle,
+//                       border: Border.all(color: _C.cardBg, width: 2),
+//                     ),
+//                     child: Icon(
+//                       canView ? Icons.visibility_rounded : Icons.lock_rounded,
+//                       size: 9,
+//                       color: Colors.white,
+//                     ),
+//                   ),
+//                 ),
+//               ],
+//             ),
+
+//             const SizedBox(height: 10),
+
+//             // ── Name ─────────────────────────────────────────────────
+//             SizedBox(
+//               width: _pillarWidth,
+//               child: Text(
+//                 firstName,
+//                 textAlign: TextAlign.center,
+//                 maxLines: 1,
+//                 overflow: TextOverflow.ellipsis,
+//                 style: TextStyle(
+//                   color: _C.textPrimary,
+//                   fontSize: isFirst ? 13 : 11.5,
+//                   fontWeight: FontWeight.w700,
+//                   letterSpacing: -0.2,
+//                 ),
+//               ),
+//             ),
+
+//             const SizedBox(height: 4),
+
+//             // ── ID chip ──────────────────────────────────────────────
+//             if (entry.id.isNotEmpty)
+//               Container(
+//                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+//                 decoration: BoxDecoration(
+//                   color: _C.serialBg,
+//                   borderRadius: BorderRadius.circular(5),
+//                   border: Border.all(color: _C.border, width: 0.5),
+//                 ),
+//                 child: Text(
+//                   entry.id,
+//                   style: const TextStyle(
+//                     color: _C.serialText,
+//                     fontSize: 9,
+//                     fontWeight: FontWeight.w600,
+//                   ),
+//                 ),
+//               ),
+
+//             const SizedBox(height: 3),
+
+//             // ── District — full text, wrap allowed ───────────────────
+//             // maxLines নেই — পুরো district দেখাবে, wrap হলেও সমস্যা নেই
+//             SizedBox(
+//               width: _pillarWidth,
+//               child: Text(
+//                 entry.district,
+//                 textAlign: TextAlign.center,
+//                 style: const TextStyle(
+//                   color: _C.districtText,
+//                   fontSize: 9.5,
+//                   fontWeight: FontWeight.w600,
+//                 ),
+//               ),
+//             ),
+
+//             const SizedBox(height: 10),
+
+//             // ── Podium bar — content intrinsic height ────────────────
+//             // barHeight fixed দিলে content clip হয়
+//             // তাই Container এ minHeight দিয়ে content বাড়লে সাথে বাড়বে
+//             Container(
+//               width: _pillarWidth,
+//               constraints: BoxConstraints(minHeight: barHeight),
+//               decoration: BoxDecoration(
+//                 color: _rankColor.withOpacity(0.06),
+//                 borderRadius: const BorderRadius.vertical(
+//                   top: Radius.circular(10),
+//                 ),
+//                 border: Border(
+//                   top: BorderSide(color: _rankColor, width: 2),
+//                   left: BorderSide(
+//                       color: _rankColor.withOpacity(0.2), width: 0.5),
+//                   right: BorderSide(
+//                       color: _rankColor.withOpacity(0.2), width: 0.5),
+//                 ),
+//               ),
+//               // ── ClipRect সরানো হয়েছে — overflow visible থাকবে ────
+//               child: Padding(
+//                 padding: const EdgeInsets.symmetric(vertical: 12),
+//                 child: Column(
+//                   mainAxisAlignment: MainAxisAlignment.center,
+//                   mainAxisSize: MainAxisSize.min,
+//                   children: [
+//                     // Points — বড় করে
+//                     Text(
+//                       '${entry.totalPoints}',
+//                       style: TextStyle(
+//                         color: _rankColor,
+//                         fontWeight: FontWeight.w900,
+//                         fontSize: isFirst
+//                             ? 20
+//                             : rank == 2
+//                                 ? 17
+//                                 : 15,
+//                         height: 1,
+//                       ),
+//                     ),
+//                     const SizedBox(height: 2),
+//                     Text(
+//                       'পয়েন্ট',
+//                       style: TextStyle(
+//                         color: _rankColor.withOpacity(0.6),
+//                         fontSize: 9,
+//                         fontWeight: FontWeight.w500,
+//                       ),
+//                     ),
+//                     const SizedBox(height: 8),
+//                     // Completion % pill
+//                     Container(
+//                       padding: const EdgeInsets.symmetric(
+//                           horizontal: 8, vertical: 3),
+//                       decoration: BoxDecoration(
+//                         color: _rankColor.withOpacity(0.12),
+//                         borderRadius: BorderRadius.circular(20),
+//                       ),
+//                       child: Text(
+//                         '${entry.completionPercentage.toInt()}% ফরজ',
+//                         style: TextStyle(
+//                           color: _rankColor,
+//                           fontSize: 9,
+//                           fontWeight: FontWeight.w700,
+//                         ),
+//                       ),
+//                     ),
+//                     // Streak
+//                     if (entry.streakDays > 0) ...[
+//                       const SizedBox(height: 6),
+//                       Row(
+//                         mainAxisAlignment: MainAxisAlignment.center,
+//                         mainAxisSize: MainAxisSize.min,
+//                         children: [
+//                           const Text('🔥', style: TextStyle(fontSize: 10)),
+//                           const SizedBox(width: 2),
+//                           Text(
+//                             '${entry.streakDays} দিন',
+//                             style: TextStyle(
+//                               color: _rankColor.withOpacity(0.75),
+//                               fontSize: 9.5,
+//                               fontWeight: FontWeight.w600,
+//                             ),
+//                           ),
+//                         ],
+//                       ),
+//                     ],
+//                   ],
+//                 ),
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPACT INFO CHIP  — ID • District একটা chip এ
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _CompactInfoChip extends StatelessWidget {
+  final LeaderboardEntry entry;
+  const _CompactInfoChip({required this.entry});
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = <String>[];
+    if (entry.id.isNotEmpty) parts.add(entry.id);
+    if (entry.district.isNotEmpty) parts.add(entry.district);
+    if (parts.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: _C.districtBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _C.border, width: 0.5),
+      ),
+      child: Text(
+        parts.join(' · '),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: _C.districtText,
+          fontSize: 9,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.1,
         ),
-      ],
+      ),
     );
   }
 }
@@ -1086,11 +1938,15 @@ class _RankTile extends StatelessWidget {
   final LeaderboardEntry entry;
   final bool isLast;
   final int delay;
+  final int year; // নতুন
+  final int month;
 
   const _RankTile({
     required this.entry,
     required this.isLast,
     required this.delay,
+    required this.year,
+    required this.month,
   });
 
   static const _avatarColors = [
@@ -1112,12 +1968,24 @@ class _RankTile extends StatelessWidget {
     final canView = entry.isProfilePublic;
 
     return GestureDetector(
+      // _RankTile এর onTap এ
       onTap: canView
           ? () {
               HapticFeedback.selectionClick();
-              _openProfile(context);
+              showPublicProfileSheet(
+                context,
+                entry: entry,
+                year: year, // leaderboard filter থেকে pass করো
+                month: month,
+              );
             }
           : null,
+      // onTap: canView
+      //     ? () {
+      //         HapticFeedback.selectionClick();
+      //         _openProfile(context);
+      //       }
+      //     : null,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
@@ -1253,20 +2121,6 @@ class _RankTile extends StatelessWidget {
           .animate(delay: Duration(milliseconds: delay))
           .fadeIn(duration: 260.ms)
           .slideX(begin: 0.04, curve: Curves.easeOut),
-    );
-  }
-
-  void _openProfile(BuildContext context) {
-    final now = DateTime.now();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _PublicProfileSheet(
-        entry: entry,
-        year: now.year,
-        month: now.month,
-      ),
     );
   }
 }
@@ -2110,808 +2964,6 @@ class _MyRankErrorCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PublicProfileSheet extends ConsumerWidget {
-  final LeaderboardEntry entry;
-  final int year;
-  final int month;
-
-  const _PublicProfileSheet({
-    required this.entry,
-    required this.year,
-    required this.month,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final detail = ref.watch(publicProfileProvider((
-      userId: entry.userId,
-      year: year,
-      month: month,
-    )));
-
-    final size = MediaQuery.of(context).size;
-
-    return Container(
-      height: size.height * 0.88,
-      decoration: const BoxDecoration(
-        color: _C.pageBg,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        children: [
-          // Drag handle
-          Padding(
-            padding: const EdgeInsets.only(top: 12, bottom: 4),
-            child: Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: _C.border,
-                  borderRadius: BorderRadius.circular(99),
-                ),
-              ),
-            ),
-          ),
-
-          // Content
-          Expanded(
-            child: detail.when(
-              loading: () => const _ProfileSheetSkeleton(),
-              error: (e, _) => _ProfileSheetError(
-                onRetry: () => ref.invalidate(publicProfileProvider((
-                  userId: entry.userId,
-                  year: year,
-                  month: month,
-                ))),
-              ),
-              data: (d) => _ProfileSheetContent(
-                detail: d,
-                year: year,
-                month: month,
-                entry: entry,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PROFILE SHEET CONTENT
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _ProfileSheetContent extends StatelessWidget {
-  final PublicMonthlyDetail detail;
-  final int year, month;
-  final LeaderboardEntry entry;
-
-  const _ProfileSheetContent({
-    required this.detail,
-    required this.year,
-    required this.month,
-    required this.entry,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final tracker = detail.tracker;
-    final isFemale = detail.gender?.toLowerCase() == 'female';
-
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Hero card ─────────────────────────────────────────────
-          _ProfileHeroCard(
-            detail: detail,
-            entry: entry,
-            year: year,
-            month: month,
-            isFemale: isFemale,
-          ).animate().fadeIn(duration: 260.ms).slideY(begin: 0.04),
-
-          const SizedBox(height: 16),
-
-          // ── Stats grid ────────────────────────────────────────────
-          if (tracker != null) ...[
-            _StatsGrid(tracker: tracker, isFemale: isFemale)
-                .animate()
-                .fadeIn(delay: 80.ms)
-                .slideY(begin: 0.04),
-            const SizedBox(height: 16),
-          ],
-
-          // ── Daily calendar ────────────────────────────────────────
-          _DailyCalendar(
-            entries: detail.entries,
-            year: year,
-            month: month,
-            isFemale: isFemale,
-          ).animate().fadeIn(delay: 120.ms).slideY(begin: 0.04),
-
-          const SizedBox(height: 16),
-
-          // ── Inspiration note ──────────────────────────────────────
-          _InspirationNote(name: detail.name).animate().fadeIn(delay: 160.ms),
-
-          SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HERO CARD
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _ProfileHeroCard extends StatelessWidget {
-  final PublicMonthlyDetail detail;
-  final LeaderboardEntry entry;
-  final int year, month;
-  final bool isFemale;
-
-  const _ProfileHeroCard({
-    required this.detail,
-    required this.entry,
-    required this.year,
-    required this.month,
-    required this.isFemale,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final initial = detail.name.isNotEmpty ? detail.name[0].toUpperCase() : 'U';
-    final monthLabel = AppConstants.bengaliMonths[month - 1];
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [_C.darkGreen, _C.midGreen],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(22),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              // Avatar
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                      color: Colors.white.withOpacity(0.25), width: 1.5),
-                ),
-                child: Center(
-                  child: Text(
-                    initial,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            detail.name,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (isFemale) ...[
-                          const SizedBox(width: 5),
-                          const Text('🌸', style: TextStyle(fontSize: 13)),
-                        ],
-                        if (entry.isWinner) ...[
-                          const SizedBox(width: 5),
-                          const Text('🏆', style: TextStyle(fontSize: 13)),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    // ID + District
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: [
-                        _DarkBadge(
-                          icon: Icons.tag_rounded,
-                          label: detail.id,
-                        ),
-                        _DarkBadge(
-                          icon: Icons.location_on_rounded,
-                          label: detail.district,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              // Rank badge
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _C.gold,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      '#${entry.rank}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 16,
-                        height: 1,
-                      ),
-                    ),
-                    Text(
-                      'র‍্যাংক',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 8,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-
-          // Month label
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.white.withOpacity(0.15)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.calendar_month_rounded,
-                    size: 13, color: Colors.white.withOpacity(0.6)),
-                const SizedBox(width: 6),
-                Text(
-                  '$monthLabel $year এর আমলনামা',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DarkBadge extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _DarkBadge({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.15), width: 0.5),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 9, color: Colors.white.withOpacity(0.6)),
-          const SizedBox(width: 3),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.85),
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// STATS GRID
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _StatsGrid extends StatelessWidget {
-  final MonthlyTracker tracker;
-  final bool isFemale;
-
-  const _StatsGrid({required this.tracker, required this.isFemale});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _SheetSectionLabel(label: 'মাসিক সারসংক্ষেপ'),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _C.border, width: 0.5),
-          ),
-          child: Column(
-            children: [
-              // Row 1
-              Row(
-                children: [
-                  Expanded(
-                    child: _StatCell(
-                      emoji: '⭐',
-                      value: '${tracker.totalPoints}',
-                      label: 'মোট পয়েন্ট',
-                      isFirst: true,
-                    ),
-                  ),
-                  _VertDivider(),
-                  Expanded(
-                    child: _StatCell(
-                      emoji: '✅',
-                      value: '${tracker.completionPercentage.toInt()}%',
-                      label: 'ফরজ আদায়',
-                    ),
-                  ),
-                ],
-              ),
-              const Divider(height: 0.5, thickness: 0.5, color: _C.border),
-              // Row 2
-              Row(
-                children: [
-                  Expanded(
-                    child: _StatCell(
-                      emoji: '🔥',
-                      value: '${tracker.streakDays} দিন',
-                      label: 'ধারাবাহিক',
-                      isFirst: true,
-                    ),
-                  ),
-                  _VertDivider(),
-                  Expanded(
-                    child: _StatCell(
-                      emoji: '📅',
-                      value: '${tracker.daysCompleted}',
-                      label: 'সম্পন্ন দিন',
-                    ),
-                  ),
-                ],
-              ),
-              // // Female exempt days — শুধু female হলে দেখাবে
-              // if (isFemale && tracker.exemptDays > 0) ...[
-              //   const Divider(height: 0.5, thickness: 0.5, color: _C.border),
-              //   _StatCell(
-              //     emoji: '🌸',
-              //     value: '${tracker.exemptDays} দিন',
-              //     label: 'মাফ দিন (হায়েজ)',
-              //     isFirst: true,
-              //     fullWidth: true,
-              //   ),
-              // ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _StatCell extends StatelessWidget {
-  final String emoji, value, label;
-  final bool isFirst;
-  final bool fullWidth;
-
-  const _StatCell({
-    required this.emoji,
-    required this.value,
-    required this.label,
-    this.isFirst = false,
-    this.fullWidth = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding:
-          EdgeInsets.fromLTRB(isFirst ? 16 : 0, 14, fullWidth ? 16 : 0, 14),
-      child: Row(
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 20)),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  color: _C.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  height: 1,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: _C.textHint,
-                  fontSize: 10,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VertDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(width: 0.5, height: 50, color: _C.border);
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DAILY CALENDAR — মাসের কোন দিন আমল হয়েছে
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _DailyCalendar extends StatelessWidget {
-  final List<DailyEntry> entries;
-  final int year, month;
-  final bool isFemale;
-
-  const _DailyCalendar({
-    required this.entries,
-    required this.year,
-    required this.month,
-    required this.isFemale,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final daysInMonth = DateTime(year, month + 1, 0).day;
-
-    // Map: day → entry
-    final entryMap = <int, DailyEntry>{};
-    for (final e in entries) {
-      entryMap[e.day] = e;
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _SheetSectionLabel(label: 'দৈনিক আমল'),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _C.border, width: 0.5),
-          ),
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            children: [
-              // Legend
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  _LegendDot(color: _C.darkGreen, label: 'আমল হয়েছে'),
-                  const SizedBox(width: 12),
-                  if (isFemale)
-                    _LegendDot(
-                        color: const Color(0xFFEC4899), label: 'মাফ দিন'),
-                  if (isFemale) const SizedBox(width: 12),
-                  _LegendDot(color: _C.border, label: 'নেই'),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Grid
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  crossAxisSpacing: 5,
-                  mainAxisSpacing: 5,
-                  childAspectRatio: 1,
-                ),
-                itemCount: daysInMonth,
-                itemBuilder: (_, i) {
-                  final day = i + 1;
-                  final entry = entryMap[day];
-                  final hasPoints = entry != null && entry.totalPoints > 0;
-                  final isExempt = entry != null && entry.isExemptDay;
-
-                  Color bgColor;
-                  Color textColor;
-
-                  if (isExempt) {
-                    bgColor = const Color(0xFFFCE7F3);
-                    textColor = const Color(0xFFEC4899);
-                  } else if (hasPoints) {
-                    bgColor = _C.darkGreen;
-                    textColor = Colors.white;
-                  } else {
-                    bgColor = const Color(0xFFF4F6F1);
-                    textColor = _C.textHint;
-                  }
-
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: bgColor,
-                      borderRadius: BorderRadius.circular(7),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '$day',
-                        style: TextStyle(
-                          color: textColor,
-                          fontSize: 11,
-                          fontWeight: hasPoints || isExempt
-                              ? FontWeight.w700
-                              : FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _LegendDot extends StatelessWidget {
-  final Color color;
-  final String label;
-  const _LegendDot({required this.color, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(3),
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            color: _C.textSecondary,
-            fontSize: 10,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// INSPIRATION NOTE
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _InspirationNote extends StatelessWidget {
-  final String name;
-  const _InspirationNote({required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF8E7),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _C.gold.withOpacity(0.3),
-          width: 0.5,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('💡', style: TextStyle(fontSize: 16)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              '${name.split(' ').first} ভাই/বোন তাঁর আমলের তথ্য শেয়ার করেছেন যাতে আপনি অনুপ্রাণিত হতে পারেন। আল্লাহ তাঁর আমল কবুল করুন।',
-              style: const TextStyle(
-                color: Color(0xFF92400E),
-                fontSize: 12,
-                height: 1.55,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION LABEL
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _SheetSectionLabel extends StatelessWidget {
-  final String label;
-  const _SheetSectionLabel({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label.toUpperCase(),
-      style: const TextStyle(
-        color: _C.textHint,
-        fontSize: 10,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.8,
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SKELETON + ERROR
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _ProfileSheetSkeleton extends StatelessWidget {
-  const _ProfileSheetSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Column(
-        children: [
-          _shimmer(height: 140, radius: 22),
-          const SizedBox(height: 16),
-          _shimmer(height: 120, radius: 16),
-          const SizedBox(height: 16),
-          _shimmer(height: 240, radius: 16),
-        ],
-      ),
-    );
-  }
-
-  Widget _shimmer({required double height, required double radius}) {
-    return Container(
-      width: double.infinity,
-      height: height,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: _C.border, width: 0.5),
-      ),
-    ).animate(onPlay: (c) => c.repeat()).shimmer(
-      duration: 1200.ms,
-      colors: const [
-        Colors.white,
-        Color(0xFFE8ECE8),
-        Colors.white,
-      ],
-    );
-  }
-}
-
-class _ProfileSheetError extends StatelessWidget {
-  final VoidCallback onRetry;
-  const _ProfileSheetError({required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: const Icon(Icons.lock_outline_rounded,
-                  color: Color(0xFFDC2626), size: 28),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'প্রোফাইল দেখা যাচ্ছে না',
-              style: TextStyle(
-                color: _C.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'এই ব্যবহারকারী তাঁর প্রোফাইল বন্ধ করে দিয়েছেন',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: _C.textSecondary, fontSize: 13),
-            ),
-            const SizedBox(height: 20),
-            GestureDetector(
-              onTap: onRetry,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5EE),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Text(
-                  'আবার চেষ্টা করুন',
-                  style: TextStyle(
-                    color: _C.darkGreen,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

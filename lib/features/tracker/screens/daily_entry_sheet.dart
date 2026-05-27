@@ -4050,14 +4050,17 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
   void _initLocalItems() {
     _localItems = {};
     final existing = widget.existingState.effectiveEntries;
+
     for (final cats in widget.catsBySection.values) {
       for (final cat in cats) {
         final prev = existing[cat.id];
-        final exempted = _isFemale && _isExemptDay && cat.isFard;
+        // final exempted = _isFemale && _isExemptDay && cat.isFard;
+        final exempted = _isFemale && _isExemptDay && cat.isExemptDuringPeriod;
         _localItems[cat.id] = _LocalItem(
           categoryId: cat.id,
           isPrayer: cat.isPrayer,
           isFard: cat.isFard,
+          isExemptDuringPeriod: cat.isExemptDuringPeriod,
           inputType: cat.inputType,
           basePoints: cat.basePoints,
           congPoints: cat.congregationPoints,
@@ -4078,19 +4081,31 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
     setState(() {
       _isExemptDay = val;
       for (final item in _localItems.values) {
-        if (item.isFard) {
+        if (item.isExemptDuringPeriod) {
           item.isExempted = val;
           if (val) {
-            // Auto-clear fard items when exempt day is ON
             item.completed = false;
             item.prayerMode = PrayerMode.missed;
             item.count = 0;
           } else {
-            // When turning OFF, just un-exempt — user picks fresh
             item.isExempted = false;
           }
         }
       }
+      // for (final item in _localItems.values) {
+      //   if (item.isFard) {
+      //     item.isExempted = val;
+      //     if (val) {
+      //       // Auto-clear fard items when exempt day is ON
+      //       item.completed = false;
+      //       item.prayerMode = PrayerMode.missed;
+      //       item.count = 0;
+      //     } else {
+      //       // When turning OFF, just un-exempt — user picks fresh
+      //       item.isExempted = false;
+      //     }
+      //   }
+      // }
     });
     HapticFeedback.mediumImpact();
   }
@@ -5526,6 +5541,7 @@ class _CounterPtsTag extends StatelessWidget {
 class _LocalItem {
   final String categoryId;
   final int basePoints, congPoints;
+  final bool isExemptDuringPeriod;
   final bool isPrayer;
   final bool isFard; // ← from backend
   final AmalInputType inputType;
@@ -5540,6 +5556,7 @@ class _LocalItem {
     required this.categoryId,
     required this.isPrayer,
     required this.isFard,
+    required this.isExemptDuringPeriod,
     required this.inputType,
     required this.basePoints,
     required this.congPoints,
