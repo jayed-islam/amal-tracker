@@ -3917,6 +3917,3458 @@
 //     if (!completed) return 0;
 //     return basePoints;
 //   }
+// // }
+// import 'package:amal_tracker/features/auth/providers/provider_reset.dart';
+// import 'package:amal_tracker/features/auth/providers/auth_provider.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
+// import 'package:flutter_animate/flutter_animate.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import '../providers/tracker_provider.dart';
+// import '../models/tracker_model.dart';
+// import '../../../core/constants/app_constants.dart';
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // DESIGN TOKENS
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _C {
+//   static const pageBg = Color(0xFFF4F6F1);
+//   static const cardBg = Color(0xFFFFFFFF);
+//   static const darkGreen = Color(0xFF0E3D22);
+//   static const midGreen = Color(0xFF1B7045);
+//   static const gold = Color(0xFFD4A843);
+//   static const goldLight = Color(0xFFFFF3E0);
+//   static const green = Color(0xFF16A34A);
+//   static const greenLight = Color(0xFFE8F5EE);
+//   static const amber = Color(0xFFFF6B35);
+//   static const amberLight = Color(0xFFFFF3E0);
+//   static const purple = Color(0xFF7C3AED);
+//   static const purpleLight = Color(0xFFEDE9FE);
+//   static const red = Color(0xFFEF4444);
+//   static const redLight = Color(0xFFFEE2E2);
+//   static const blue = Color(0xFF0891B2);
+//   static const blueLight = Color(0xFFE0F2FE);
+//   static const textPrimary = Color(0xFF0A1A0F);
+//   static const textSecondary = Color(0xFF6B7C6E);
+//   static const textHint = Color(0xFFABBAAE);
+//   static const border = Color(0xFFE4EAE4);
+//   static const borderMid = Color(0xFFD0DAD2);
+//   static const success = Color(0xFF16A34A);
+//   static const maafBg = Color(0xFFE8F5EE);
+//   static const maafText = Color(0xFF1B7045);
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // HELPERS — driven by backend unit strings
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// String _unitLabelBn(String? unit) {
+//   switch (unit) {
+//     case 'ayah':
+//       return 'আয়াত';
+//     case 'day':
+//       return 'দিন';
+//     case 'person':
+//       return 'জন';
+//     case 'minute':
+//       return 'মিনিট';
+//     case 'time':
+//       return 'বার';
+//     default:
+//       return unit ?? 'টি';
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // SHEET ROOT
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class DailyEntrySheet extends ConsumerStatefulWidget {
+//   final String dateStr;
+//   final Map<String, List<AmalCategory>> catsBySection;
+//   final DailyEntryState existingState;
+//   final bool isNew;
+
+//   const DailyEntrySheet({
+//     super.key,
+//     required this.dateStr,
+//     required this.catsBySection,
+//     required this.existingState,
+//     required this.isNew,
+//   });
+
+//   @override
+//   ConsumerState<DailyEntrySheet> createState() => _DailyEntrySheetState();
+// }
+
+// class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
+//   late Map<String, _LocalItem> _localItems;
+//   bool _saving = false;
+//   int _activeSection = 0;
+//   bool _isExemptDay = false;
+//   bool _isFemale = false;
+
+//   static const _sectionOrder = [
+//     'salat',
+//     'sunnah_nafl',
+//     'dhikr_tilawat',
+//     'daily_habits',
+//     'weekly',
+//     'special_dhulhijja',
+//     'social',
+//   ];
+
+//   static const _sectionIcons = <String, IconData>{
+//     'salat': Icons.mosque_rounded,
+//     'sunnah_nafl': Icons.auto_awesome_rounded,
+//     'dhikr_tilawat': Icons.menu_book_rounded,
+//     'daily_habits': Icons.self_improvement_rounded,
+//     'weekly': Icons.date_range_rounded,
+//     'special_dhulhijja': Icons.star_rounded,
+//     'social': Icons.people_rounded,
+//   };
+
+//   List<String> get _activeSections => _sectionOrder
+//       .where((s) => (widget.catsBySection[s] ?? []).isNotEmpty)
+//       .toList();
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     // Determine gender from current user
+//     final user = ref.read(currentUserProvider);
+
+//     _isFemale = (user?.gender?.toLowerCase() == 'female');
+
+//     // Load existing exempt day state
+//     _isExemptDay = widget.existingState.entry?.isExemptDay ?? false;
+
+//     _initLocalItems();
+//   }
+
+//   void _initLocalItems() {
+//     _localItems = {};
+//     final existing = widget.existingState.effectiveEntries;
+
+//     for (final cats in widget.catsBySection.values) {
+//       for (final cat in cats) {
+//         final prev = existing[cat.id];
+//         // final exempted = _isFemale && _isExemptDay && cat.isFard;
+//         final exempted = _isFemale && _isExemptDay && cat.isExemptDuringPeriod;
+//         _localItems[cat.id] = _LocalItem(
+//           categoryId: cat.id,
+//           isPrayer: cat.isPrayer,
+//           isFard: cat.isFard,
+//           isExemptDuringPeriod: cat.isExemptDuringPeriod,
+//           inputType: cat.inputType,
+//           basePoints: cat.basePoints,
+//           congPoints: cat.congregationPoints,
+//           pointsPerUnit: cat.pointsPerUnit,
+//           maxValue: cat.maxValue,
+//           completed: exempted ? false : (prev?.completed ?? false),
+//           prayerMode: exempted ? PrayerMode.missed : prev?.prayerMode,
+//           count: exempted ? 0 : (prev?.count ?? 0),
+//           isExempted: exempted,
+//         );
+//       }
+//     }
+//   }
+
+//   // ── Exempt day toggle ──────────────────────────────────────────────────────
+
+//   void _toggleExemptDay(bool val) {
+//     setState(() {
+//       _isExemptDay = val;
+//       for (final item in _localItems.values) {
+//         if (item.isExemptDuringPeriod) {
+//           item.isExempted = val;
+//           if (val) {
+//             item.completed = false;
+//             item.prayerMode = PrayerMode.missed;
+//             item.count = 0;
+//           } else {
+//             item.isExempted = false;
+//           }
+//         }
+//       }
+//       // for (final item in _localItems.values) {
+//       //   if (item.isFard) {
+//       //     item.isExempted = val;
+//       //     if (val) {
+//       //       // Auto-clear fard items when exempt day is ON
+//       //       item.completed = false;
+//       //       item.prayerMode = PrayerMode.missed;
+//       //       item.count = 0;
+//       //     } else {
+//       //       // When turning OFF, just un-exempt — user picks fresh
+//       //       item.isExempted = false;
+//       //     }
+//       //   }
+//       // }
+//     });
+//     HapticFeedback.mediumImpact();
+//   }
+
+//   // ── Item interaction callbacks ─────────────────────────────────────────────
+
+//   void _toggleItem(String id, bool value) {
+//     setState(() {
+//       final item = _localItems[id]!;
+//       if (item.isExempted) return; // block interaction on exempted items
+//       item.completed = value;
+//       if (!value) {
+//         item.prayerMode = item.isPrayer ? PrayerMode.missed : null;
+//         item.count = 0;
+//       } else if (item.isPrayer && item.prayerMode == null) {
+//         item.prayerMode = PrayerMode.congregation;
+//       }
+//     });
+//     HapticFeedback.selectionClick();
+//   }
+
+//   void _setPrayerMode(String id, PrayerMode mode) {
+//     setState(() {
+//       final item = _localItems[id]!;
+//       if (item.isExempted) return; // block interaction on exempted items
+//       item.prayerMode = mode;
+//       item.completed = mode != PrayerMode.missed;
+//     });
+//     HapticFeedback.selectionClick();
+//   }
+
+//   void _setCount(String id, int count) {
+//     setState(() {
+//       final item = _localItems[id]!;
+//       if (item.isExempted) return;
+//       final max = item.maxValue?.toInt();
+//       item.count = max != null ? count.clamp(0, max) : count.clamp(0, 9999);
+//       item.completed = item.count > 0;
+//     });
+//     HapticFeedback.lightImpact();
+//   }
+
+//   // ── Points / count (excluding exempted) ───────────────────────────────────
+
+//   int get _totalPoints => _localItems.values.fold(0, (s, i) => s + i.points);
+
+//   int get _completedCount =>
+//       _localItems.values.where((i) => i.completed && !i.isExempted).length;
+
+//   // ── Save ──────────────────────────────────────────────────────────────────
+
+//   Future<void> _save() async {
+//     setState(() => _saving = true);
+
+//     final updates = _localItems.values
+//         .map((item) => EntryUpdate(
+//               categoryId: item.categoryId,
+//               completed: item.isExempted ? false : item.completed,
+//               prayerMode: item.isExempted ? PrayerMode.missed : item.prayerMode,
+//               count: item.isExempted ? 0 : item.count,
+//             ))
+//         .toList();
+
+//     final ok = await ref
+//         .read(dailyEntryProvider(widget.dateStr).notifier)
+//         .saveEntryFromUpdates(updates, isExemptDay: _isExemptDay);
+
+//     if (ok && mounted) {
+//       final parts = widget.dateStr.split('-');
+//       refreshAfterEntryUpdate(
+//         ref,
+//         year: int.parse(parts[0]),
+//         month: int.parse(parts[1]),
+//         specificDateStr: widget.dateStr,
+//       );
+//     }
+
+//     setState(() => _saving = false);
+//     if (!mounted) return;
+//     Navigator.pop(context);
+
+//     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+//       content: Row(children: [
+//         Icon(
+//           ok ? Icons.check_circle_rounded : Icons.error_outline_rounded,
+//           color: Colors.white,
+//         ),
+//         const SizedBox(width: 10),
+//         Text(ok
+//             ? (widget.isNew
+//                 ? 'আমল সফলভাবে সেভ হয়েছে! 🌟'
+//                 : 'আমল আপডেট হয়েছে! ✨')
+//             : 'সেভ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।'),
+//       ]),
+//       backgroundColor: ok ? _C.success : _C.red,
+//       margin: const EdgeInsets.all(16),
+//       behavior: SnackBarBehavior.floating,
+//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+//       duration: const Duration(seconds: 2),
+//     ));
+//   }
+
+//   // ── Build ─────────────────────────────────────────────────────────────────
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final size = MediaQuery.of(context).size;
+//     final isTablet = size.width > 600;
+//     final sections = _activeSections;
+
+//     print(
+//       'gender $_isFemale',
+//     );
+
+//     return Container(
+//       height: size.height * 0.96,
+//       decoration: const BoxDecoration(
+//         color: _C.pageBg,
+//         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+//       ),
+//       child: Column(children: [
+//         _SheetHeader(
+//           isNew: widget.isNew,
+//           dateStr: widget.dateStr,
+//           points: _totalPoints,
+//           completed: _completedCount,
+//           saving: _saving,
+//           onClose: () => Navigator.pop(context),
+//           onSave: _save,
+//         ),
+//         _SectionTabBar(
+//           sections: sections,
+//           icons: _sectionIcons,
+//           activeIndex: _activeSection,
+//           catsBySection: widget.catsBySection,
+//           localItems: _localItems,
+//           onTap: (i) => setState(() => _activeSection = i),
+//         ),
+//         Expanded(
+//           child: AnimatedSwitcher(
+//             duration: 220.ms,
+//             transitionBuilder: (child, anim) => FadeTransition(
+//               opacity: CurvedAnimation(parent: anim, curve: Curves.easeOut),
+//               child: child,
+//             ),
+//             child: _SectionForm(
+//               key: ValueKey(_activeSection),
+//               sectionKey: sections[_activeSection],
+//               categories: widget.catsBySection[sections[_activeSection]] ?? [],
+//               localItems: _localItems,
+//               isTablet: isTablet,
+//               isFemale: _isFemale,
+//               isExemptDay: _isExemptDay,
+//               onToggle: _toggleItem,
+//               onPrayerMode: _setPrayerMode,
+//               onCount: _setCount,
+//               onExemptToggle: _toggleExemptDay,
+//             ),
+//           ),
+//         ),
+//         _BottomSaveBar(
+//           isNew: widget.isNew,
+//           saving: _saving,
+//           points: _totalPoints,
+//           completed: _completedCount,
+//           onSave: _save,
+//           onCancel: () => Navigator.pop(context),
+//         ),
+//       ]),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // SHEET HEADER
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _SheetHeader extends StatelessWidget {
+//   final bool isNew, saving;
+//   final String dateStr;
+//   final int points, completed;
+//   final VoidCallback onClose, onSave;
+
+//   const _SheetHeader({
+//     required this.isNew,
+//     required this.saving,
+//     required this.dateStr,
+//     required this.points,
+//     required this.completed,
+//     required this.onClose,
+//     required this.onSave,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final parts = dateStr.split('-');
+//     final d = int.parse(parts[2]);
+//     final m = int.parse(parts[1]);
+//     final y = int.parse(parts[0]);
+//     final month = AppConstants.bengaliMonths[m - 1];
+
+//     return Container(
+//       decoration: const BoxDecoration(
+//         color: _C.darkGreen,
+//         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+//       ),
+//       child: Stack(children: [
+//         Positioned(
+//             top: -30,
+//             right: -30,
+//             child: Container(
+//                 width: 100,
+//                 height: 100,
+//                 decoration: BoxDecoration(
+//                     shape: BoxShape.circle,
+//                     color: Colors.white.withOpacity(0.04)))),
+//         Positioned(
+//             bottom: 0,
+//             left: 10,
+//             child: Container(
+//                 width: 60,
+//                 height: 60,
+//                 decoration: BoxDecoration(
+//                     shape: BoxShape.circle,
+//                     color: Colors.white.withOpacity(0.03)))),
+//         Column(mainAxisSize: MainAxisSize.min, children: [
+//           // Drag handle
+//           Padding(
+//             padding: const EdgeInsets.only(top: 12, bottom: 4),
+//             child: Center(
+//               child: Container(
+//                   width: 40,
+//                   height: 4,
+//                   decoration: BoxDecoration(
+//                       color: Colors.white.withOpacity(0.25),
+//                       borderRadius: BorderRadius.circular(99))),
+//             ),
+//           ),
+
+//           // Title row
+//           Padding(
+//             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+//             child: Row(children: [
+//               Container(
+//                 width: 38,
+//                 height: 38,
+//                 decoration: BoxDecoration(
+//                     color: Colors.white.withOpacity(0.12),
+//                     borderRadius: BorderRadius.circular(11),
+//                     border: Border.all(
+//                         color: Colors.white.withOpacity(0.18), width: 0.5)),
+//                 child: Icon(isNew ? Icons.add_rounded : Icons.edit_rounded,
+//                     color: Colors.white, size: 18),
+//               ),
+//               const SizedBox(width: 10),
+//               Expanded(
+//                   child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   Text(isNew ? 'আমল যোগ করুন' : 'আমল সম্পাদনা করুন',
+//                       style: const TextStyle(
+//                           color: Colors.white,
+//                           fontWeight: FontWeight.w800,
+//                           fontSize: 16,
+//                           letterSpacing: -0.3)),
+//                   Text('$d $month $y',
+//                       style: TextStyle(
+//                           color: Colors.white.withOpacity(0.5),
+//                           fontSize: 11,
+//                           fontWeight: FontWeight.w500)),
+//                 ],
+//               )),
+//               GestureDetector(
+//                 onTap: onClose,
+//                 child: Container(
+//                   width: 34,
+//                   height: 34,
+//                   decoration: BoxDecoration(
+//                       color: Colors.white.withOpacity(0.1),
+//                       borderRadius: BorderRadius.circular(10),
+//                       border: Border.all(
+//                           color: Colors.white.withOpacity(0.15), width: 0.5)),
+//                   child: Icon(Icons.close_rounded,
+//                       color: Colors.white.withOpacity(0.7), size: 18),
+//                 ),
+//               ),
+//             ]),
+//           ),
+
+//           const SizedBox(height: 12),
+
+//           // Live points card
+//           Padding(
+//             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+//             child: Container(
+//               padding: const EdgeInsets.all(13),
+//               decoration: BoxDecoration(
+//                   color: Colors.white.withOpacity(0.09),
+//                   borderRadius: BorderRadius.circular(14),
+//                   border: Border.all(
+//                       color: Colors.white.withOpacity(0.18), width: 0.5)),
+//               child: Row(children: [
+//                 Container(
+//                   width: 44,
+//                   height: 44,
+//                   decoration: BoxDecoration(
+//                       color: _C.gold, borderRadius: BorderRadius.circular(12)),
+//                   child: const Icon(Icons.stars_rounded,
+//                       color: Colors.white, size: 24),
+//                 ),
+//                 const SizedBox(width: 12),
+//                 Expanded(
+//                     child: Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     Text('লাইভ পয়েন্ট',
+//                         style: TextStyle(
+//                             color: Colors.white.withOpacity(0.5),
+//                             fontSize: 10)),
+//                     const SizedBox(height: 1),
+//                     Row(children: [
+//                       Text('$points',
+//                           style: const TextStyle(
+//                               color: Colors.white,
+//                               fontWeight: FontWeight.w900,
+//                               fontSize: 22,
+//                               letterSpacing: -0.4,
+//                               height: 1)),
+//                       Text(' pts',
+//                           style: TextStyle(
+//                               color: Colors.white.withOpacity(0.5),
+//                               fontSize: 12)),
+//                     ]),
+//                   ],
+//                 )),
+//                 Container(
+//                   padding:
+//                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+//                   decoration: BoxDecoration(
+//                       color: Colors.white.withOpacity(0.12),
+//                       borderRadius: BorderRadius.circular(20)),
+//                   child: Row(mainAxisSize: MainAxisSize.min, children: [
+//                     Icon(Icons.check_circle_rounded,
+//                         color: Colors.white.withOpacity(0.7), size: 12),
+//                     const SizedBox(width: 4),
+//                     Text('$completed টি সম্পন্ন',
+//                         style: const TextStyle(
+//                             color: Colors.white,
+//                             fontSize: 11,
+//                             fontWeight: FontWeight.w600)),
+//                   ]),
+//                 ),
+//               ]),
+//             ),
+//           ),
+//         ]),
+//       ]),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // SECTION TAB BAR
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _SectionTabBar extends StatelessWidget {
+//   final List<String> sections;
+//   final Map<String, IconData> icons;
+//   final int activeIndex;
+//   final Map<String, List<AmalCategory>> catsBySection;
+//   final Map<String, _LocalItem> localItems;
+//   final ValueChanged<int> onTap;
+
+//   const _SectionTabBar({
+//     required this.sections,
+//     required this.icons,
+//     required this.activeIndex,
+//     required this.catsBySection,
+//     required this.localItems,
+//     required this.onTap,
+//   });
+
+//   int _completedInSection(String sec) {
+//     final cats = catsBySection[sec] ?? [];
+//     return cats
+//         .where((c) =>
+//             localItems[c.id]?.completed == true &&
+//             localItems[c.id]?.isExempted == false)
+//         .length;
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       color: _C.cardBg,
+//       child: Column(children: [
+//         SingleChildScrollView(
+//           scrollDirection: Axis.horizontal,
+//           padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+//           child: Row(
+//             children: sections.asMap().entries.map((e) {
+//               final i = e.key;
+//               final sec = e.value;
+//               final label = AppConstants.sectionLabels[sec]?['bn'] ?? sec;
+//               final icon = icons[sec] ?? Icons.circle;
+//               final done = _completedInSection(sec);
+//               final total = (catsBySection[sec] ?? []).length;
+//               final isActive = i == activeIndex;
+//               final allDone = done == total && total > 0;
+
+//               return GestureDetector(
+//                 onTap: () => onTap(i),
+//                 child: AnimatedContainer(
+//                   duration: 180.ms,
+//                   margin: const EdgeInsets.only(right: 8),
+//                   padding:
+//                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+//                   decoration: BoxDecoration(
+//                     color: isActive ? _C.darkGreen : _C.pageBg,
+//                     borderRadius: BorderRadius.circular(99),
+//                     border: Border.all(
+//                       color: isActive
+//                           ? _C.darkGreen
+//                           : allDone
+//                               ? _C.green.withOpacity(0.4)
+//                               : _C.border,
+//                       width: 0.5,
+//                     ),
+//                   ),
+//                   child: Row(mainAxisSize: MainAxisSize.min, children: [
+//                     Icon(icon,
+//                         size: 12,
+//                         color: isActive
+//                             ? Colors.white
+//                             : allDone
+//                                 ? _C.green
+//                                 : _C.textSecondary),
+//                     const SizedBox(width: 5),
+//                     Text(label,
+//                         style: TextStyle(
+//                             fontSize: 11,
+//                             fontWeight:
+//                                 isActive ? FontWeight.w700 : FontWeight.w500,
+//                             color: isActive
+//                                 ? Colors.white
+//                                 : allDone
+//                                     ? _C.green
+//                                     : _C.textSecondary)),
+//                     if (done > 0) ...[
+//                       const SizedBox(width: 6),
+//                       Container(
+//                         padding: const EdgeInsets.symmetric(
+//                             horizontal: 6, vertical: 2),
+//                         decoration: BoxDecoration(
+//                             color: isActive
+//                                 ? Colors.white.withOpacity(0.2)
+//                                 : allDone
+//                                     ? _C.greenLight
+//                                     : _C.pageBg,
+//                             borderRadius: BorderRadius.circular(20)),
+//                         child: Text('$done/$total',
+//                             style: TextStyle(
+//                                 fontSize: 9,
+//                                 fontWeight: FontWeight.w700,
+//                                 color: isActive
+//                                     ? Colors.white
+//                                     : allDone
+//                                         ? _C.green
+//                                         : _C.textHint)),
+//                       ),
+//                     ],
+//                   ]),
+//                 ),
+//               );
+//             }).toList(),
+//           ),
+//         ),
+//         const Divider(height: 0.5, thickness: 0.5, color: _C.border),
+//       ]),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // EXEMPT DAY BANNER  — only shown for female users in salat section
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _ExemptDayBanner extends StatelessWidget {
+//   final bool isExemptDay;
+//   final ValueChanged<bool> onToggle;
+
+//   const _ExemptDayBanner({
+//     required this.isExemptDay,
+//     required this.onToggle,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return GestureDetector(
+//       onTap: () => onToggle(!isExemptDay),
+//       child: AnimatedContainer(
+//         duration: 200.ms,
+//         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+//         decoration: BoxDecoration(
+//           color: isExemptDay
+//               ? _C.midGreen.withOpacity(0.08)
+//               : const Color(0xFFFFF8EE),
+//           borderRadius: BorderRadius.circular(14),
+//           border: Border.all(
+//             color: isExemptDay
+//                 ? _C.midGreen.withOpacity(0.35)
+//                 : _C.gold.withOpacity(0.5),
+//             width: 1,
+//           ),
+//         ),
+//         child: Row(children: [
+//           // Icon badge
+//           AnimatedContainer(
+//             duration: 200.ms,
+//             width: 42,
+//             height: 42,
+//             decoration: BoxDecoration(
+//               color: isExemptDay
+//                   ? _C.midGreen.withOpacity(0.12)
+//                   : _C.gold.withOpacity(0.15),
+//               borderRadius: BorderRadius.circular(11),
+//             ),
+//             child: const Center(
+//               child: Text('🌸', style: TextStyle(fontSize: 20)),
+//             ),
+//           ),
+//           const SizedBox(width: 12),
+
+//           // Text
+//           Expanded(
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Text(
+//                   isExemptDay ? 'আজ মাহলির দিন' : 'আজ কি মাহলি আছেন?',
+//                   style: TextStyle(
+//                     color: isExemptDay ? _C.darkGreen : _C.textPrimary,
+//                     fontWeight: FontWeight.w700,
+//                     fontSize: 13,
+//                   ),
+//                 ),
+//                 const SizedBox(height: 2),
+//                 Text(
+//                   isExemptDay
+//                       ? 'ফরজ আমলগুলো মাফ হিসেবে চিহ্নিত হয়েছে'
+//                       : 'চালু করলে ফরজ আমলগুলো মাফ ধরা হবে',
+//                   style: TextStyle(
+//                     color: isExemptDay ? _C.midGreen : _C.textSecondary,
+//                     fontSize: 11,
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ),
+//           const SizedBox(width: 10),
+
+//           // Animated toggle switch
+//           _ToggleSwitch(
+//             value: isExemptDay,
+//             onChanged: onToggle,
+//             activeColor: _C.midGreen,
+//           ),
+//         ]),
+//       ),
+//     ).animate().fadeIn(duration: 220.ms).slideY(begin: -0.04);
+//   }
+// }
+
+// // Smooth animated toggle switch
+// class _ToggleSwitch extends StatelessWidget {
+//   final bool value;
+//   final ValueChanged<bool> onChanged;
+//   final Color activeColor;
+
+//   const _ToggleSwitch({
+//     required this.value,
+//     required this.onChanged,
+//     required this.activeColor,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return GestureDetector(
+//       onTap: () => onChanged(!value),
+//       child: AnimatedContainer(
+//         duration: 200.ms,
+//         curve: Curves.easeInOut,
+//         width: 46,
+//         height: 26,
+//         padding: const EdgeInsets.all(3),
+//         decoration: BoxDecoration(
+//           color: value ? activeColor : _C.borderMid,
+//           borderRadius: BorderRadius.circular(99),
+//         ),
+//         child: AnimatedAlign(
+//           duration: 200.ms,
+//           curve: Curves.easeInOut,
+//           alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+//           child: Container(
+//             width: 20,
+//             height: 20,
+//             decoration: const BoxDecoration(
+//               color: Colors.white,
+//               shape: BoxShape.circle,
+//             ),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // SECTION FORM
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _SectionForm extends StatelessWidget {
+//   final String sectionKey;
+//   final List<AmalCategory> categories;
+//   final Map<String, _LocalItem> localItems;
+//   final bool isTablet;
+//   final bool isFemale;
+//   final bool isExemptDay;
+//   final void Function(String, bool) onToggle;
+//   final void Function(String, PrayerMode) onPrayerMode;
+//   final void Function(String, int) onCount;
+//   final ValueChanged<bool> onExemptToggle;
+
+//   const _SectionForm({
+//     super.key,
+//     required this.sectionKey,
+//     required this.categories,
+//     required this.localItems,
+//     required this.isTablet,
+//     required this.isFemale,
+//     required this.isExemptDay,
+//     required this.onToggle,
+//     required this.onPrayerMode,
+//     required this.onCount,
+//     required this.onExemptToggle,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     if (categories.isEmpty) {
+//       return const Center(
+//         child: Text('এই বিভাগে কোনো আমল নেই',
+//             style: TextStyle(color: _C.textHint, fontSize: 13)),
+//       );
+//     }
+
+//     final hPad =
+//         isTablet ? (MediaQuery.of(context).size.width - 600) / 2 + 16.0 : 16.0;
+
+//     // Show exempt banner only in salat section for female users
+//     final showBanner = isFemale && sectionKey == 'salat';
+
+//     // Total list items = banner (if shown) + categories
+//     final itemCount = categories.length + (showBanner ? 1 : 0);
+
+//     return ListView.separated(
+//       padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 14),
+//       itemCount: itemCount,
+//       separatorBuilder: (_, __) => const SizedBox(height: 10),
+//       itemBuilder: (ctx, i) {
+//         // First item = banner when applicable
+//         if (showBanner && i == 0) {
+//           return _ExemptDayBanner(
+//             isExemptDay: isExemptDay,
+//             onToggle: onExemptToggle,
+//           );
+//         }
+
+//         final catIndex = showBanner ? i - 1 : i;
+//         final cat = categories[catIndex];
+//         final item = localItems[cat.id];
+//         final isExempted = item?.isExempted ?? false;
+
+//         // ── Route card type ──────────────────────────────────────
+//         late Widget card;
+
+//         if (cat.isPrayer) {
+//           if (isExempted) {
+//             // Show exempted card — no interaction
+//             card = _ExemptedPrayerCard(cat: cat);
+//           } else {
+//             card = _PrayerFormCard(
+//               cat: cat,
+//               item: item,
+//               onMode: (mode) => onPrayerMode(cat.id, mode),
+//             );
+//           }
+//         } else if (cat.inputType == AmalInputType.counter) {
+//           card = _CounterFormCard(
+//             cat: cat,
+//             item: item,
+//             onCount: (c) => onCount(cat.id, c),
+//           );
+//         } else {
+//           card = _ToggleFormCard(
+//             cat: cat,
+//             item: item,
+//             onToggle: (v) => onToggle(cat.id, v),
+//           );
+//         }
+
+//         return card
+//             .animate(delay: (catIndex * 35).ms)
+//             .fadeIn(duration: 240.ms)
+//             .slideX(begin: 0.05, curve: Curves.easeOut);
+//       },
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // EXEMPTED PRAYER CARD  — shown instead of normal prayer card on exempt day
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _ExemptedPrayerCard extends StatelessWidget {
+//   final AmalCategory cat;
+
+//   const _ExemptedPrayerCard({required this.cat});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       decoration: BoxDecoration(
+//         color: _C.pageBg,
+//         borderRadius: BorderRadius.circular(16),
+//         border: Border.all(color: _C.border, width: 0.5),
+//       ),
+//       child: Opacity(
+//         opacity: 0.55,
+//         child: Padding(
+//           padding: const EdgeInsets.all(14),
+//           child: Row(children: [
+//             // Icon badge — muted
+//             Container(
+//               width: 38,
+//               height: 38,
+//               decoration: BoxDecoration(
+//                   color: _C.pageBg,
+//                   borderRadius: BorderRadius.circular(10),
+//                   border: Border.all(color: _C.border, width: 0.5)),
+//               child: const Icon(Icons.mosque_rounded,
+//                   color: _C.textHint, size: 18),
+//             ),
+//             const SizedBox(width: 12),
+
+//             // Name with strikethrough
+//             Expanded(
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   Text(
+//                     cat.nameBn,
+//                     style: const TextStyle(
+//                       color: _C.textHint,
+//                       fontWeight: FontWeight.w600,
+//                       fontSize: 13,
+//                       decoration: TextDecoration.lineThrough,
+//                       decorationColor: _C.textHint,
+//                     ),
+//                   ),
+//                   Text(cat.nameEn,
+//                       style: const TextStyle(color: _C.textHint, fontSize: 11)),
+//                 ],
+//               ),
+//             ),
+
+//             // Maaf badge
+//             Container(
+//               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+//               decoration: BoxDecoration(
+//                 color: _C.maafBg,
+//                 borderRadius: BorderRadius.circular(20),
+//                 border:
+//                     Border.all(color: _C.green.withOpacity(0.3), width: 0.5),
+//               ),
+//               child: const Text(
+//                 'মাফ আছে',
+//                 style: TextStyle(
+//                     fontSize: 10.5,
+//                     fontWeight: FontWeight.w700,
+//                     color: _C.maafText),
+//               ),
+//             ),
+//           ]),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // PRAYER FORM CARD
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _PrayerFormCard extends StatelessWidget {
+//   final AmalCategory cat;
+//   final _LocalItem? item;
+//   final ValueChanged<PrayerMode> onMode;
+
+//   const _PrayerFormCard({
+//     required this.cat,
+//     required this.item,
+//     required this.onMode,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final mode = item?.prayerMode ?? PrayerMode.missed;
+//     final pts = item?.points ?? 0;
+
+//     final borderColor = mode == PrayerMode.congregation
+//         ? _C.green.withOpacity(0.5)
+//         : mode == PrayerMode.solo
+//             ? _C.amber.withOpacity(0.5)
+//             : _C.border;
+
+//     return Container(
+//       decoration: BoxDecoration(
+//         color: _C.cardBg,
+//         borderRadius: BorderRadius.circular(16),
+//         border: Border.all(color: borderColor, width: 1),
+//       ),
+//       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+//         Padding(
+//           padding: const EdgeInsets.fromLTRB(14, 13, 14, 11),
+//           child: Row(children: [
+//             _AmalIconBadge(
+//                 icon: Icons.mosque_rounded,
+//                 active: mode != PrayerMode.missed,
+//                 activeColor: _C.green),
+//             const SizedBox(width: 12),
+//             Expanded(
+//                 child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Text(cat.nameBn,
+//                     style: const TextStyle(
+//                         color: _C.textPrimary,
+//                         fontWeight: FontWeight.w700,
+//                         fontSize: 13)),
+//                 Text(cat.nameEn,
+//                     style:
+//                         const TextStyle(color: _C.textSecondary, fontSize: 11)),
+//               ],
+//             )),
+//             _PtsTag(pts: pts, maxPts: cat.congregationPoints, active: pts > 0),
+//           ]),
+//         ),
+//         const Divider(height: 0.5, thickness: 0.5, color: _C.border),
+//         const SizedBox(height: 10),
+//         Padding(
+//           padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+//           child: Row(children: [
+//             Expanded(
+//                 child: _ModeBtn(
+//                     label: 'জামাতে',
+//                     subLabel: '+${cat.congregationPoints}',
+//                     emoji: '✔',
+//                     isSelected: mode == PrayerMode.congregation,
+//                     activeColor: _C.green,
+//                     activeBg: _C.greenLight,
+//                     onTap: () => onMode(PrayerMode.congregation))),
+//             const SizedBox(width: 8),
+//             Expanded(
+//                 child: _ModeBtn(
+//                     label: 'একাকী',
+//                     subLabel: '+${cat.basePoints}',
+//                     emoji: '/',
+//                     isSelected: mode == PrayerMode.solo,
+//                     activeColor: _C.amber,
+//                     activeBg: _C.amberLight,
+//                     onTap: () => onMode(PrayerMode.solo))),
+//             const SizedBox(width: 8),
+//             Expanded(
+//                 child: _ModeBtn(
+//                     label: 'মিস',
+//                     subLabel: '+০',
+//                     emoji: '✗',
+//                     isSelected: mode == PrayerMode.missed,
+//                     activeColor: _C.textSecondary,
+//                     activeBg: _C.pageBg,
+//                     onTap: () => onMode(PrayerMode.missed))),
+//           ]),
+//         ),
+//       ]),
+//     );
+//   }
+// }
+
+// class _ModeBtn extends StatelessWidget {
+//   final String label, subLabel, emoji;
+//   final bool isSelected;
+//   final Color activeColor, activeBg;
+//   final VoidCallback onTap;
+
+//   const _ModeBtn({
+//     required this.label,
+//     required this.subLabel,
+//     required this.emoji,
+//     required this.isSelected,
+//     required this.activeColor,
+//     required this.activeBg,
+//     required this.onTap,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return GestureDetector(
+//       onTap: onTap,
+//       child: AnimatedContainer(
+//         duration: 160.ms,
+//         padding: const EdgeInsets.symmetric(vertical: 11),
+//         decoration: BoxDecoration(
+//             color: isSelected ? activeBg : _C.pageBg,
+//             borderRadius: BorderRadius.circular(12),
+//             border: Border.all(
+//                 color: isSelected ? activeColor : _C.border,
+//                 width: isSelected ? 1.5 : 0.5)),
+//         child: Column(mainAxisSize: MainAxisSize.min, children: [
+//           Text(emoji,
+//               style: TextStyle(
+//                   fontSize: 15,
+//                   fontWeight: FontWeight.w700,
+//                   color: isSelected ? activeColor : _C.textHint)),
+//           const SizedBox(height: 3),
+//           Text(label,
+//               style: TextStyle(
+//                   fontSize: 11,
+//                   fontWeight: FontWeight.w700,
+//                   color: isSelected ? activeColor : _C.textSecondary)),
+//           Text(subLabel,
+//               style: TextStyle(
+//                   fontSize: 9.5,
+//                   color:
+//                       isSelected ? activeColor.withOpacity(0.7) : _C.textHint)),
+//         ]),
+//       ),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // TOGGLE FORM CARD  (binary)
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _ToggleFormCard extends StatelessWidget {
+//   final AmalCategory cat;
+//   final _LocalItem? item;
+//   final ValueChanged<bool> onToggle;
+
+//   const _ToggleFormCard({
+//     required this.cat,
+//     required this.item,
+//     required this.onToggle,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final done = item?.completed ?? false;
+//     final pts = item?.points ?? 0;
+
+//     return GestureDetector(
+//       onTap: () => onToggle(!done),
+//       child: AnimatedContainer(
+//         duration: 160.ms,
+//         padding: const EdgeInsets.all(14),
+//         decoration: BoxDecoration(
+//             color: done ? _C.greenLight : _C.cardBg,
+//             borderRadius: BorderRadius.circular(16),
+//             border: Border.all(
+//                 color: done ? _C.green.withOpacity(0.4) : _C.border,
+//                 width: done ? 1.5 : 0.5)),
+//         child: Row(children: [
+//           AnimatedContainer(
+//             duration: 180.ms,
+//             width: 30,
+//             height: 30,
+//             decoration: BoxDecoration(
+//                 color: done ? _C.darkGreen : Colors.transparent,
+//                 borderRadius: BorderRadius.circular(8),
+//                 border: Border.all(
+//                     color: done ? _C.darkGreen : _C.borderMid, width: 1.5)),
+//             child: done
+//                 ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
+//                 : null,
+//           ),
+//           const SizedBox(width: 13),
+//           Expanded(
+//               child: Column(
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: [
+//               Text(cat.nameBn,
+//                   style: TextStyle(
+//                       color: done ? _C.darkGreen : _C.textPrimary,
+//                       fontWeight: FontWeight.w600,
+//                       fontSize: 13)),
+//               if (cat.description != null) ...[
+//                 const SizedBox(height: 2),
+//                 Text(cat.description!,
+//                     style:
+//                         const TextStyle(color: _C.textSecondary, fontSize: 11)),
+//               ],
+//             ],
+//           )),
+//           const SizedBox(width: 8),
+//           _PtsTag(pts: pts, maxPts: cat.basePoints, active: done),
+//         ]),
+//       ),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // COUNTER FORM CARD
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _CounterFormCard extends StatelessWidget {
+//   final AmalCategory cat;
+//   final _LocalItem? item;
+//   final ValueChanged<int> onCount;
+
+//   const _CounterFormCard({
+//     required this.cat,
+//     required this.item,
+//     required this.onCount,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final count = item?.count ?? 0;
+//     final pts = item?.points ?? 0;
+//     final unitBn = _unitLabelBn(cat.unit);
+//     final maxVal = cat.maxValue?.toInt();
+//     final ppu = cat.pointsPerUnit ?? cat.basePoints.toDouble();
+//     final maxPts = maxVal != null ? (maxVal * ppu).round() : null;
+//     final hasMax = maxVal != null;
+
+//     return Container(
+//       decoration: BoxDecoration(
+//           color: _C.cardBg,
+//           borderRadius: BorderRadius.circular(16),
+//           border: Border.all(
+//               color: count > 0 ? _C.green.withOpacity(0.4) : _C.border,
+//               width: count > 0 ? 1.5 : 0.5)),
+//       child: Column(children: [
+//         Padding(
+//           padding: const EdgeInsets.fromLTRB(14, 13, 14, 11),
+//           child: Row(children: [
+//             _AmalIconBadge(
+//                 icon: Icons.add_circle_outline_rounded,
+//                 active: count > 0,
+//                 activeColor: _C.darkGreen),
+//             const SizedBox(width: 12),
+//             Expanded(
+//                 child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Text(cat.nameBn,
+//                     style: const TextStyle(
+//                         color: _C.textPrimary,
+//                         fontWeight: FontWeight.w700,
+//                         fontSize: 13)),
+//                 if (cat.description != null)
+//                   Text(cat.description!,
+//                       style: const TextStyle(
+//                           color: _C.textSecondary, fontSize: 11)),
+//               ],
+//             )),
+//             _CounterPtsTag(
+//               current: pts,
+//               max: maxPts,
+//               active: count > 0,
+//             ),
+//           ]),
+//         ),
+//         const Divider(height: 0.5, thickness: 0.5, color: _C.border),
+//         const SizedBox(height: 20),
+//         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+//           _StepBtn(
+//             icon: Icons.remove_rounded,
+//             onTap: count > 0 ? () => onCount(count - 1) : null,
+//           ),
+//           Container(
+//             width: 96,
+//             height: 78,
+//             margin: const EdgeInsets.symmetric(horizontal: 16),
+//             decoration: BoxDecoration(
+//                 color: count > 0 ? _C.greenLight : _C.pageBg,
+//                 borderRadius: BorderRadius.circular(16),
+//                 border: Border.all(
+//                     color: count > 0 ? _C.green.withOpacity(0.3) : _C.border,
+//                     width: 0.5)),
+//             child: Column(
+//               mainAxisAlignment: MainAxisAlignment.center,
+//               children: [
+//                 Text('$count',
+//                     style: TextStyle(
+//                         fontSize: 34,
+//                         fontWeight: FontWeight.w900,
+//                         height: 1,
+//                         color: count > 0 ? _C.darkGreen : _C.textHint)),
+//                 const SizedBox(height: 3),
+//                 Text(hasMax ? '/ $maxVal $unitBn' : unitBn,
+//                     style: TextStyle(
+//                         fontSize: 10,
+//                         color: count > 0 ? _C.textSecondary : _C.textHint)),
+//               ],
+//             ),
+//           ),
+//           _StepBtn(
+//             icon: Icons.add_rounded,
+//             onTap:
+//                 (hasMax && count >= maxVal!) ? null : () => onCount(count + 1),
+//           ),
+//         ]),
+//         const SizedBox(height: 14),
+//         if (hasMax) ...[
+//           Padding(
+//             padding: const EdgeInsets.only(bottom: 16),
+//             child: _BoundedProgress(count: count, max: maxVal!),
+//           ),
+//         ] else ...[
+//           Padding(
+//             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+//             child: _UnboundedProgress(count: count, unitBn: unitBn),
+//           ),
+//         ],
+//         Padding(
+//           padding: const EdgeInsets.only(bottom: 14),
+//           child: Container(
+//             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+//             decoration: BoxDecoration(
+//                 color: _C.pageBg,
+//                 borderRadius: BorderRadius.circular(20),
+//                 border: Border.all(color: _C.border, width: 0.5)),
+//             child: Text('প্রতি $unitBn = ${ppu.toInt()} পয়েন্ট',
+//                 style: const TextStyle(
+//                     color: _C.textSecondary,
+//                     fontSize: 10.5,
+//                     fontWeight: FontWeight.w500)),
+//           ),
+//         ),
+//       ]),
+//     );
+//   }
+// }
+
+// class _BoundedProgress extends StatelessWidget {
+//   final int count, max;
+//   const _BoundedProgress({required this.count, required this.max});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final dotCount = max.clamp(1, 15);
+//     final fillRatio = max > 15 ? count / max : null;
+
+//     if (fillRatio != null) {
+//       return Padding(
+//         padding: const EdgeInsets.symmetric(horizontal: 20),
+//         child: Column(children: [
+//           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+//             Text('$count',
+//                 style: const TextStyle(
+//                     color: _C.darkGreen,
+//                     fontWeight: FontWeight.w700,
+//                     fontSize: 11)),
+//             Text('$max',
+//                 style: const TextStyle(color: _C.textHint, fontSize: 11)),
+//           ]),
+//           const SizedBox(height: 6),
+//           ClipRRect(
+//             borderRadius: BorderRadius.circular(99),
+//             child: LinearProgressIndicator(
+//               value: fillRatio.clamp(0.0, 1.0),
+//               backgroundColor: _C.border,
+//               valueColor: const AlwaysStoppedAnimation(_C.darkGreen),
+//               minHeight: 8,
+//             ),
+//           ),
+//         ]),
+//       );
+//     }
+
+//     return Row(
+//       mainAxisAlignment: MainAxisAlignment.center,
+//       children: List.generate(dotCount, (i) {
+//         return AnimatedContainer(
+//           duration: 140.ms,
+//           width: max <= 7 ? 28 : 22,
+//           height: 7,
+//           margin: const EdgeInsets.symmetric(horizontal: 2),
+//           decoration: BoxDecoration(
+//               color: i < count ? _C.darkGreen : _C.border,
+//               borderRadius: BorderRadius.circular(99)),
+//         );
+//       }),
+//     );
+//   }
+// }
+
+// class _UnboundedProgress extends StatelessWidget {
+//   final int count;
+//   final String unitBn;
+//   const _UnboundedProgress({required this.count, required this.unitBn});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Row(
+//       mainAxisAlignment: MainAxisAlignment.center,
+//       children: [
+//         Icon(Icons.trending_up_rounded,
+//             color: count > 0 ? _C.darkGreen : _C.textHint, size: 16),
+//         const SizedBox(width: 6),
+//         Text(
+//             count > 0
+//                 ? '$count $unitBn যোগ করা হয়েছে'
+//                 : 'যত বেশি, তত বেশি পয়েন্ট',
+//             style: TextStyle(
+//                 color: count > 0 ? _C.darkGreen : _C.textHint,
+//                 fontSize: 11,
+//                 fontWeight: FontWeight.w500)),
+//       ],
+//     );
+//   }
+// }
+
+// class _StepBtn extends StatelessWidget {
+//   final IconData icon;
+//   final VoidCallback? onTap;
+//   const _StepBtn({required this.icon, this.onTap});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return GestureDetector(
+//       onTap: onTap,
+//       child: Container(
+//         width: 52,
+//         height: 52,
+//         decoration: BoxDecoration(
+//             color: onTap != null ? _C.greenLight : _C.pageBg,
+//             borderRadius: BorderRadius.circular(14),
+//             border: Border.all(
+//                 color: onTap != null ? _C.green.withOpacity(0.3) : _C.border,
+//                 width: 0.5)),
+//         child: Icon(icon,
+//             color: onTap != null ? _C.darkGreen : _C.textHint, size: 24),
+//       ),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // BOTTOM SAVE BAR
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _BottomSaveBar extends StatelessWidget {
+//   final bool isNew, saving;
+//   final int points, completed;
+//   final VoidCallback onSave, onCancel;
+
+//   const _BottomSaveBar({
+//     required this.isNew,
+//     required this.saving,
+//     required this.points,
+//     required this.completed,
+//     required this.onSave,
+//     required this.onCancel,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       padding: EdgeInsets.fromLTRB(
+//           16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+//       decoration: const BoxDecoration(
+//         color: _C.cardBg,
+//         border: Border(top: BorderSide(color: _C.border, width: 0.5)),
+//       ),
+//       child: Row(children: [
+//         GestureDetector(
+//           onTap: onCancel,
+//           child: Container(
+//             width: 50,
+//             height: 52,
+//             decoration: BoxDecoration(
+//                 color: _C.pageBg,
+//                 borderRadius: BorderRadius.circular(14),
+//                 border: Border.all(color: _C.border, width: 0.5)),
+//             child: const Icon(Icons.close_rounded,
+//                 color: _C.textSecondary, size: 20),
+//           ),
+//         ),
+//         const SizedBox(width: 10),
+//         Expanded(
+//           child: GestureDetector(
+//             onTap: saving ? null : onSave,
+//             child: AnimatedContainer(
+//               duration: 160.ms,
+//               height: 52,
+//               decoration: BoxDecoration(
+//                   color: saving ? _C.darkGreen.withOpacity(0.7) : _C.darkGreen,
+//                   borderRadius: BorderRadius.circular(14)),
+//               child: Row(
+//                 mainAxisAlignment: MainAxisAlignment.center,
+//                 children: [
+//                   if (saving)
+//                     const SizedBox(
+//                         width: 18,
+//                         height: 18,
+//                         child: CircularProgressIndicator(
+//                             color: Colors.white, strokeWidth: 2))
+//                   else ...[
+//                     Icon(isNew ? Icons.save_rounded : Icons.check_rounded,
+//                         color: Colors.white, size: 18),
+//                     const SizedBox(width: 8),
+//                     Text(
+//                         isNew
+//                             ? 'সেভ করুন  ($points pts)'
+//                             : 'আপডেট করুন  ($points pts)',
+//                         style: const TextStyle(
+//                             color: Colors.white,
+//                             fontWeight: FontWeight.w700,
+//                             fontSize: 14)),
+//                   ],
+//                 ],
+//               ),
+//             ),
+//           ),
+//         ),
+//       ]),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // SHARED SMALL WIDGETS
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _AmalIconBadge extends StatelessWidget {
+//   final IconData icon;
+//   final bool active;
+//   final Color activeColor;
+//   const _AmalIconBadge(
+//       {required this.icon, required this.active, required this.activeColor});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return AnimatedContainer(
+//       duration: 180.ms,
+//       width: 38,
+//       height: 38,
+//       decoration: BoxDecoration(
+//           color: active ? activeColor.withOpacity(0.1) : _C.pageBg,
+//           borderRadius: BorderRadius.circular(10),
+//           border: Border.all(
+//               color: active ? activeColor.withOpacity(0.25) : _C.border,
+//               width: 0.5)),
+//       child: Icon(icon, size: 18, color: active ? activeColor : _C.textHint),
+//     );
+//   }
+// }
+
+// class _PtsTag extends StatelessWidget {
+//   final int pts, maxPts;
+//   final bool active;
+//   const _PtsTag(
+//       {required this.pts, required this.maxPts, required this.active});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return AnimatedContainer(
+//       duration: 180.ms,
+//       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+//       decoration: BoxDecoration(
+//           color: active ? _C.greenLight : _C.pageBg,
+//           borderRadius: BorderRadius.circular(20),
+//           border: Border.all(
+//               color: active ? _C.green.withOpacity(0.3) : _C.border,
+//               width: 0.5)),
+//       child: Text(active ? '+$pts pts' : '$maxPts pts',
+//           style: TextStyle(
+//               fontSize: 10.5,
+//               fontWeight: FontWeight.w700,
+//               color: active ? _C.darkGreen : _C.textHint)),
+//     );
+//   }
+// }
+
+// class _CounterPtsTag extends StatelessWidget {
+//   final int current;
+//   final int? max;
+//   final bool active;
+//   const _CounterPtsTag({required this.current, this.max, required this.active});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final label = active
+//         ? (max != null ? '+$current / $max pts' : '+$current pts')
+//         : (max != null ? 'max $max pts' : '∞ pts');
+
+//     return AnimatedContainer(
+//       duration: 180.ms,
+//       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+//       decoration: BoxDecoration(
+//           color: active ? _C.greenLight : _C.pageBg,
+//           borderRadius: BorderRadius.circular(20),
+//           border: Border.all(
+//               color: active ? _C.green.withOpacity(0.3) : _C.border,
+//               width: 0.5)),
+//       child: Text(label,
+//           style: TextStyle(
+//               fontSize: 10.5,
+//               fontWeight: FontWeight.w700,
+//               color: active ? _C.darkGreen : _C.textHint)),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // LOCAL ITEM MODEL
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _LocalItem {
+//   final String categoryId;
+//   final int basePoints, congPoints;
+//   final bool isExemptDuringPeriod;
+//   final bool isPrayer;
+//   final bool isFard; // ← from backend
+//   final AmalInputType inputType;
+//   final double? pointsPerUnit;
+//   final num? maxValue;
+//   bool completed;
+//   bool isExempted; // ← true when female + exemptDay + isFard
+//   PrayerMode? prayerMode;
+//   int count;
+
+//   _LocalItem({
+//     required this.categoryId,
+//     required this.isPrayer,
+//     required this.isFard,
+//     required this.isExemptDuringPeriod,
+//     required this.inputType,
+//     required this.basePoints,
+//     required this.congPoints,
+//     required this.completed,
+//     this.pointsPerUnit,
+//     this.maxValue,
+//     this.prayerMode,
+//     this.count = 0,
+//     this.isExempted = false,
+//   });
+
+//   int get points {
+//     // Exempted items always return 0 points
+//     if (isExempted) return 0;
+
+//     if (isPrayer) {
+//       if (prayerMode == PrayerMode.congregation) return congPoints;
+//       if (prayerMode == PrayerMode.solo) return basePoints;
+//       return 0;
+//     }
+//     if (inputType == AmalInputType.counter) {
+//       return (count * (pointsPerUnit ?? basePoints.toDouble())).round();
+//     }
+//     if (!completed) return 0;
+//     return basePoints;
+//   }
+// }
+// import 'package:amal_tracker/features/auth/providers/provider_reset.dart';
+// import 'package:amal_tracker/features/auth/providers/auth_provider.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
+// import 'package:flutter_animate/flutter_animate.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import '../providers/tracker_provider.dart';
+// import '../models/tracker_model.dart';
+// import '../../../core/constants/app_constants.dart';
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // DESIGN TOKENS
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _C {
+//   static const pageBg = Color(0xFFF4F6F1);
+//   static const cardBg = Color(0xFFFFFFFF);
+//   static const darkGreen = Color(0xFF0E3D22);
+//   static const midGreen = Color(0xFF1B7045);
+//   static const gold = Color(0xFFD4A843);
+//   static const goldLight = Color(0xFFFFF3E0);
+//   static const green = Color(0xFF16A34A);
+//   static const greenLight = Color(0xFFE8F5EE);
+//   static const amber = Color(0xFFFF6B35);
+//   static const amberLight = Color(0xFFFFF3E0);
+//   static const purple = Color(0xFF7C3AED);
+//   static const purpleLight = Color(0xFFEDE9FE);
+//   static const red = Color(0xFFEF4444);
+//   static const redLight = Color(0xFFFEE2E2);
+//   static const blue = Color(0xFF0891B2);
+//   static const blueLight = Color(0xFFE0F2FE);
+//   static const textPrimary = Color(0xFF0A1A0F);
+//   static const textSecondary = Color(0xFF6B7C6E);
+//   static const textHint = Color(0xFFABBAAE);
+//   static const border = Color(0xFFE4EAE4);
+//   static const borderMid = Color(0xFFD0DAD2);
+//   static const success = Color(0xFF16A34A);
+//   static const maafBg = Color(0xFFE8F5EE);
+//   static const maafText = Color(0xFF1B7045);
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // HELPERS
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// String _unitLabelBn(String? unit) {
+//   switch (unit) {
+//     case 'ayah':
+//       return 'আয়াত';
+//     case 'day':
+//       return 'দিন';
+//     case 'person':
+//       return 'জন';
+//     case 'minute':
+//       return 'মিনিট';
+//     case 'time':
+//       return 'বার';
+//     case 'rakaat':
+//       return 'রাকাত';
+//     default:
+//       return unit ?? 'টি';
+//   }
+// }
+
+// // ── Prayer card routing logic (driven purely by existing JSON fields) ─────────
+// //
+// // congregationPoints != null  →  ফরজ নামাজ  → congregation/solo/missed card
+// // congregationPoints == null
+// //   + inputType == counter    →  নফল (witr/tahajjud/ishraq/duha) → counter card
+// //   + inputType == binary     →  সুন্নত fixed (fajr_sunnah, sunnah_muakkadah, juma, travel_salat)
+// //                                → simple toggle card
+// //
+// // Witr   → unit == 'rakaat' + maxValue == 9  → odd steps  (1,3,5,7,9)
+// // Others → unit == 'rakaat' + maxValue==null → even steps (2,4,6,8…)
+
+// bool _isWitr(AmalCategory cat) =>
+//     cat.key == 'witr'; // or: cat.unit == 'rakaat' && cat.maxValue == 9
+
+// bool _isEvenRakaat(AmalCategory cat) =>
+//     cat.inputType == AmalInputType.counter &&
+//     cat.unit == 'rakaat' &&
+//     cat.maxValue == null;
+
+// // Step size for +/- buttons
+// int _stepFor(AmalCategory cat) {
+//   if (_isWitr(cat)) return 2;
+//   if (_isEvenRakaat(cat)) return 2;
+//   return 1;
+// }
+
+// // Minimum value shown in counter (0 = "not done")
+// int _minFor(AmalCategory cat) {
+//   if (cat.minValue != null) return cat.minValue!.toInt();
+//   return 0;
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // SHEET ROOT
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class DailyEntrySheet extends ConsumerStatefulWidget {
+//   final String dateStr;
+//   final Map<String, List<AmalCategory>> catsBySection;
+//   final DailyEntryState existingState;
+//   final bool isNew;
+
+//   const DailyEntrySheet({
+//     super.key,
+//     required this.dateStr,
+//     required this.catsBySection,
+//     required this.existingState,
+//     required this.isNew,
+//   });
+
+//   @override
+//   ConsumerState<DailyEntrySheet> createState() => _DailyEntrySheetState();
+// }
+
+// class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
+//   late Map<String, _LocalItem> _localItems;
+//   bool _saving = false;
+//   int _activeSection = 0;
+//   bool _isExemptDay = false;
+//   bool _isFemale = false;
+
+//   static const _sectionOrder = [
+//     'salat',
+//     'sunnah_nafl',
+//     'dhikr_tilawat',
+//     'daily_habits',
+//     'weekly',
+//     'special_dhulhijja',
+//     'social',
+//   ];
+
+//   static const _sectionIcons = <String, IconData>{
+//     'salat': Icons.mosque_rounded,
+//     'sunnah_nafl': Icons.auto_awesome_rounded,
+//     'dhikr_tilawat': Icons.menu_book_rounded,
+//     'daily_habits': Icons.self_improvement_rounded,
+//     'weekly': Icons.date_range_rounded,
+//     'special_dhulhijja': Icons.star_rounded,
+//     'social': Icons.people_rounded,
+//   };
+
+//   List<String> get _activeSections => _sectionOrder
+//       .where((s) => (widget.catsBySection[s] ?? []).isNotEmpty)
+//       .toList();
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     final user = ref.read(currentUserProvider);
+//     _isFemale = (user?.gender?.toLowerCase() == 'female');
+//     _isExemptDay = widget.existingState.entry?.isExemptDay ?? false;
+//     _initLocalItems();
+//   }
+
+//   void _initLocalItems() {
+//     _localItems = {};
+//     final existing = widget.existingState.effectiveEntries;
+
+//     for (final cats in widget.catsBySection.values) {
+//       for (final cat in cats) {
+//         final prev = existing[cat.id];
+//         final exempted = _isFemale && _isExemptDay && cat.isExemptDuringPeriod;
+
+//         _localItems[cat.id] = _LocalItem(
+//           cat: cat,
+//           completed: exempted ? false : (prev?.completed ?? false),
+//           prayerMode: exempted ? PrayerMode.missed : prev?.prayerMode,
+//           count: exempted ? 0 : (prev?.count ?? 0),
+//           isExempted: exempted,
+//         );
+//       }
+//     }
+//   }
+
+//   // ── Exempt day toggle ──────────────────────────────────────────────────────
+
+//   void _toggleExemptDay(bool val) {
+//     setState(() {
+//       _isExemptDay = val;
+//       for (final item in _localItems.values) {
+//         if (item.cat.isExemptDuringPeriod) {
+//           item.isExempted = val;
+//           if (val) {
+//             item.completed = false;
+//             item.prayerMode = PrayerMode.missed;
+//             item.count = 0;
+//           } else {
+//             item.isExempted = false;
+//           }
+//         }
+//       }
+//     });
+//     HapticFeedback.mediumImpact();
+//   }
+
+//   // ── Item callbacks ─────────────────────────────────────────────────────────
+
+//   void _toggleItem(String id, bool value) {
+//     setState(() {
+//       final item = _localItems[id]!;
+//       if (item.isExempted) return;
+//       item.completed = value;
+//       if (!value) {
+//         item.prayerMode = item.cat.isPrayer ? PrayerMode.missed : null;
+//         item.count = 0;
+//       } else if (item.cat.isPrayer && item.prayerMode == null) {
+//         item.prayerMode = PrayerMode.congregation;
+//       }
+//     });
+//     HapticFeedback.selectionClick();
+//   }
+
+//   void _setPrayerMode(String id, PrayerMode mode) {
+//     setState(() {
+//       final item = _localItems[id]!;
+//       if (item.isExempted) return;
+//       item.prayerMode = mode;
+//       item.completed = mode != PrayerMode.missed;
+//     });
+//     HapticFeedback.selectionClick();
+//   }
+
+//   /// Called by counter cards with the raw new count value.
+//   /// Applies odd-snap for witr and even-snap for rakaat-based nafl.
+//   void _setCount(String id, int rawCount) {
+//     setState(() {
+//       final item = _localItems[id]!;
+//       if (item.isExempted) return;
+
+//       final cat = item.cat;
+//       final max = cat.maxValue?.toInt();
+//       final min = _minFor(cat);
+//       int snapped = rawCount;
+
+//       if (rawCount > 0 && cat.unit == 'rakaat') {
+//         if (_isWitr(cat)) {
+//           // Snap to nearest odd: 1,3,5,7,9
+//           snapped = rawCount.isEven ? rawCount - 1 : rawCount;
+//           snapped = snapped.clamp(1, max ?? 9);
+//         } else if (_isEvenRakaat(cat)) {
+//           // Snap to nearest even: 2,4,6,8…
+//           snapped = rawCount.isOdd ? rawCount - 1 : rawCount;
+//           snapped = snapped.clamp(min > 0 ? min : 2, max ?? 9999);
+//         }
+//       }
+
+//       item.count = max != null ? snapped.clamp(0, max) : snapped.clamp(0, 9999);
+//       item.completed = item.count > 0;
+//     });
+//     HapticFeedback.lightImpact();
+//   }
+
+//   // ── Totals ─────────────────────────────────────────────────────────────────
+
+//   int get _totalPoints => _localItems.values.fold(0, (s, i) => s + i.points);
+
+//   int get _completedCount =>
+//       _localItems.values.where((i) => i.completed && !i.isExempted).length;
+
+//   // ── Save ──────────────────────────────────────────────────────────────────
+
+//   Future<void> _save() async {
+//     setState(() => _saving = true);
+
+//     final updates = _localItems.values
+//         .map((item) => EntryUpdate(
+//               categoryId: item.cat.id,
+//               completed: item.isExempted ? false : item.completed,
+//               prayerMode: item.isExempted ? PrayerMode.missed : item.prayerMode,
+//               count: item.isExempted ? 0 : item.count,
+//             ))
+//         .toList();
+
+//     final ok = await ref
+//         .read(dailyEntryProvider(widget.dateStr).notifier)
+//         .saveEntryFromUpdates(updates, isExemptDay: _isExemptDay);
+
+//     if (ok && mounted) {
+//       final parts = widget.dateStr.split('-');
+//       refreshAfterEntryUpdate(
+//         ref,
+//         year: int.parse(parts[0]),
+//         month: int.parse(parts[1]),
+//         specificDateStr: widget.dateStr,
+//       );
+//     }
+
+//     setState(() => _saving = false);
+//     if (!mounted) return;
+//     Navigator.pop(context);
+
+//     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+//       content: Row(children: [
+//         Icon(
+//           ok ? Icons.check_circle_rounded : Icons.error_outline_rounded,
+//           color: Colors.white,
+//         ),
+//         const SizedBox(width: 10),
+//         Text(ok
+//             ? (widget.isNew
+//                 ? 'আমল সফলভাবে সেভ হয়েছে! 🌟'
+//                 : 'আমল আপডেট হয়েছে! ✨')
+//             : 'সেভ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।'),
+//       ]),
+//       backgroundColor: ok ? _C.success : _C.red,
+//       margin: const EdgeInsets.all(16),
+//       behavior: SnackBarBehavior.floating,
+//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+//       duration: const Duration(seconds: 2),
+//     ));
+//   }
+
+//   // ── Build ─────────────────────────────────────────────────────────────────
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final size = MediaQuery.of(context).size;
+//     final isTablet = size.width > 600;
+//     final sections = _activeSections;
+
+//     return Container(
+//       height: size.height * 0.96,
+//       decoration: const BoxDecoration(
+//         color: _C.pageBg,
+//         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+//       ),
+//       child: Column(children: [
+//         _SheetHeader(
+//           isNew: widget.isNew,
+//           dateStr: widget.dateStr,
+//           points: _totalPoints,
+//           completed: _completedCount,
+//           saving: _saving,
+//           onClose: () => Navigator.pop(context),
+//           onSave: _save,
+//         ),
+//         _SectionTabBar(
+//           sections: sections,
+//           icons: _sectionIcons,
+//           activeIndex: _activeSection,
+//           catsBySection: widget.catsBySection,
+//           localItems: _localItems,
+//           onTap: (i) => setState(() => _activeSection = i),
+//         ),
+//         Expanded(
+//           child: AnimatedSwitcher(
+//             duration: 220.ms,
+//             transitionBuilder: (child, anim) => FadeTransition(
+//               opacity: CurvedAnimation(parent: anim, curve: Curves.easeOut),
+//               child: child,
+//             ),
+//             child: _SectionForm(
+//               key: ValueKey(_activeSection),
+//               sectionKey: sections[_activeSection],
+//               categories: widget.catsBySection[sections[_activeSection]] ?? [],
+//               localItems: _localItems,
+//               isTablet: isTablet,
+//               isFemale: _isFemale,
+//               isExemptDay: _isExemptDay,
+//               onToggle: _toggleItem,
+//               onPrayerMode: _setPrayerMode,
+//               onCount: _setCount,
+//               onExemptToggle: _toggleExemptDay,
+//             ),
+//           ),
+//         ),
+//         _BottomSaveBar(
+//           isNew: widget.isNew,
+//           saving: _saving,
+//           points: _totalPoints,
+//           completed: _completedCount,
+//           onSave: _save,
+//           onCancel: () => Navigator.pop(context),
+//         ),
+//       ]),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // SHEET HEADER
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _SheetHeader extends StatelessWidget {
+//   final bool isNew, saving;
+//   final String dateStr;
+//   final int points, completed;
+//   final VoidCallback onClose, onSave;
+
+//   const _SheetHeader({
+//     required this.isNew,
+//     required this.saving,
+//     required this.dateStr,
+//     required this.points,
+//     required this.completed,
+//     required this.onClose,
+//     required this.onSave,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final parts = dateStr.split('-');
+//     final d = int.parse(parts[2]);
+//     final m = int.parse(parts[1]);
+//     final y = int.parse(parts[0]);
+//     final month = AppConstants.bengaliMonths[m - 1];
+
+//     return Container(
+//       decoration: const BoxDecoration(
+//         color: _C.darkGreen,
+//         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+//       ),
+//       child: Stack(children: [
+//         Positioned(
+//             top: -30,
+//             right: -30,
+//             child: Container(
+//                 width: 100,
+//                 height: 100,
+//                 decoration: BoxDecoration(
+//                     shape: BoxShape.circle,
+//                     color: Colors.white.withOpacity(0.04)))),
+//         Positioned(
+//             bottom: 0,
+//             left: 10,
+//             child: Container(
+//                 width: 60,
+//                 height: 60,
+//                 decoration: BoxDecoration(
+//                     shape: BoxShape.circle,
+//                     color: Colors.white.withOpacity(0.03)))),
+//         Column(mainAxisSize: MainAxisSize.min, children: [
+//           Padding(
+//             padding: const EdgeInsets.only(top: 12, bottom: 4),
+//             child: Center(
+//               child: Container(
+//                   width: 40,
+//                   height: 4,
+//                   decoration: BoxDecoration(
+//                       color: Colors.white.withOpacity(0.25),
+//                       borderRadius: BorderRadius.circular(99))),
+//             ),
+//           ),
+//           Padding(
+//             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+//             child: Row(children: [
+//               Container(
+//                 width: 38,
+//                 height: 38,
+//                 decoration: BoxDecoration(
+//                     color: Colors.white.withOpacity(0.12),
+//                     borderRadius: BorderRadius.circular(11),
+//                     border: Border.all(
+//                         color: Colors.white.withOpacity(0.18), width: 0.5)),
+//                 child: Icon(isNew ? Icons.add_rounded : Icons.edit_rounded,
+//                     color: Colors.white, size: 18),
+//               ),
+//               const SizedBox(width: 10),
+//               Expanded(
+//                   child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   Text(isNew ? 'আমল যোগ করুন' : 'আমল সম্পাদনা করুন',
+//                       style: const TextStyle(
+//                           color: Colors.white,
+//                           fontWeight: FontWeight.w800,
+//                           fontSize: 16,
+//                           letterSpacing: -0.3)),
+//                   Text('$d $month $y',
+//                       style: TextStyle(
+//                           color: Colors.white.withOpacity(0.5),
+//                           fontSize: 11,
+//                           fontWeight: FontWeight.w500)),
+//                 ],
+//               )),
+//               GestureDetector(
+//                 onTap: onClose,
+//                 child: Container(
+//                   width: 34,
+//                   height: 34,
+//                   decoration: BoxDecoration(
+//                       color: Colors.white.withOpacity(0.1),
+//                       borderRadius: BorderRadius.circular(10),
+//                       border: Border.all(
+//                           color: Colors.white.withOpacity(0.15), width: 0.5)),
+//                   child: Icon(Icons.close_rounded,
+//                       color: Colors.white.withOpacity(0.7), size: 18),
+//                 ),
+//               ),
+//             ]),
+//           ),
+//           const SizedBox(height: 12),
+//           Padding(
+//             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+//             child: Container(
+//               padding: const EdgeInsets.all(13),
+//               decoration: BoxDecoration(
+//                   color: Colors.white.withOpacity(0.09),
+//                   borderRadius: BorderRadius.circular(14),
+//                   border: Border.all(
+//                       color: Colors.white.withOpacity(0.18), width: 0.5)),
+//               child: Row(children: [
+//                 Container(
+//                   width: 44,
+//                   height: 44,
+//                   decoration: BoxDecoration(
+//                       color: _C.gold, borderRadius: BorderRadius.circular(12)),
+//                   child: const Icon(Icons.stars_rounded,
+//                       color: Colors.white, size: 24),
+//                 ),
+//                 const SizedBox(width: 12),
+//                 Expanded(
+//                     child: Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     Text('লাইভ পয়েন্ট',
+//                         style: TextStyle(
+//                             color: Colors.white.withOpacity(0.5),
+//                             fontSize: 10)),
+//                     const SizedBox(height: 1),
+//                     Row(children: [
+//                       Text('$points',
+//                           style: const TextStyle(
+//                               color: Colors.white,
+//                               fontWeight: FontWeight.w900,
+//                               fontSize: 22,
+//                               letterSpacing: -0.4,
+//                               height: 1)),
+//                       Text(' pts',
+//                           style: TextStyle(
+//                               color: Colors.white.withOpacity(0.5),
+//                               fontSize: 12)),
+//                     ]),
+//                   ],
+//                 )),
+//                 Container(
+//                   padding:
+//                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+//                   decoration: BoxDecoration(
+//                       color: Colors.white.withOpacity(0.12),
+//                       borderRadius: BorderRadius.circular(20)),
+//                   child: Row(mainAxisSize: MainAxisSize.min, children: [
+//                     Icon(Icons.check_circle_rounded,
+//                         color: Colors.white.withOpacity(0.7), size: 12),
+//                     const SizedBox(width: 4),
+//                     Text('$completed টি সম্পন্ন',
+//                         style: const TextStyle(
+//                             color: Colors.white,
+//                             fontSize: 11,
+//                             fontWeight: FontWeight.w600)),
+//                   ]),
+//                 ),
+//               ]),
+//             ),
+//           ),
+//         ]),
+//       ]),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // SECTION TAB BAR
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _SectionTabBar extends StatelessWidget {
+//   final List<String> sections;
+//   final Map<String, IconData> icons;
+//   final int activeIndex;
+//   final Map<String, List<AmalCategory>> catsBySection;
+//   final Map<String, _LocalItem> localItems;
+//   final ValueChanged<int> onTap;
+
+//   const _SectionTabBar({
+//     required this.sections,
+//     required this.icons,
+//     required this.activeIndex,
+//     required this.catsBySection,
+//     required this.localItems,
+//     required this.onTap,
+//   });
+
+//   int _completedInSection(String sec) {
+//     final cats = catsBySection[sec] ?? [];
+//     return cats
+//         .where((c) =>
+//             localItems[c.id]?.completed == true &&
+//             localItems[c.id]?.isExempted == false)
+//         .length;
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       color: _C.cardBg,
+//       child: Column(children: [
+//         SingleChildScrollView(
+//           scrollDirection: Axis.horizontal,
+//           padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+//           child: Row(
+//             children: sections.asMap().entries.map((e) {
+//               final i = e.key;
+//               final sec = e.value;
+//               final label = AppConstants.sectionLabels[sec]?['bn'] ?? sec;
+//               final icon = icons[sec] ?? Icons.circle;
+//               final done = _completedInSection(sec);
+//               final total = (catsBySection[sec] ?? []).length;
+//               final isActive = i == activeIndex;
+//               final allDone = done == total && total > 0;
+
+//               return GestureDetector(
+//                 onTap: () => onTap(i),
+//                 child: AnimatedContainer(
+//                   duration: 180.ms,
+//                   margin: const EdgeInsets.only(right: 8),
+//                   padding:
+//                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+//                   decoration: BoxDecoration(
+//                     color: isActive ? _C.darkGreen : _C.pageBg,
+//                     borderRadius: BorderRadius.circular(99),
+//                     border: Border.all(
+//                       color: isActive
+//                           ? _C.darkGreen
+//                           : allDone
+//                               ? _C.green.withOpacity(0.4)
+//                               : _C.border,
+//                       width: 0.5,
+//                     ),
+//                   ),
+//                   child: Row(mainAxisSize: MainAxisSize.min, children: [
+//                     Icon(icon,
+//                         size: 12,
+//                         color: isActive
+//                             ? Colors.white
+//                             : allDone
+//                                 ? _C.green
+//                                 : _C.textSecondary),
+//                     const SizedBox(width: 5),
+//                     Text(label,
+//                         style: TextStyle(
+//                             fontSize: 11,
+//                             fontWeight:
+//                                 isActive ? FontWeight.w700 : FontWeight.w500,
+//                             color: isActive
+//                                 ? Colors.white
+//                                 : allDone
+//                                     ? _C.green
+//                                     : _C.textSecondary)),
+//                     if (done > 0) ...[
+//                       const SizedBox(width: 6),
+//                       Container(
+//                         padding: const EdgeInsets.symmetric(
+//                             horizontal: 6, vertical: 2),
+//                         decoration: BoxDecoration(
+//                             color: isActive
+//                                 ? Colors.white.withOpacity(0.2)
+//                                 : allDone
+//                                     ? _C.greenLight
+//                                     : _C.pageBg,
+//                             borderRadius: BorderRadius.circular(20)),
+//                         child: Text('$done/$total',
+//                             style: TextStyle(
+//                                 fontSize: 9,
+//                                 fontWeight: FontWeight.w700,
+//                                 color: isActive
+//                                     ? Colors.white
+//                                     : allDone
+//                                         ? _C.green
+//                                         : _C.textHint)),
+//                       ),
+//                     ],
+//                   ]),
+//                 ),
+//               );
+//             }).toList(),
+//           ),
+//         ),
+//         const Divider(height: 0.5, thickness: 0.5, color: _C.border),
+//       ]),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // EXEMPT DAY BANNER
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _ExemptDayBanner extends StatelessWidget {
+//   final bool isExemptDay;
+//   final ValueChanged<bool> onToggle;
+
+//   const _ExemptDayBanner({
+//     required this.isExemptDay,
+//     required this.onToggle,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return GestureDetector(
+//       onTap: () => onToggle(!isExemptDay),
+//       child: AnimatedContainer(
+//         duration: 200.ms,
+//         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+//         decoration: BoxDecoration(
+//           color: isExemptDay
+//               ? _C.midGreen.withOpacity(0.08)
+//               : const Color(0xFFFFF8EE),
+//           borderRadius: BorderRadius.circular(14),
+//           border: Border.all(
+//             color: isExemptDay
+//                 ? _C.midGreen.withOpacity(0.35)
+//                 : _C.gold.withOpacity(0.5),
+//             width: 1,
+//           ),
+//         ),
+//         child: Row(children: [
+//           AnimatedContainer(
+//             duration: 200.ms,
+//             width: 42,
+//             height: 42,
+//             decoration: BoxDecoration(
+//               color: isExemptDay
+//                   ? _C.midGreen.withOpacity(0.12)
+//                   : _C.gold.withOpacity(0.15),
+//               borderRadius: BorderRadius.circular(11),
+//             ),
+//             child: const Center(
+//               child: Text('🌸', style: TextStyle(fontSize: 20)),
+//             ),
+//           ),
+//           const SizedBox(width: 12),
+//           Expanded(
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Text(
+//                   isExemptDay ? 'আজ মাহলির দিন' : 'আজ কি মাহলি আছেন?',
+//                   style: TextStyle(
+//                     color: isExemptDay ? _C.darkGreen : _C.textPrimary,
+//                     fontWeight: FontWeight.w700,
+//                     fontSize: 13,
+//                   ),
+//                 ),
+//                 const SizedBox(height: 2),
+//                 Text(
+//                   isExemptDay
+//                       ? 'ফরজ আমলগুলো মাফ হিসেবে চিহ্নিত হয়েছে'
+//                       : 'চালু করলে ফরজ আমলগুলো মাফ ধরা হবে',
+//                   style: TextStyle(
+//                     color: isExemptDay ? _C.midGreen : _C.textSecondary,
+//                     fontSize: 11,
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ),
+//           const SizedBox(width: 10),
+//           _ToggleSwitch(
+//             value: isExemptDay,
+//             onChanged: onToggle,
+//             activeColor: _C.midGreen,
+//           ),
+//         ]),
+//       ),
+//     ).animate().fadeIn(duration: 220.ms).slideY(begin: -0.04);
+//   }
+// }
+
+// class _ToggleSwitch extends StatelessWidget {
+//   final bool value;
+//   final ValueChanged<bool> onChanged;
+//   final Color activeColor;
+
+//   const _ToggleSwitch({
+//     required this.value,
+//     required this.onChanged,
+//     required this.activeColor,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return GestureDetector(
+//       onTap: () => onChanged(!value),
+//       child: AnimatedContainer(
+//         duration: 200.ms,
+//         curve: Curves.easeInOut,
+//         width: 46,
+//         height: 26,
+//         padding: const EdgeInsets.all(3),
+//         decoration: BoxDecoration(
+//           color: value ? activeColor : _C.borderMid,
+//           borderRadius: BorderRadius.circular(99),
+//         ),
+//         child: AnimatedAlign(
+//           duration: 200.ms,
+//           curve: Curves.easeInOut,
+//           alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+//           child: Container(
+//             width: 20,
+//             height: 20,
+//             decoration: const BoxDecoration(
+//               color: Colors.white,
+//               shape: BoxShape.circle,
+//             ),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // SECTION FORM  ← main routing logic lives here
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _SectionForm extends StatelessWidget {
+//   final String sectionKey;
+//   final List<AmalCategory> categories;
+//   final Map<String, _LocalItem> localItems;
+//   final bool isTablet;
+//   final bool isFemale;
+//   final bool isExemptDay;
+//   final void Function(String, bool) onToggle;
+//   final void Function(String, PrayerMode) onPrayerMode;
+//   final void Function(String, int) onCount;
+//   final ValueChanged<bool> onExemptToggle;
+
+//   const _SectionForm({
+//     super.key,
+//     required this.sectionKey,
+//     required this.categories,
+//     required this.localItems,
+//     required this.isTablet,
+//     required this.isFemale,
+//     required this.isExemptDay,
+//     required this.onToggle,
+//     required this.onPrayerMode,
+//     required this.onCount,
+//     required this.onExemptToggle,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     if (categories.isEmpty) {
+//       return const Center(
+//         child: Text('এই বিভাগে কোনো আমল নেই',
+//             style: TextStyle(color: _C.textHint, fontSize: 13)),
+//       );
+//     }
+
+//     final hPad =
+//         isTablet ? (MediaQuery.of(context).size.width - 600) / 2 + 16.0 : 16.0;
+
+//     final showBanner = isFemale && sectionKey == 'salat';
+//     final itemCount = categories.length + (showBanner ? 1 : 0);
+
+//     return ListView.separated(
+//       padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 14),
+//       itemCount: itemCount,
+//       separatorBuilder: (_, __) => const SizedBox(height: 10),
+//       itemBuilder: (ctx, i) {
+//         if (showBanner && i == 0) {
+//           return _ExemptDayBanner(
+//             isExemptDay: isExemptDay,
+//             onToggle: onExemptToggle,
+//           );
+//         }
+
+//         final catIndex = showBanner ? i - 1 : i;
+//         final cat = categories[catIndex];
+//         final item = localItems[cat.id];
+//         final isExempted = item?.isExempted ?? false;
+
+//         // ── Card routing ─────────────────────────────────────────────────────
+//         //
+//         // Priority:
+//         //  1. Exempted (female + period day) → exempted card (no interaction)
+//         //  2. isPrayer + congregationPoints != null → ফরজ → congregation card
+//         //  3. isPrayer + inputType == counter → নফল variable rakaat → counter
+//         //  4. isPrayer + inputType == binary + no congregationPoints → সুন্নত fixed → toggle
+//         //  5. !isPrayer + inputType == counter → dhikr/fasting counter
+//         //  6. !isPrayer + inputType == binary → simple toggle
+//         // ────────────────────────────────────────────────────────────────────
+
+//         late Widget card;
+
+//         if (cat.isPrayer) {
+//           if (isExempted) {
+//             card = _ExemptedPrayerCard(cat: cat);
+//           } else if (cat.congregationPoints != null) {
+//             // ফরজ নামাজ — congregation / solo / missed
+//             card = _PrayerFormCard(
+//               cat: cat,
+//               item: item,
+//               onMode: (mode) => onPrayerMode(cat.id, mode),
+//             );
+//           } else if (cat.inputType == AmalInputType.counter) {
+//             // নফল variable rakaat (witr, tahajjud, ishraq, duha)
+//             card = _CounterFormCard(
+//               cat: cat,
+//               item: item,
+//               onCount: (c) => onCount(cat.id, c),
+//             );
+//           } else {
+//             // সুন্নত fixed rakaat (fajr_sunnah, sunnah_muakkadah, juma, travel_salat)
+//             card = _ToggleFormCard(
+//               cat: cat,
+//               item: item,
+//               onToggle: (v) => onToggle(cat.id, v),
+//             );
+//           }
+//         } else if (cat.inputType == AmalInputType.counter) {
+//           card = _CounterFormCard(
+//             cat: cat,
+//             item: item,
+//             onCount: (c) => onCount(cat.id, c),
+//           );
+//         } else {
+//           card = _ToggleFormCard(
+//             cat: cat,
+//             item: item,
+//             onToggle: (v) => onToggle(cat.id, v),
+//           );
+//         }
+
+//         return card
+//             .animate(delay: (catIndex * 35).ms)
+//             .fadeIn(duration: 240.ms)
+//             .slideX(begin: 0.05, curve: Curves.easeOut);
+//       },
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // EXEMPTED PRAYER CARD
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _ExemptedPrayerCard extends StatelessWidget {
+//   final AmalCategory cat;
+
+//   const _ExemptedPrayerCard({required this.cat});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       decoration: BoxDecoration(
+//         color: _C.pageBg,
+//         borderRadius: BorderRadius.circular(16),
+//         border: Border.all(color: _C.border, width: 0.5),
+//       ),
+//       child: Opacity(
+//         opacity: 0.55,
+//         child: Padding(
+//           padding: const EdgeInsets.all(14),
+//           child: Row(children: [
+//             Container(
+//               width: 38,
+//               height: 38,
+//               decoration: BoxDecoration(
+//                   color: _C.pageBg,
+//                   borderRadius: BorderRadius.circular(10),
+//                   border: Border.all(color: _C.border, width: 0.5)),
+//               child: const Icon(Icons.mosque_rounded,
+//                   color: _C.textHint, size: 18),
+//             ),
+//             const SizedBox(width: 12),
+//             Expanded(
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   Text(
+//                     cat.nameBn,
+//                     style: const TextStyle(
+//                       color: _C.textHint,
+//                       fontWeight: FontWeight.w600,
+//                       fontSize: 13,
+//                       decoration: TextDecoration.lineThrough,
+//                       decorationColor: _C.textHint,
+//                     ),
+//                   ),
+//                   Text(cat.nameEn,
+//                       style: const TextStyle(color: _C.textHint, fontSize: 11)),
+//                 ],
+//               ),
+//             ),
+//             Container(
+//               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+//               decoration: BoxDecoration(
+//                 color: _C.maafBg,
+//                 borderRadius: BorderRadius.circular(20),
+//                 border:
+//                     Border.all(color: _C.green.withOpacity(0.3), width: 0.5),
+//               ),
+//               child: const Text(
+//                 'মাফ আছে',
+//                 style: TextStyle(
+//                     fontSize: 10.5,
+//                     fontWeight: FontWeight.w700,
+//                     color: _C.maafText),
+//               ),
+//             ),
+//           ]),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // PRAYER FORM CARD  (ফরজ only — congregation / solo / missed)
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _PrayerFormCard extends StatelessWidget {
+//   final AmalCategory cat;
+//   final _LocalItem? item;
+//   final ValueChanged<PrayerMode> onMode;
+
+//   const _PrayerFormCard({
+//     required this.cat,
+//     required this.item,
+//     required this.onMode,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final mode = item?.prayerMode ?? PrayerMode.missed;
+//     final pts = item?.points ?? 0;
+
+//     final borderColor = mode == PrayerMode.congregation
+//         ? _C.green.withOpacity(0.5)
+//         : mode == PrayerMode.solo
+//             ? _C.amber.withOpacity(0.5)
+//             : _C.border;
+
+//     return Container(
+//       decoration: BoxDecoration(
+//         color: _C.cardBg,
+//         borderRadius: BorderRadius.circular(16),
+//         border: Border.all(color: borderColor, width: 1),
+//       ),
+//       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+//         Padding(
+//           padding: const EdgeInsets.fromLTRB(14, 13, 14, 11),
+//           child: Row(children: [
+//             _AmalIconBadge(
+//                 icon: Icons.mosque_rounded,
+//                 active: mode != PrayerMode.missed,
+//                 activeColor: _C.green),
+//             const SizedBox(width: 12),
+//             Expanded(
+//                 child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Text(cat.nameBn,
+//                     style: const TextStyle(
+//                         color: _C.textPrimary,
+//                         fontWeight: FontWeight.w700,
+//                         fontSize: 13)),
+//                 Text(cat.nameEn,
+//                     style:
+//                         const TextStyle(color: _C.textSecondary, fontSize: 11)),
+//               ],
+//             )),
+//             _PtsTag(
+//                 pts: pts,
+//                 maxPts: cat.congregationPoints ?? cat.basePoints,
+//                 active: pts > 0),
+//           ]),
+//         ),
+//         const Divider(height: 0.5, thickness: 0.5, color: _C.border),
+//         const SizedBox(height: 10),
+//         Padding(
+//           padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+//           child: Row(children: [
+//             Expanded(
+//                 child: _ModeBtn(
+//                     label: 'জামাতে',
+//                     subLabel: '+${cat.congregationPoints}',
+//                     emoji: '✔',
+//                     isSelected: mode == PrayerMode.congregation,
+//                     activeColor: _C.green,
+//                     activeBg: _C.greenLight,
+//                     onTap: () => onMode(PrayerMode.congregation))),
+//             const SizedBox(width: 8),
+//             Expanded(
+//                 child: _ModeBtn(
+//                     label: 'একাকী',
+//                     subLabel: '+${cat.basePoints}',
+//                     emoji: '/',
+//                     isSelected: mode == PrayerMode.solo,
+//                     activeColor: _C.amber,
+//                     activeBg: _C.amberLight,
+//                     onTap: () => onMode(PrayerMode.solo))),
+//             const SizedBox(width: 8),
+//             Expanded(
+//                 child: _ModeBtn(
+//                     label: 'মিস',
+//                     subLabel: '+০',
+//                     emoji: '✗',
+//                     isSelected: mode == PrayerMode.missed,
+//                     activeColor: _C.textSecondary,
+//                     activeBg: _C.pageBg,
+//                     onTap: () => onMode(PrayerMode.missed))),
+//           ]),
+//         ),
+//       ]),
+//     );
+//   }
+// }
+
+// class _ModeBtn extends StatelessWidget {
+//   final String label, subLabel, emoji;
+//   final bool isSelected;
+//   final Color activeColor, activeBg;
+//   final VoidCallback onTap;
+
+//   const _ModeBtn({
+//     required this.label,
+//     required this.subLabel,
+//     required this.emoji,
+//     required this.isSelected,
+//     required this.activeColor,
+//     required this.activeBg,
+//     required this.onTap,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return GestureDetector(
+//       onTap: onTap,
+//       child: AnimatedContainer(
+//         duration: 160.ms,
+//         padding: const EdgeInsets.symmetric(vertical: 11),
+//         decoration: BoxDecoration(
+//             color: isSelected ? activeBg : _C.pageBg,
+//             borderRadius: BorderRadius.circular(12),
+//             border: Border.all(
+//                 color: isSelected ? activeColor : _C.border,
+//                 width: isSelected ? 1.5 : 0.5)),
+//         child: Column(mainAxisSize: MainAxisSize.min, children: [
+//           Text(emoji,
+//               style: TextStyle(
+//                   fontSize: 15,
+//                   fontWeight: FontWeight.w700,
+//                   color: isSelected ? activeColor : _C.textHint)),
+//           const SizedBox(height: 3),
+//           Text(label,
+//               style: TextStyle(
+//                   fontSize: 11,
+//                   fontWeight: FontWeight.w700,
+//                   color: isSelected ? activeColor : _C.textSecondary)),
+//           Text(subLabel,
+//               style: TextStyle(
+//                   fontSize: 9.5,
+//                   color:
+//                       isSelected ? activeColor.withOpacity(0.7) : _C.textHint)),
+//         ]),
+//       ),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // TOGGLE FORM CARD  (binary — সুন্নত fixed + সব non-prayer binary)
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _ToggleFormCard extends StatelessWidget {
+//   final AmalCategory cat;
+//   final _LocalItem? item;
+//   final ValueChanged<bool> onToggle;
+
+//   const _ToggleFormCard({
+//     required this.cat,
+//     required this.item,
+//     required this.onToggle,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final done = item?.completed ?? false;
+//     final pts = item?.points ?? 0;
+
+//     return GestureDetector(
+//       onTap: () => onToggle(!done),
+//       child: AnimatedContainer(
+//         duration: 160.ms,
+//         padding: const EdgeInsets.all(14),
+//         decoration: BoxDecoration(
+//             color: done ? _C.greenLight : _C.cardBg,
+//             borderRadius: BorderRadius.circular(16),
+//             border: Border.all(
+//                 color: done ? _C.green.withOpacity(0.4) : _C.border,
+//                 width: done ? 1.5 : 0.5)),
+//         child: Row(children: [
+//           AnimatedContainer(
+//             duration: 180.ms,
+//             width: 30,
+//             height: 30,
+//             decoration: BoxDecoration(
+//                 color: done ? _C.darkGreen : Colors.transparent,
+//                 borderRadius: BorderRadius.circular(8),
+//                 border: Border.all(
+//                     color: done ? _C.darkGreen : _C.borderMid, width: 1.5)),
+//             child: done
+//                 ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
+//                 : null,
+//           ),
+//           const SizedBox(width: 13),
+//           Expanded(
+//               child: Column(
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: [
+//               Text(cat.nameBn,
+//                   style: TextStyle(
+//                       color: done ? _C.darkGreen : _C.textPrimary,
+//                       fontWeight: FontWeight.w600,
+//                       fontSize: 13)),
+//               if (cat.description != null) ...[
+//                 const SizedBox(height: 2),
+//                 Text(cat.description!,
+//                     style:
+//                         const TextStyle(color: _C.textSecondary, fontSize: 11)),
+//               ],
+//             ],
+//           )),
+//           const SizedBox(width: 8),
+//           _PtsTag(pts: pts, maxPts: cat.basePoints, active: done),
+//         ]),
+//       ),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // COUNTER FORM CARD  (witr + নফল rakaat + dhikr counters)
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _CounterFormCard extends StatelessWidget {
+//   final AmalCategory cat;
+//   final _LocalItem? item;
+//   final ValueChanged<int> onCount;
+
+//   const _CounterFormCard({
+//     required this.cat,
+//     required this.item,
+//     required this.onCount,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final count = item?.count ?? 0;
+//     final pts = item?.points ?? 0;
+//     final unitBn = _unitLabelBn(cat.unit);
+//     final maxVal = cat.maxValue?.toInt();
+//     final ppu = cat.pointsPerUnit ?? cat.basePoints.toDouble();
+//     final maxPts = maxVal != null ? (maxVal * ppu).round() : null;
+//     final hasMax = maxVal != null;
+
+//     final step = _stepFor(cat);
+//     final minVal = _minFor(cat);
+//     final isWitr = _isWitr(cat);
+
+//     // For display hint
+//     final String stepHint = isWitr
+//         ? 'বেজোড় রাকাত: ১, ৩, ৫, ৭, ৯'
+//         : (cat.unit == 'rakaat' ? 'জোড় রাকাত: ২, ৪, ৬, ৮…' : '');
+
+//     return Container(
+//       decoration: BoxDecoration(
+//           color: _C.cardBg,
+//           borderRadius: BorderRadius.circular(16),
+//           border: Border.all(
+//               color: count > 0 ? _C.green.withOpacity(0.4) : _C.border,
+//               width: count > 0 ? 1.5 : 0.5)),
+//       child: Column(children: [
+//         Padding(
+//           padding: const EdgeInsets.fromLTRB(14, 13, 14, 11),
+//           child: Row(children: [
+//             _AmalIconBadge(
+//                 icon: cat.unit == 'rakaat'
+//                     ? Icons.mosque_rounded
+//                     : Icons.add_circle_outline_rounded,
+//                 active: count > 0,
+//                 activeColor: _C.darkGreen),
+//             const SizedBox(width: 12),
+//             Expanded(
+//                 child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Text(cat.nameBn,
+//                     style: const TextStyle(
+//                         color: _C.textPrimary,
+//                         fontWeight: FontWeight.w700,
+//                         fontSize: 13)),
+//                 if (cat.description != null)
+//                   Text(cat.description!,
+//                       style: const TextStyle(
+//                           color: _C.textSecondary, fontSize: 11)),
+//               ],
+//             )),
+//             _CounterPtsTag(
+//               current: pts,
+//               max: maxPts,
+//               active: count > 0,
+//             ),
+//           ]),
+//         ),
+
+//         // Step hint for rakaat cards
+//         if (stepHint.isNotEmpty)
+//           Padding(
+//             padding: const EdgeInsets.only(bottom: 8),
+//             child: Text(stepHint,
+//                 style: const TextStyle(
+//                     color: _C.textHint,
+//                     fontSize: 10,
+//                     fontWeight: FontWeight.w500)),
+//           ),
+
+//         const Divider(height: 0.5, thickness: 0.5, color: _C.border),
+//         const SizedBox(height: 20),
+
+//         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+//           _StepBtn(
+//             icon: Icons.remove_rounded,
+//             onTap: count > 0
+//                 ? () {
+//                     final next = count - step;
+//                     // If going below minVal, go to 0 (= not done)
+//                     onCount(next < minVal ? 0 : next);
+//                   }
+//                 : null,
+//           ),
+//           Container(
+//             width: 96,
+//             height: 78,
+//             margin: const EdgeInsets.symmetric(horizontal: 16),
+//             decoration: BoxDecoration(
+//                 color: count > 0 ? _C.greenLight : _C.pageBg,
+//                 borderRadius: BorderRadius.circular(16),
+//                 border: Border.all(
+//                     color: count > 0 ? _C.green.withOpacity(0.3) : _C.border,
+//                     width: 0.5)),
+//             child: Column(
+//               mainAxisAlignment: MainAxisAlignment.center,
+//               children: [
+//                 Text('$count',
+//                     style: TextStyle(
+//                         fontSize: 34,
+//                         fontWeight: FontWeight.w900,
+//                         height: 1,
+//                         color: count > 0 ? _C.darkGreen : _C.textHint)),
+//                 const SizedBox(height: 3),
+//                 Text(hasMax ? '/ $maxVal $unitBn' : unitBn,
+//                     style: TextStyle(
+//                         fontSize: 10,
+//                         color: count > 0 ? _C.textSecondary : _C.textHint)),
+//               ],
+//             ),
+//           ),
+//           _StepBtn(
+//             icon: Icons.add_rounded,
+//             onTap: (hasMax && count >= maxVal!)
+//                 ? null
+//                 : () {
+//                     // First tap: jump to minVal (e.g. 1 for witr, 2 for nafl)
+//                     final next = count == 0
+//                         ? (minVal > 0 ? minVal : step)
+//                         : count + step;
+//                     onCount(next);
+//                   },
+//           ),
+//         ]),
+
+//         const SizedBox(height: 14),
+
+//         // Progress indicator
+//         if (isWitr)
+//           Padding(
+//             padding: const EdgeInsets.only(bottom: 16),
+//             child: _WitrProgress(count: count),
+//           )
+//         else if (hasMax)
+//           Padding(
+//             padding: const EdgeInsets.only(bottom: 16),
+//             child: _BoundedProgress(count: count, max: maxVal!),
+//           )
+//         else
+//           Padding(
+//             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+//             child: _UnboundedProgress(count: count, unitBn: unitBn),
+//           ),
+
+//         Padding(
+//           padding: const EdgeInsets.only(bottom: 14),
+//           child: Container(
+//             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+//             decoration: BoxDecoration(
+//                 color: _C.pageBg,
+//                 borderRadius: BorderRadius.circular(20),
+//                 border: Border.all(color: _C.border, width: 0.5)),
+//             child: Text('প্রতি $unitBn = ${ppu.toInt()} পয়েন্ট',
+//                 style: const TextStyle(
+//                     color: _C.textSecondary,
+//                     fontSize: 10.5,
+//                     fontWeight: FontWeight.w500)),
+//           ),
+//         ),
+//       ]),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // WITR PROGRESS  (dots for 1, 3, 5, 7, 9)
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _WitrProgress extends StatelessWidget {
+//   final int count;
+//   const _WitrProgress({required this.count});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     const oddValues = [1, 3, 5, 7, 9];
+//     return Row(
+//       mainAxisAlignment: MainAxisAlignment.center,
+//       children: oddValues.map((val) {
+//         final filled = count >= val;
+//         return AnimatedContainer(
+//           duration: 140.ms,
+//           width: 28,
+//           height: 7,
+//           margin: const EdgeInsets.symmetric(horizontal: 3),
+//           decoration: BoxDecoration(
+//               color: filled ? _C.darkGreen : _C.border,
+//               borderRadius: BorderRadius.circular(99)),
+//           child: filled
+//               ? Center(
+//                   child: Text('$val',
+//                       style: const TextStyle(
+//                           color: Colors.white,
+//                           fontSize: 6,
+//                           fontWeight: FontWeight.w800)))
+//               : null,
+//         );
+//       }).toList(),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // BOUNDED PROGRESS  (for day counters with maxValue)
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _BoundedProgress extends StatelessWidget {
+//   final int count, max;
+//   const _BoundedProgress({required this.count, required this.max});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final dotCount = max.clamp(1, 15);
+//     final fillRatio = max > 15 ? count / max : null;
+
+//     if (fillRatio != null) {
+//       return Padding(
+//         padding: const EdgeInsets.symmetric(horizontal: 20),
+//         child: Column(children: [
+//           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+//             Text('$count',
+//                 style: const TextStyle(
+//                     color: _C.darkGreen,
+//                     fontWeight: FontWeight.w700,
+//                     fontSize: 11)),
+//             Text('$max',
+//                 style: const TextStyle(color: _C.textHint, fontSize: 11)),
+//           ]),
+//           const SizedBox(height: 6),
+//           ClipRRect(
+//             borderRadius: BorderRadius.circular(99),
+//             child: LinearProgressIndicator(
+//               value: (count / max).clamp(0.0, 1.0),
+//               backgroundColor: _C.border,
+//               valueColor: const AlwaysStoppedAnimation(_C.darkGreen),
+//               minHeight: 8,
+//             ),
+//           ),
+//         ]),
+//       );
+//     }
+
+//     return Row(
+//       mainAxisAlignment: MainAxisAlignment.center,
+//       children: List.generate(dotCount, (i) {
+//         return AnimatedContainer(
+//           duration: 140.ms,
+//           width: max <= 7 ? 28 : 22,
+//           height: 7,
+//           margin: const EdgeInsets.symmetric(horizontal: 2),
+//           decoration: BoxDecoration(
+//               color: i < count ? _C.darkGreen : _C.border,
+//               borderRadius: BorderRadius.circular(99)),
+//         );
+//       }),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // UNBOUNDED PROGRESS
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _UnboundedProgress extends StatelessWidget {
+//   final int count;
+//   final String unitBn;
+//   const _UnboundedProgress({required this.count, required this.unitBn});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Row(
+//       mainAxisAlignment: MainAxisAlignment.center,
+//       children: [
+//         Icon(Icons.trending_up_rounded,
+//             color: count > 0 ? _C.darkGreen : _C.textHint, size: 16),
+//         const SizedBox(width: 6),
+//         Text(
+//             count > 0
+//                 ? '$count $unitBn যোগ করা হয়েছে'
+//                 : 'যত বেশি, তত বেশি পয়েন্ট',
+//             style: TextStyle(
+//                 color: count > 0 ? _C.darkGreen : _C.textHint,
+//                 fontSize: 11,
+//                 fontWeight: FontWeight.w500)),
+//       ],
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // STEP BUTTON
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _StepBtn extends StatelessWidget {
+//   final IconData icon;
+//   final VoidCallback? onTap;
+//   const _StepBtn({required this.icon, this.onTap});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return GestureDetector(
+//       onTap: onTap,
+//       child: Container(
+//         width: 52,
+//         height: 52,
+//         decoration: BoxDecoration(
+//             color: onTap != null ? _C.greenLight : _C.pageBg,
+//             borderRadius: BorderRadius.circular(14),
+//             border: Border.all(
+//                 color: onTap != null ? _C.green.withOpacity(0.3) : _C.border,
+//                 width: 0.5)),
+//         child: Icon(icon,
+//             color: onTap != null ? _C.darkGreen : _C.textHint, size: 24),
+//       ),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // BOTTOM SAVE BAR
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _BottomSaveBar extends StatelessWidget {
+//   final bool isNew, saving;
+//   final int points, completed;
+//   final VoidCallback onSave, onCancel;
+
+//   const _BottomSaveBar({
+//     required this.isNew,
+//     required this.saving,
+//     required this.points,
+//     required this.completed,
+//     required this.onSave,
+//     required this.onCancel,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       padding: EdgeInsets.fromLTRB(
+//           16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+//       decoration: const BoxDecoration(
+//         color: _C.cardBg,
+//         border: Border(top: BorderSide(color: _C.border, width: 0.5)),
+//       ),
+//       child: Row(children: [
+//         GestureDetector(
+//           onTap: onCancel,
+//           child: Container(
+//             width: 50,
+//             height: 52,
+//             decoration: BoxDecoration(
+//                 color: _C.pageBg,
+//                 borderRadius: BorderRadius.circular(14),
+//                 border: Border.all(color: _C.border, width: 0.5)),
+//             child: const Icon(Icons.close_rounded,
+//                 color: _C.textSecondary, size: 20),
+//           ),
+//         ),
+//         const SizedBox(width: 10),
+//         Expanded(
+//           child: GestureDetector(
+//             onTap: saving ? null : onSave,
+//             child: AnimatedContainer(
+//               duration: 160.ms,
+//               height: 52,
+//               decoration: BoxDecoration(
+//                   color: saving ? _C.darkGreen.withOpacity(0.7) : _C.darkGreen,
+//                   borderRadius: BorderRadius.circular(14)),
+//               child: Row(
+//                 mainAxisAlignment: MainAxisAlignment.center,
+//                 children: [
+//                   if (saving)
+//                     const SizedBox(
+//                         width: 18,
+//                         height: 18,
+//                         child: CircularProgressIndicator(
+//                             color: Colors.white, strokeWidth: 2))
+//                   else ...[
+//                     Icon(isNew ? Icons.save_rounded : Icons.check_rounded,
+//                         color: Colors.white, size: 18),
+//                     const SizedBox(width: 8),
+//                     Text(
+//                         isNew
+//                             ? 'সেভ করুন  ($points pts)'
+//                             : 'আপডেট করুন  ($points pts)',
+//                         style: const TextStyle(
+//                             color: Colors.white,
+//                             fontWeight: FontWeight.w700,
+//                             fontSize: 14)),
+//                   ],
+//                 ],
+//               ),
+//             ),
+//           ),
+//         ),
+//       ]),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // SHARED SMALL WIDGETS
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _AmalIconBadge extends StatelessWidget {
+//   final IconData icon;
+//   final bool active;
+//   final Color activeColor;
+//   const _AmalIconBadge(
+//       {required this.icon, required this.active, required this.activeColor});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return AnimatedContainer(
+//       duration: 180.ms,
+//       width: 38,
+//       height: 38,
+//       decoration: BoxDecoration(
+//           color: active ? activeColor.withOpacity(0.1) : _C.pageBg,
+//           borderRadius: BorderRadius.circular(10),
+//           border: Border.all(
+//               color: active ? activeColor.withOpacity(0.25) : _C.border,
+//               width: 0.5)),
+//       child: Icon(icon, size: 18, color: active ? activeColor : _C.textHint),
+//     );
+//   }
+// }
+
+// class _PtsTag extends StatelessWidget {
+//   final int pts, maxPts;
+//   final bool active;
+//   const _PtsTag(
+//       {required this.pts, required this.maxPts, required this.active});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return AnimatedContainer(
+//       duration: 180.ms,
+//       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+//       decoration: BoxDecoration(
+//           color: active ? _C.greenLight : _C.pageBg,
+//           borderRadius: BorderRadius.circular(20),
+//           border: Border.all(
+//               color: active ? _C.green.withOpacity(0.3) : _C.border,
+//               width: 0.5)),
+//       child: Text(active ? '+$pts pts' : '$maxPts pts',
+//           style: TextStyle(
+//               fontSize: 10.5,
+//               fontWeight: FontWeight.w700,
+//               color: active ? _C.darkGreen : _C.textHint)),
+//     );
+//   }
+// }
+
+// class _CounterPtsTag extends StatelessWidget {
+//   final int current;
+//   final int? max;
+//   final bool active;
+//   const _CounterPtsTag({required this.current, this.max, required this.active});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final label = active
+//         ? (max != null ? '+$current / $max pts' : '+$current pts')
+//         : (max != null ? 'max $max pts' : '∞ pts');
+
+//     return AnimatedContainer(
+//       duration: 180.ms,
+//       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+//       decoration: BoxDecoration(
+//           color: active ? _C.greenLight : _C.pageBg,
+//           borderRadius: BorderRadius.circular(20),
+//           border: Border.all(
+//               color: active ? _C.green.withOpacity(0.3) : _C.border,
+//               width: 0.5)),
+//       child: Text(label,
+//           style: TextStyle(
+//               fontSize: 10.5,
+//               fontWeight: FontWeight.w700,
+//               color: active ? _C.darkGreen : _C.textHint)),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // LOCAL ITEM MODEL  ← simplified: cat reference replaces duplicate fields
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _LocalItem {
+//   final AmalCategory cat;
+//   bool completed;
+//   bool isExempted;
+//   PrayerMode? prayerMode;
+//   int count;
+
+//   _LocalItem({
+//     required this.cat,
+//     required this.completed,
+//     this.prayerMode,
+//     this.count = 0,
+//     this.isExempted = false,
+//   });
+
+//   int get points {
+//     if (isExempted) return 0;
+
+//     if (cat.isPrayer) {
+//       // ফরজ — congregation/solo/missed
+//       if (cat.congregationPoints != null) {
+//         if (prayerMode == PrayerMode.congregation)
+//           return cat.congregationPoints!;
+//         if (prayerMode == PrayerMode.solo) return cat.basePoints;
+//         return 0;
+//       }
+//       // নফল variable rakaat (witr, tahajjud, ishraq, duha) — counter based
+//       if (cat.inputType == AmalInputType.counter) {
+//         return (count * (cat.pointsPerUnit ?? cat.basePoints.toDouble()))
+//             .round();
+//       }
+//       // সুন্নত fixed — binary
+//       return completed ? cat.basePoints : 0;
+//     }
+
+//     // Non-prayer counter
+//     if (cat.inputType == AmalInputType.counter) {
+//       return (count * (cat.pointsPerUnit ?? cat.basePoints.toDouble())).round();
+//     }
+
+//     // Non-prayer binary
+//     return completed ? cat.basePoints : 0;
+//   }
 // }
 import 'package:amal_tracker/features/auth/providers/provider_reset.dart';
 import 'package:amal_tracker/features/auth/providers/auth_provider.dart';
@@ -3938,17 +7390,11 @@ class _C {
   static const darkGreen = Color(0xFF0E3D22);
   static const midGreen = Color(0xFF1B7045);
   static const gold = Color(0xFFD4A843);
-  static const goldLight = Color(0xFFFFF3E0);
   static const green = Color(0xFF16A34A);
   static const greenLight = Color(0xFFE8F5EE);
   static const amber = Color(0xFFFF6B35);
   static const amberLight = Color(0xFFFFF3E0);
-  static const purple = Color(0xFF7C3AED);
-  static const purpleLight = Color(0xFFEDE9FE);
   static const red = Color(0xFFEF4444);
-  static const redLight = Color(0xFFFEE2E2);
-  static const blue = Color(0xFF0891B2);
-  static const blueLight = Color(0xFFE0F2FE);
   static const textPrimary = Color(0xFF0A1A0F);
   static const textSecondary = Color(0xFF6B7C6E);
   static const textHint = Color(0xFFABBAAE);
@@ -3960,7 +7406,7 @@ class _C {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HELPERS — driven by backend unit strings
+// HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 
 String _unitLabelBn(String? unit) {
@@ -3975,10 +7421,53 @@ String _unitLabelBn(String? unit) {
       return 'মিনিট';
     case 'time':
       return 'বার';
+    case 'rakaat':
+      return 'রাকাত';
     default:
       return unit ?? 'টি';
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CARD TYPE RESOLVER
+//
+// This is the single source of truth for what card to show.
+// Uses isFard + inputType (both exist reliably in the model).
+//
+// Rules:
+//   isPrayer + isFard == true          → FardPrayerCard (congregation/solo/missed)
+//   isPrayer + isFard == false
+//     + inputType == counter           → RakaatCounterCard (witr/tahajjud/ishraq/duha)
+//     + inputType == binary            → SunnahToggleCard (fajr_sunnah / sunnah_muakkadah / juma / travel)
+//   !isPrayer + inputType == counter   → GenericCounterCard (quran/dhikr)
+//   !isPrayer + inputType == binary    → GenericToggleCard
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum _CardType {
+  fardPrayer, // جماعة / فردى / مفقود
+  rakaatCounter, // witr (odd) / nafl (even)
+  sunnahToggle, // fixed sunnah binary
+  genericCounter, // quran ayah / dhikr count
+  genericToggle, // all other binary
+}
+
+_CardType _resolveCardType(AmalCategory cat) {
+  if (cat.isPrayer) {
+    if (cat.isFard) return _CardType.fardPrayer;
+    if (cat.inputType == AmalInputType.counter) return _CardType.rakaatCounter;
+    return _CardType.sunnahToggle;
+  }
+  if (cat.inputType == AmalInputType.counter) return _CardType.genericCounter;
+  return _CardType.genericToggle;
+}
+
+// Witr uses odd steps (1,3,5,7,9); other rakaat use even steps (2,4,6,8…)
+bool _isWitr(AmalCategory cat) => cat.key == 'witr';
+
+int _rakaatStep(AmalCategory cat) => 2; // both witr and nafl increment by 2
+
+int _rakaatMin(AmalCategory cat) =>
+    (cat.minValue ?? (_isWitr(cat) ? 1 : 2)).toInt();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SHEET ROOT
@@ -4003,7 +7492,7 @@ class DailyEntrySheet extends ConsumerStatefulWidget {
 }
 
 class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
-  late Map<String, _LocalItem> _localItems;
+  late Map<String, _LocalItem> _items;
   bool _saving = false;
   int _activeSection = 0;
   bool _isExemptDay = false;
@@ -4036,36 +7525,21 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
   @override
   void initState() {
     super.initState();
-    // Determine gender from current user
     final user = ref.read(currentUserProvider);
-
     _isFemale = (user?.gender?.toLowerCase() == 'female');
-
-    // Load existing exempt day state
     _isExemptDay = widget.existingState.entry?.isExemptDay ?? false;
-
-    _initLocalItems();
+    _buildItems();
   }
 
-  void _initLocalItems() {
-    _localItems = {};
+  void _buildItems() {
+    _items = {};
     final existing = widget.existingState.effectiveEntries;
-
     for (final cats in widget.catsBySection.values) {
       for (final cat in cats) {
         final prev = existing[cat.id];
-        // final exempted = _isFemale && _isExemptDay && cat.isFard;
         final exempted = _isFemale && _isExemptDay && cat.isExemptDuringPeriod;
-        _localItems[cat.id] = _LocalItem(
-          categoryId: cat.id,
-          isPrayer: cat.isPrayer,
-          isFard: cat.isFard,
-          isExemptDuringPeriod: cat.isExemptDuringPeriod,
-          inputType: cat.inputType,
-          basePoints: cat.basePoints,
-          congPoints: cat.congregationPoints,
-          pointsPerUnit: cat.pointsPerUnit,
-          maxValue: cat.maxValue,
+        _items[cat.id] = _LocalItem(
+          cat: cat,
           completed: exempted ? false : (prev?.completed ?? false),
           prayerMode: exempted ? PrayerMode.missed : prev?.prayerMode,
           count: exempted ? 0 : (prev?.count ?? 0),
@@ -4075,94 +7549,91 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
     }
   }
 
-  // ── Exempt day toggle ──────────────────────────────────────────────────────
+  // ── exempt day ─────────────────────────────────────────────────────────────
 
   void _toggleExemptDay(bool val) {
     setState(() {
       _isExemptDay = val;
-      for (final item in _localItems.values) {
-        if (item.isExemptDuringPeriod) {
-          item.isExempted = val;
-          if (val) {
-            item.completed = false;
-            item.prayerMode = PrayerMode.missed;
-            item.count = 0;
-          } else {
-            item.isExempted = false;
-          }
+      for (final item in _items.values) {
+        if (!item.cat.isExemptDuringPeriod) continue;
+        item.isExempted = val;
+        if (val) {
+          item.completed = false;
+          item.prayerMode = PrayerMode.missed;
+          item.count = 0;
         }
       }
-      // for (final item in _localItems.values) {
-      //   if (item.isFard) {
-      //     item.isExempted = val;
-      //     if (val) {
-      //       // Auto-clear fard items when exempt day is ON
-      //       item.completed = false;
-      //       item.prayerMode = PrayerMode.missed;
-      //       item.count = 0;
-      //     } else {
-      //       // When turning OFF, just un-exempt — user picks fresh
-      //       item.isExempted = false;
-      //     }
-      //   }
-      // }
     });
     HapticFeedback.mediumImpact();
   }
 
-  // ── Item interaction callbacks ─────────────────────────────────────────────
+  // ── callbacks ──────────────────────────────────────────────────────────────
 
-  void _toggleItem(String id, bool value) {
+  void _toggleBinary(String id, bool value) {
     setState(() {
-      final item = _localItems[id]!;
-      if (item.isExempted) return; // block interaction on exempted items
+      final item = _items[id]!;
+      if (item.isExempted) return;
       item.completed = value;
-      if (!value) {
-        item.prayerMode = item.isPrayer ? PrayerMode.missed : null;
-        item.count = 0;
-      } else if (item.isPrayer && item.prayerMode == null) {
-        item.prayerMode = PrayerMode.congregation;
-      }
     });
     HapticFeedback.selectionClick();
   }
 
   void _setPrayerMode(String id, PrayerMode mode) {
     setState(() {
-      final item = _localItems[id]!;
-      if (item.isExempted) return; // block interaction on exempted items
+      final item = _items[id]!;
+      if (item.isExempted) return;
       item.prayerMode = mode;
       item.completed = mode != PrayerMode.missed;
     });
     HapticFeedback.selectionClick();
   }
 
-  void _setCount(String id, int count) {
+  /// rawCount is the desired new value (after +/- button press).
+  /// Snap logic applied here, not in the card.
+  void _setCount(String id, int rawCount) {
     setState(() {
-      final item = _localItems[id]!;
+      final item = _items[id]!;
       if (item.isExempted) return;
-      final max = item.maxValue?.toInt();
-      item.count = max != null ? count.clamp(0, max) : count.clamp(0, 9999);
+      final cat = item.cat;
+      final max = cat.maxValue?.toInt();
+
+      int value = rawCount;
+
+      // Rakaat snapping
+      if (cat.unit == 'rakaat' && value > 0) {
+        if (_isWitr(cat)) {
+          // Snap to odd: 1,3,5,7,9
+          if (value.isEven) value = value - 1;
+          value = value.clamp(1, max ?? 9);
+        } else {
+          // Snap to even: 2,4,6,8…
+          if (value.isOdd) value = value - 1;
+          final min = _rakaatMin(cat);
+          value = value.clamp(min, max ?? 9999);
+        }
+      }
+
+      item.count = max != null ? value.clamp(0, max) : value.clamp(0, 9999);
       item.completed = item.count > 0;
     });
     HapticFeedback.lightImpact();
   }
 
-  // ── Points / count (excluding exempted) ───────────────────────────────────
+  // ── totals ─────────────────────────────────────────────────────────────────
 
-  int get _totalPoints => _localItems.values.fold(0, (s, i) => s + i.points);
+  int get _totalPoints => _items.values.fold(0, (s, i) => s + i.points);
 
   int get _completedCount =>
-      _localItems.values.where((i) => i.completed && !i.isExempted).length;
+      _items.values.where((i) => i.completed && !i.isExempted).length;
 
-  // ── Save ──────────────────────────────────────────────────────────────────
+  // ── save ───────────────────────────────────────────────────────────────────
 
   Future<void> _save() async {
     setState(() => _saving = true);
 
-    final updates = _localItems.values
+    final updates = _items.values
         .map((item) => EntryUpdate(
-              categoryId: item.categoryId,
+              categoryId: item.cat.id,
               completed: item.isExempted ? false : item.completed,
               prayerMode: item.isExempted ? PrayerMode.missed : item.prayerMode,
               count: item.isExempted ? 0 : item.count,
@@ -4189,10 +7660,8 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Row(children: [
-        Icon(
-          ok ? Icons.check_circle_rounded : Icons.error_outline_rounded,
-          color: Colors.white,
-        ),
+        Icon(ok ? Icons.check_circle_rounded : Icons.error_outline_rounded,
+            color: Colors.white),
         const SizedBox(width: 10),
         Text(ok
             ? (widget.isNew
@@ -4208,17 +7677,13 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
     ));
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
+  // ── build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isTablet = size.width > 600;
     final sections = _activeSections;
-
-    print(
-      'gender $_isFemale',
-    );
 
     return Container(
       height: size.height * 0.96,
@@ -4241,7 +7706,7 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
           icons: _sectionIcons,
           activeIndex: _activeSection,
           catsBySection: widget.catsBySection,
-          localItems: _localItems,
+          localItems: _items,
           onTap: (i) => setState(() => _activeSection = i),
         ),
         Expanded(
@@ -4255,11 +7720,11 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
               key: ValueKey(_activeSection),
               sectionKey: sections[_activeSection],
               categories: widget.catsBySection[sections[_activeSection]] ?? [],
-              localItems: _localItems,
+              localItems: _items,
               isTablet: isTablet,
               isFemale: _isFemale,
               isExemptDay: _isExemptDay,
-              onToggle: _toggleItem,
+              onToggle: _toggleBinary,
               onPrayerMode: _setPrayerMode,
               onCount: _setCount,
               onExemptToggle: _toggleExemptDay,
@@ -4332,20 +7797,16 @@ class _SheetHeader extends StatelessWidget {
                     shape: BoxShape.circle,
                     color: Colors.white.withOpacity(0.03)))),
         Column(mainAxisSize: MainAxisSize.min, children: [
-          // Drag handle
           Padding(
             padding: const EdgeInsets.only(top: 12, bottom: 4),
             child: Center(
-              child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.25),
-                      borderRadius: BorderRadius.circular(99))),
-            ),
+                child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(99)))),
           ),
-
-          // Title row
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: Row(children: [
@@ -4363,21 +7824,20 @@ class _SheetHeader extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                   child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(isNew ? 'আমল যোগ করুন' : 'আমল সম্পাদনা করুন',
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
-                          letterSpacing: -0.3)),
-                  Text('$d $month $y',
-                      style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500)),
-                ],
-              )),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    Text(isNew ? 'আমল যোগ করুন' : 'আমল সম্পাদনা করুন',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            letterSpacing: -0.3)),
+                    Text('$d $month $y',
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500)),
+                  ])),
               GestureDetector(
                 onTap: onClose,
                 child: Container(
@@ -4394,10 +7854,7 @@ class _SheetHeader extends StatelessWidget {
               ),
             ]),
           ),
-
           const SizedBox(height: 12),
-
-          // Live points card
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Container(
@@ -4419,28 +7876,27 @@ class _SheetHeader extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                     child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('লাইভ পয়েন্ট',
-                        style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
-                            fontSize: 10)),
-                    const SizedBox(height: 1),
-                    Row(children: [
-                      Text('$points',
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 22,
-                              letterSpacing: -0.4,
-                              height: 1)),
-                      Text(' pts',
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                      Text('লাইভ পয়েন্ট',
                           style: TextStyle(
                               color: Colors.white.withOpacity(0.5),
-                              fontSize: 12)),
-                    ]),
-                  ],
-                )),
+                              fontSize: 10)),
+                      const SizedBox(height: 1),
+                      Row(children: [
+                        Text('$points',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 22,
+                                letterSpacing: -0.4,
+                                height: 1)),
+                        Text(' pts',
+                            style: TextStyle(
+                                color: Colors.white.withOpacity(0.5),
+                                fontSize: 12)),
+                      ]),
+                    ])),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -4488,9 +7944,8 @@ class _SectionTabBar extends StatelessWidget {
     required this.onTap,
   });
 
-  int _completedInSection(String sec) {
-    final cats = catsBySection[sec] ?? [];
-    return cats
+  int _doneIn(String sec) {
+    return (catsBySection[sec] ?? [])
         .where((c) =>
             localItems[c.id]?.completed == true &&
             localItems[c.id]?.isExempted == false)
@@ -4511,9 +7966,9 @@ class _SectionTabBar extends StatelessWidget {
               final sec = e.value;
               final label = AppConstants.sectionLabels[sec]?['bn'] ?? sec;
               final icon = icons[sec] ?? Icons.circle;
-              final done = _completedInSection(sec);
+              final done = _doneIn(sec);
               final total = (catsBySection[sec] ?? []).length;
-              final isActive = i == activeIndex;
+              final active = i == activeIndex;
               final allDone = done == total && total > 0;
 
               return GestureDetector(
@@ -4524,10 +7979,10 @@ class _SectionTabBar extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isActive ? _C.darkGreen : _C.pageBg,
+                    color: active ? _C.darkGreen : _C.pageBg,
                     borderRadius: BorderRadius.circular(99),
                     border: Border.all(
-                      color: isActive
+                      color: active
                           ? _C.darkGreen
                           : allDone
                               ? _C.green.withOpacity(0.4)
@@ -4538,7 +7993,7 @@ class _SectionTabBar extends StatelessWidget {
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     Icon(icon,
                         size: 12,
-                        color: isActive
+                        color: active
                             ? Colors.white
                             : allDone
                                 ? _C.green
@@ -4548,8 +8003,8 @@ class _SectionTabBar extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 11,
                             fontWeight:
-                                isActive ? FontWeight.w700 : FontWeight.w500,
-                            color: isActive
+                                active ? FontWeight.w700 : FontWeight.w500,
+                            color: active
                                 ? Colors.white
                                 : allDone
                                     ? _C.green
@@ -4560,7 +8015,7 @@ class _SectionTabBar extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                            color: isActive
+                            color: active
                                 ? Colors.white.withOpacity(0.2)
                                 : allDone
                                     ? _C.greenLight
@@ -4570,7 +8025,7 @@ class _SectionTabBar extends StatelessWidget {
                             style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w700,
-                                color: isActive
+                                color: active
                                     ? Colors.white
                                     : allDone
                                         ? _C.green
@@ -4590,17 +8045,13 @@ class _SectionTabBar extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// EXEMPT DAY BANNER  — only shown for female users in salat section
+// EXEMPT DAY BANNER  (female only, salat section)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _ExemptDayBanner extends StatelessWidget {
   final bool isExemptDay;
   final ValueChanged<bool> onToggle;
-
-  const _ExemptDayBanner({
-    required this.isExemptDay,
-    required this.onToggle,
-  });
+  const _ExemptDayBanner({required this.isExemptDay, required this.onToggle});
 
   @override
   Widget build(BuildContext context) {
@@ -4622,7 +8073,6 @@ class _ExemptDayBanner extends StatelessWidget {
           ),
         ),
         child: Row(children: [
-          // Icon badge
           AnimatedContainer(
             duration: 200.ms,
             width: 42,
@@ -4633,24 +8083,20 @@ class _ExemptDayBanner extends StatelessWidget {
                   : _C.gold.withOpacity(0.15),
               borderRadius: BorderRadius.circular(11),
             ),
-            child: const Center(
-              child: Text('🌸', style: TextStyle(fontSize: 20)),
-            ),
+            child:
+                const Center(child: Text('🌸', style: TextStyle(fontSize: 20))),
           ),
           const SizedBox(width: 12),
-
-          // Text
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                 Text(
                   isExemptDay ? 'আজ মাহলির দিন' : 'আজ কি মাহলি আছেন?',
                   style: TextStyle(
-                    color: isExemptDay ? _C.darkGreen : _C.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
+                      color: isExemptDay ? _C.darkGreen : _C.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -4658,38 +8104,29 @@ class _ExemptDayBanner extends StatelessWidget {
                       ? 'ফরজ আমলগুলো মাফ হিসেবে চিহ্নিত হয়েছে'
                       : 'চালু করলে ফরজ আমলগুলো মাফ ধরা হবে',
                   style: TextStyle(
-                    color: isExemptDay ? _C.midGreen : _C.textSecondary,
-                    fontSize: 11,
-                  ),
+                      color: isExemptDay ? _C.midGreen : _C.textSecondary,
+                      fontSize: 11),
                 ),
-              ],
-            ),
-          ),
+              ])),
           const SizedBox(width: 10),
-
-          // Animated toggle switch
           _ToggleSwitch(
-            value: isExemptDay,
-            onChanged: onToggle,
-            activeColor: _C.midGreen,
-          ),
+              value: isExemptDay,
+              onChanged: onToggle,
+              activeColor: _C.midGreen),
         ]),
       ),
     ).animate().fadeIn(duration: 220.ms).slideY(begin: -0.04);
   }
 }
 
-// Smooth animated toggle switch
 class _ToggleSwitch extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
   final Color activeColor;
-
-  const _ToggleSwitch({
-    required this.value,
-    required this.onChanged,
-    required this.activeColor,
-  });
+  const _ToggleSwitch(
+      {required this.value,
+      required this.onChanged,
+      required this.activeColor});
 
   @override
   Widget build(BuildContext context) {
@@ -4702,21 +8139,17 @@ class _ToggleSwitch extends StatelessWidget {
         height: 26,
         padding: const EdgeInsets.all(3),
         decoration: BoxDecoration(
-          color: value ? activeColor : _C.borderMid,
-          borderRadius: BorderRadius.circular(99),
-        ),
+            color: value ? activeColor : _C.borderMid,
+            borderRadius: BorderRadius.circular(99)),
         child: AnimatedAlign(
           duration: 200.ms,
           curve: Curves.easeInOut,
           alignment: value ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
-            width: 20,
-            height: 20,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-          ),
+              width: 20,
+              height: 20,
+              decoration: const BoxDecoration(
+                  color: Colors.white, shape: BoxShape.circle)),
         ),
       ),
     );
@@ -4724,16 +8157,14 @@ class _ToggleSwitch extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION FORM
+// SECTION FORM  ← THE FIX IS HERE
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _SectionForm extends StatelessWidget {
   final String sectionKey;
   final List<AmalCategory> categories;
   final Map<String, _LocalItem> localItems;
-  final bool isTablet;
-  final bool isFemale;
-  final bool isExemptDay;
+  final bool isTablet, isFemale, isExemptDay;
   final void Function(String, bool) onToggle;
   final void Function(String, PrayerMode) onPrayerMode;
   final void Function(String, int) onCount;
@@ -4757,18 +8188,13 @@ class _SectionForm extends StatelessWidget {
   Widget build(BuildContext context) {
     if (categories.isEmpty) {
       return const Center(
-        child: Text('এই বিভাগে কোনো আমল নেই',
-            style: TextStyle(color: _C.textHint, fontSize: 13)),
-      );
+          child: Text('এই বিভাগে কোনো আমল নেই',
+              style: TextStyle(color: _C.textHint, fontSize: 13)));
     }
 
     final hPad =
         isTablet ? (MediaQuery.of(context).size.width - 600) / 2 + 16.0 : 16.0;
-
-    // Show exempt banner only in salat section for female users
     final showBanner = isFemale && sectionKey == 'salat';
-
-    // Total list items = banner (if shown) + categories
     final itemCount = categories.length + (showBanner ? 1 : 0);
 
     return ListView.separated(
@@ -4776,45 +8202,78 @@ class _SectionForm extends StatelessWidget {
       itemCount: itemCount,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (ctx, i) {
-        // First item = banner when applicable
+        // Banner is always first item in salat section for females
         if (showBanner && i == 0) {
           return _ExemptDayBanner(
-            isExemptDay: isExemptDay,
-            onToggle: onExemptToggle,
-          );
+              isExemptDay: isExemptDay, onToggle: onExemptToggle);
         }
 
         final catIndex = showBanner ? i - 1 : i;
         final cat = categories[catIndex];
         final item = localItems[cat.id];
-        final isExempted = item?.isExempted ?? false;
 
-        // ── Route card type ──────────────────────────────────────
-        late Widget card;
+        // ── CARD ROUTING ─────────────────────────────────────────────────────
+        // _resolveCardType() uses isFard + inputType — both are reliable fields.
+        // congregationPoints is NOT used for routing because backend default: 2
+        // makes it unreliable (non-null even for non-congregation prayers).
+        // ─────────────────────────────────────────────────────────────────────
 
-        if (cat.isPrayer) {
-          if (isExempted) {
-            // Show exempted card — no interaction
-            card = _ExemptedPrayerCard(cat: cat);
-          } else {
-            card = _PrayerFormCard(
-              cat: cat,
-              item: item,
-              onMode: (mode) => onPrayerMode(cat.id, mode),
-            );
-          }
-        } else if (cat.inputType == AmalInputType.counter) {
-          card = _CounterFormCard(
-            cat: cat,
-            item: item,
-            onCount: (c) => onCount(cat.id, c),
-          );
+        Widget card;
+
+        if (item?.isExempted == true) {
+          // Exempted items (female period day) — show muted "মাফ আছে" card
+          card = _ExemptedCard(cat: cat);
         } else {
-          card = _ToggleFormCard(
-            cat: cat,
-            item: item,
-            onToggle: (v) => onToggle(cat.id, v),
-          );
+          switch (_resolveCardType(cat)) {
+            case _CardType.fardPrayer:
+              // ফজর, যোহর, আসর, মাগরিব, এশা
+              // Shows: জামাতে (+8) / একাকী (+3) / মিস (+0)
+              card = _FardPrayerCard(
+                cat: cat,
+                item: item,
+                onMode: (mode) => onPrayerMode(cat.id, mode),
+              );
+              break;
+
+            case _CardType.rakaatCounter:
+              // বিতর (বেজোড়: ১,৩,৫,৭,৯) — witr
+              // তাহাজ্জুদ, ইশরাক, চাশত (জোড়: ২,৪,৬,৮…)
+              // Shows: counter with step-2 +/- buttons
+              card = _RakaatCounterCard(
+                cat: cat,
+                item: item,
+                onCount: (c) => onCount(cat.id, c),
+              );
+              break;
+
+            case _CardType.sunnahToggle:
+              // ফজরের সুন্নত, সুন্নতে মুয়াক্কাদাহ, জুমুআ, সফরের নামাজ
+              // Shows: simple done/not-done toggle (no congregation option)
+              card = _SunnahToggleCard(
+                cat: cat,
+                item: item,
+                onToggle: (v) => onToggle(cat.id, v),
+              );
+              break;
+
+            case _CardType.genericCounter:
+              // কুরআন তিলাওয়াত, হিফজ, দরুদ, জিলহজের রোজা
+              card = _GenericCounterCard(
+                cat: cat,
+                item: item,
+                onCount: (c) => onCount(cat.id, c),
+              );
+              break;
+
+            case _CardType.genericToggle:
+              // All other binary amals
+              card = _GenericToggleCard(
+                cat: cat,
+                item: item,
+                onToggle: (v) => onToggle(cat.id, v),
+              );
+              break;
+          }
         }
 
         return card
@@ -4827,28 +8286,25 @@ class _SectionForm extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// EXEMPTED PRAYER CARD  — shown instead of normal prayer card on exempt day
+// CARD 1 — EXEMPTED  (female period day)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ExemptedPrayerCard extends StatelessWidget {
+class _ExemptedCard extends StatelessWidget {
   final AmalCategory cat;
-
-  const _ExemptedPrayerCard({required this.cat});
+  const _ExemptedCard({required this.cat});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: _C.pageBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _C.border, width: 0.5),
-      ),
+          color: _C.pageBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _C.border, width: 0.5)),
       child: Opacity(
         opacity: 0.55,
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(children: [
-            // Icon badge — muted
             Container(
               width: 38,
               height: 38,
@@ -4860,44 +8316,32 @@ class _ExemptedPrayerCard extends StatelessWidget {
                   color: _C.textHint, size: 18),
             ),
             const SizedBox(width: 12),
-
-            // Name with strikethrough
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    cat.nameBn,
-                    style: const TextStyle(
-                      color: _C.textHint,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                      decoration: TextDecoration.lineThrough,
-                      decorationColor: _C.textHint,
-                    ),
-                  ),
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text(cat.nameBn,
+                      style: const TextStyle(
+                          color: _C.textHint,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          decoration: TextDecoration.lineThrough,
+                          decorationColor: _C.textHint)),
                   Text(cat.nameEn,
                       style: const TextStyle(color: _C.textHint, fontSize: 11)),
-                ],
-              ),
-            ),
-
-            // Maaf badge
+                ])),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: _C.maafBg,
-                borderRadius: BorderRadius.circular(20),
-                border:
-                    Border.all(color: _C.green.withOpacity(0.3), width: 0.5),
-              ),
-              child: const Text(
-                'মাফ আছে',
-                style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                    color: _C.maafText),
-              ),
+                  color: _C.maafBg,
+                  borderRadius: BorderRadius.circular(20),
+                  border:
+                      Border.all(color: _C.green.withOpacity(0.3), width: 0.5)),
+              child: const Text('মাফ আছে',
+                  style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: _C.maafText)),
             ),
           ]),
         ),
@@ -4907,19 +8351,15 @@ class _ExemptedPrayerCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PRAYER FORM CARD
+// CARD 2 — FARD PRAYER  (congregation / solo / missed)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _PrayerFormCard extends StatelessWidget {
+class _FardPrayerCard extends StatelessWidget {
   final AmalCategory cat;
   final _LocalItem? item;
   final ValueChanged<PrayerMode> onMode;
-
-  const _PrayerFormCard({
-    required this.cat,
-    required this.item,
-    required this.onMode,
-  });
+  const _FardPrayerCard(
+      {required this.cat, required this.item, required this.onMode});
 
   @override
   Widget build(BuildContext context) {
@@ -4934,33 +8374,31 @@ class _PrayerFormCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: _C.cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor, width: 1),
-      ),
+          color: _C.cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor, width: 1)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 13, 14, 11),
           child: Row(children: [
-            _AmalIconBadge(
+            _IconBadge(
                 icon: Icons.mosque_rounded,
                 active: mode != PrayerMode.missed,
-                activeColor: _C.green),
+                color: _C.green),
             const SizedBox(width: 12),
             Expanded(
                 child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(cat.nameBn,
-                    style: const TextStyle(
-                        color: _C.textPrimary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13)),
-                Text(cat.nameEn,
-                    style:
-                        const TextStyle(color: _C.textSecondary, fontSize: 11)),
-              ],
-            )),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text(cat.nameBn,
+                      style: const TextStyle(
+                          color: _C.textPrimary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13)),
+                  Text(cat.nameEn,
+                      style: const TextStyle(
+                          color: _C.textSecondary, fontSize: 11)),
+                ])),
             _PtsTag(pts: pts, maxPts: cat.congregationPoints, active: pts > 0),
           ]),
         ),
@@ -5010,7 +8448,6 @@ class _ModeBtn extends StatelessWidget {
   final bool isSelected;
   final Color activeColor, activeBg;
   final VoidCallback onTap;
-
   const _ModeBtn({
     required this.label,
     required this.subLabel,
@@ -5058,19 +8495,318 @@ class _ModeBtn extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TOGGLE FORM CARD  (binary)
+// CARD 3 — RAKAAT COUNTER  (witr odd / nafl even)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ToggleFormCard extends StatelessWidget {
+class _RakaatCounterCard extends StatelessWidget {
+  final AmalCategory cat;
+  final _LocalItem? item;
+  final ValueChanged<int> onCount;
+  const _RakaatCounterCard(
+      {required this.cat, required this.item, required this.onCount});
+
+  @override
+  Widget build(BuildContext context) {
+    final count = item?.count ?? 0;
+    final pts = item?.points ?? 0;
+    final isWitr = _isWitr(cat);
+    final minVal = _rakaatMin(cat);
+    final maxVal = cat.maxValue?.toInt();
+    final ppu = cat.pointsPerUnit ?? 1.0;
+
+    final hint =
+        isWitr ? 'বেজোড় রাকাত — ১, ৩, ৫, ৭, ৯' : 'জোড় রাকাত — ২, ৪, ৬, ৮…';
+
+    final borderColor = count > 0 ? _C.green.withOpacity(0.4) : _C.border;
+
+    return Container(
+      decoration: BoxDecoration(
+          color: _C.cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor, width: count > 0 ? 1.5 : 0.5)),
+      child: Column(children: [
+        // Header
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 13, 14, 0),
+          child: Row(children: [
+            _IconBadge(
+                icon: Icons.mosque_rounded,
+                active: count > 0,
+                color: _C.darkGreen),
+            const SizedBox(width: 12),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text(cat.nameBn,
+                      style: const TextStyle(
+                          color: _C.textPrimary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13)),
+                  if (cat.description != null)
+                    Text(cat.description!,
+                        style: const TextStyle(
+                            color: _C.textSecondary, fontSize: 11)),
+                ])),
+            _CounterPtsTag(
+                current: pts,
+                max: maxVal != null ? (maxVal * ppu).round() : null,
+                active: count > 0),
+          ]),
+        ),
+
+        // Hint
+        Padding(
+          padding: const EdgeInsets.only(top: 6, bottom: 2),
+          child: Text(hint,
+              style: const TextStyle(
+                  color: _C.textHint,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500)),
+        ),
+
+        const Divider(height: 0.5, thickness: 0.5, color: _C.border),
+        const SizedBox(height: 20),
+
+        // Counter row
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          _StepBtn(
+            icon: Icons.remove_rounded,
+            enabled: count > 0,
+            onTap: () {
+              if (count <= 0) return;
+              final next = count - _rakaatStep(cat);
+              // If would go below minVal, reset to 0 (= not done)
+              onCount(next < minVal ? 0 : next);
+            },
+          ),
+          _CounterDisplay(
+              count: count, unit: 'রাকাত', max: maxVal, active: count > 0),
+          _StepBtn(
+            icon: Icons.add_rounded,
+            enabled: maxVal == null || count < maxVal,
+            onTap: () {
+              // First tap: jump straight to minVal
+              final next = count == 0 ? minVal : count + _rakaatStep(cat);
+              onCount(next);
+            },
+          ),
+        ]),
+
+        const SizedBox(height: 14),
+
+        // Progress
+        if (isWitr)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: _WitrDots(count: count),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: _UnboundedProgress(count: count, unitBn: 'রাকাত'),
+          ),
+
+        // Points per unit label
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+                color: _C.pageBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _C.border, width: 0.5)),
+            child: Text('প্রতি রাকাত = ${ppu.toInt()} পয়েন্ট',
+                style: const TextStyle(
+                    color: _C.textSecondary,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w500)),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CARD 4 — SUNNAH TOGGLE  (fixed rakaat sunnah — binary done/not-done)
+// No congregation option. No counter. Just a checkmark.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SunnahToggleCard extends StatelessWidget {
   final AmalCategory cat;
   final _LocalItem? item;
   final ValueChanged<bool> onToggle;
+  const _SunnahToggleCard(
+      {required this.cat, required this.item, required this.onToggle});
 
-  const _ToggleFormCard({
-    required this.cat,
-    required this.item,
-    required this.onToggle,
-  });
+  @override
+  Widget build(BuildContext context) {
+    final done = item?.completed ?? false;
+    final pts = item?.points ?? 0;
+
+    return GestureDetector(
+      onTap: () => onToggle(!done),
+      child: AnimatedContainer(
+        duration: 160.ms,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+            color: done ? _C.greenLight : _C.cardBg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+                color: done ? _C.green.withOpacity(0.4) : _C.border,
+                width: done ? 1.5 : 0.5)),
+        child: Row(children: [
+          // Mosque icon badge
+          _IconBadge(icon: Icons.mosque_rounded, active: done, color: _C.green),
+          const SizedBox(width: 13),
+          Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text(cat.nameBn,
+                    style: TextStyle(
+                        color: done ? _C.darkGreen : _C.textPrimary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13)),
+                if (cat.description != null) ...[
+                  const SizedBox(height: 2),
+                  Text(cat.description!,
+                      style: const TextStyle(
+                          color: _C.textSecondary, fontSize: 11)),
+                ],
+              ])),
+          const SizedBox(width: 8),
+          // Check box
+          AnimatedContainer(
+            duration: 180.ms,
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+                color: done ? _C.darkGreen : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                    color: done ? _C.darkGreen : _C.borderMid, width: 1.5)),
+            child: done
+                ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
+                : null,
+          ),
+          const SizedBox(width: 8),
+          _PtsTag(pts: pts, maxPts: cat.basePoints, active: done),
+        ]),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CARD 5 — GENERIC COUNTER  (quran ayah, dhikr, fasting days, etc.)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _GenericCounterCard extends StatelessWidget {
+  final AmalCategory cat;
+  final _LocalItem? item;
+  final ValueChanged<int> onCount;
+  const _GenericCounterCard(
+      {required this.cat, required this.item, required this.onCount});
+
+  @override
+  Widget build(BuildContext context) {
+    final count = item?.count ?? 0;
+    final pts = item?.points ?? 0;
+    final unitBn = _unitLabelBn(cat.unit);
+    final maxVal = cat.maxValue?.toInt();
+    final ppu = cat.pointsPerUnit ?? cat.basePoints.toDouble();
+    final maxPts = maxVal != null ? (maxVal * ppu).round() : null;
+
+    return Container(
+      decoration: BoxDecoration(
+          color: _C.cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+              color: count > 0 ? _C.green.withOpacity(0.4) : _C.border,
+              width: count > 0 ? 1.5 : 0.5)),
+      child: Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 13, 14, 11),
+          child: Row(children: [
+            _IconBadge(
+                icon: Icons.add_circle_outline_rounded,
+                active: count > 0,
+                color: _C.darkGreen),
+            const SizedBox(width: 12),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text(cat.nameBn,
+                      style: const TextStyle(
+                          color: _C.textPrimary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13)),
+                  if (cat.description != null)
+                    Text(cat.description!,
+                        style: const TextStyle(
+                            color: _C.textSecondary, fontSize: 11)),
+                ])),
+            _CounterPtsTag(current: pts, max: maxPts, active: count > 0),
+          ]),
+        ),
+        const Divider(height: 0.5, thickness: 0.5, color: _C.border),
+        const SizedBox(height: 20),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          _StepBtn(
+            icon: Icons.remove_rounded,
+            enabled: count > 0,
+            onTap: () => onCount(count - 1),
+          ),
+          _CounterDisplay(
+              count: count, unit: unitBn, max: maxVal, active: count > 0),
+          _StepBtn(
+            icon: Icons.add_rounded,
+            enabled: maxVal == null || count < maxVal,
+            onTap: () => onCount(count + 1),
+          ),
+        ]),
+        const SizedBox(height: 14),
+        if (maxVal != null)
+          Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _BoundedProgress(count: count, max: maxVal))
+        else
+          Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: _UnboundedProgress(count: count, unitBn: unitBn)),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+                color: _C.pageBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _C.border, width: 0.5)),
+            child: Text('প্রতি $unitBn = ${ppu.toInt()} পয়েন্ট',
+                style: const TextStyle(
+                    color: _C.textSecondary,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w500)),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CARD 6 — GENERIC TOGGLE  (all other binary amals)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _GenericToggleCard extends StatelessWidget {
+  final AmalCategory cat;
+  final _LocalItem? item;
+  final ValueChanged<bool> onToggle;
+  const _GenericToggleCard(
+      {required this.cat, required this.item, required this.onToggle});
 
   @override
   Widget build(BuildContext context) {
@@ -5105,263 +8841,23 @@ class _ToggleFormCard extends StatelessWidget {
           const SizedBox(width: 13),
           Expanded(
               child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(cat.nameBn,
-                  style: TextStyle(
-                      color: done ? _C.darkGreen : _C.textPrimary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13)),
-              if (cat.description != null) ...[
-                const SizedBox(height: 2),
-                Text(cat.description!,
-                    style:
-                        const TextStyle(color: _C.textSecondary, fontSize: 11)),
-              ],
-            ],
-          )),
-          const SizedBox(width: 8),
-          _PtsTag(pts: pts, maxPts: cat.basePoints, active: done),
-        ]),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// COUNTER FORM CARD
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _CounterFormCard extends StatelessWidget {
-  final AmalCategory cat;
-  final _LocalItem? item;
-  final ValueChanged<int> onCount;
-
-  const _CounterFormCard({
-    required this.cat,
-    required this.item,
-    required this.onCount,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final count = item?.count ?? 0;
-    final pts = item?.points ?? 0;
-    final unitBn = _unitLabelBn(cat.unit);
-    final maxVal = cat.maxValue?.toInt();
-    final ppu = cat.pointsPerUnit ?? cat.basePoints.toDouble();
-    final maxPts = maxVal != null ? (maxVal * ppu).round() : null;
-    final hasMax = maxVal != null;
-
-    return Container(
-      decoration: BoxDecoration(
-          color: _C.cardBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-              color: count > 0 ? _C.green.withOpacity(0.4) : _C.border,
-              width: count > 0 ? 1.5 : 0.5)),
-      child: Column(children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(14, 13, 14, 11),
-          child: Row(children: [
-            _AmalIconBadge(
-                icon: Icons.add_circle_outline_rounded,
-                active: count > 0,
-                activeColor: _C.darkGreen),
-            const SizedBox(width: 12),
-            Expanded(
-                child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                 Text(cat.nameBn,
-                    style: const TextStyle(
-                        color: _C.textPrimary,
-                        fontWeight: FontWeight.w700,
+                    style: TextStyle(
+                        color: done ? _C.darkGreen : _C.textPrimary,
+                        fontWeight: FontWeight.w600,
                         fontSize: 13)),
-                if (cat.description != null)
+                if (cat.description != null) ...[
+                  const SizedBox(height: 2),
                   Text(cat.description!,
                       style: const TextStyle(
                           color: _C.textSecondary, fontSize: 11)),
-              ],
-            )),
-            _CounterPtsTag(
-              current: pts,
-              max: maxPts,
-              active: count > 0,
-            ),
-          ]),
-        ),
-        const Divider(height: 0.5, thickness: 0.5, color: _C.border),
-        const SizedBox(height: 20),
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          _StepBtn(
-            icon: Icons.remove_rounded,
-            onTap: count > 0 ? () => onCount(count - 1) : null,
-          ),
-          Container(
-            width: 96,
-            height: 78,
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-                color: count > 0 ? _C.greenLight : _C.pageBg,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                    color: count > 0 ? _C.green.withOpacity(0.3) : _C.border,
-                    width: 0.5)),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('$count',
-                    style: TextStyle(
-                        fontSize: 34,
-                        fontWeight: FontWeight.w900,
-                        height: 1,
-                        color: count > 0 ? _C.darkGreen : _C.textHint)),
-                const SizedBox(height: 3),
-                Text(hasMax ? '/ $maxVal $unitBn' : unitBn,
-                    style: TextStyle(
-                        fontSize: 10,
-                        color: count > 0 ? _C.textSecondary : _C.textHint)),
-              ],
-            ),
-          ),
-          _StepBtn(
-            icon: Icons.add_rounded,
-            onTap:
-                (hasMax && count >= maxVal!) ? null : () => onCount(count + 1),
-          ),
+                ],
+              ])),
+          const SizedBox(width: 8),
+          _PtsTag(pts: pts, maxPts: cat.basePoints, active: done),
         ]),
-        const SizedBox(height: 14),
-        if (hasMax) ...[
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: _BoundedProgress(count: count, max: maxVal!),
-          ),
-        ] else ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: _UnboundedProgress(count: count, unitBn: unitBn),
-          ),
-        ],
-        Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-                color: _C.pageBg,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _C.border, width: 0.5)),
-            child: Text('প্রতি $unitBn = ${ppu.toInt()} পয়েন্ট',
-                style: const TextStyle(
-                    color: _C.textSecondary,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w500)),
-          ),
-        ),
-      ]),
-    );
-  }
-}
-
-class _BoundedProgress extends StatelessWidget {
-  final int count, max;
-  const _BoundedProgress({required this.count, required this.max});
-
-  @override
-  Widget build(BuildContext context) {
-    final dotCount = max.clamp(1, 15);
-    final fillRatio = max > 15 ? count / max : null;
-
-    if (fillRatio != null) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Text('$count',
-                style: const TextStyle(
-                    color: _C.darkGreen,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 11)),
-            Text('$max',
-                style: const TextStyle(color: _C.textHint, fontSize: 11)),
-          ]),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(99),
-            child: LinearProgressIndicator(
-              value: fillRatio.clamp(0.0, 1.0),
-              backgroundColor: _C.border,
-              valueColor: const AlwaysStoppedAnimation(_C.darkGreen),
-              minHeight: 8,
-            ),
-          ),
-        ]),
-      );
-    }
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(dotCount, (i) {
-        return AnimatedContainer(
-          duration: 140.ms,
-          width: max <= 7 ? 28 : 22,
-          height: 7,
-          margin: const EdgeInsets.symmetric(horizontal: 2),
-          decoration: BoxDecoration(
-              color: i < count ? _C.darkGreen : _C.border,
-              borderRadius: BorderRadius.circular(99)),
-        );
-      }),
-    );
-  }
-}
-
-class _UnboundedProgress extends StatelessWidget {
-  final int count;
-  final String unitBn;
-  const _UnboundedProgress({required this.count, required this.unitBn});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.trending_up_rounded,
-            color: count > 0 ? _C.darkGreen : _C.textHint, size: 16),
-        const SizedBox(width: 6),
-        Text(
-            count > 0
-                ? '$count $unitBn যোগ করা হয়েছে'
-                : 'যত বেশি, তত বেশি পয়েন্ট',
-            style: TextStyle(
-                color: count > 0 ? _C.darkGreen : _C.textHint,
-                fontSize: 11,
-                fontWeight: FontWeight.w500)),
-      ],
-    );
-  }
-}
-
-class _StepBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback? onTap;
-  const _StepBtn({required this.icon, this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 52,
-        height: 52,
-        decoration: BoxDecoration(
-            color: onTap != null ? _C.greenLight : _C.pageBg,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-                color: onTap != null ? _C.green.withOpacity(0.3) : _C.border,
-                width: 0.5)),
-        child: Icon(icon,
-            color: onTap != null ? _C.darkGreen : _C.textHint, size: 24),
       ),
     );
   }
@@ -5375,7 +8871,6 @@ class _BottomSaveBar extends StatelessWidget {
   final bool isNew, saving;
   final int points, completed;
   final VoidCallback onSave, onCancel;
-
   const _BottomSaveBar({
     required this.isNew,
     required this.saving,
@@ -5391,9 +8886,8 @@ class _BottomSaveBar extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(
           16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
       decoration: const BoxDecoration(
-        color: _C.cardBg,
-        border: Border(top: BorderSide(color: _C.border, width: 0.5)),
-      ),
+          color: _C.cardBg,
+          border: Border(top: BorderSide(color: _C.border, width: 0.5))),
       child: Row(children: [
         GestureDetector(
           onTap: onCancel,
@@ -5418,30 +8912,28 @@ class _BottomSaveBar extends StatelessWidget {
               decoration: BoxDecoration(
                   color: saving ? _C.darkGreen.withOpacity(0.7) : _C.darkGreen,
                   borderRadius: BorderRadius.circular(14)),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (saving)
-                    const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
-                  else ...[
-                    Icon(isNew ? Icons.save_rounded : Icons.check_rounded,
-                        color: Colors.white, size: 18),
-                    const SizedBox(width: 8),
-                    Text(
-                        isNew
-                            ? 'সেভ করুন  ($points pts)'
-                            : 'আপডেট করুন  ($points pts)',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14)),
-                  ],
+              child:
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                if (saving)
+                  const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
+                else ...[
+                  Icon(isNew ? Icons.save_rounded : Icons.check_rounded,
+                      color: Colors.white, size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                      isNew
+                          ? 'সেভ করুন  ($points pts)'
+                          : 'আপডেট করুন  ($points pts)',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14)),
                 ],
-              ),
+              ]),
             ),
           ),
         ),
@@ -5454,12 +8946,12 @@ class _BottomSaveBar extends StatelessWidget {
 // SHARED SMALL WIDGETS
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _AmalIconBadge extends StatelessWidget {
+class _IconBadge extends StatelessWidget {
   final IconData icon;
   final bool active;
-  final Color activeColor;
-  const _AmalIconBadge(
-      {required this.icon, required this.active, required this.activeColor});
+  final Color color;
+  const _IconBadge(
+      {required this.icon, required this.active, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -5468,18 +8960,18 @@ class _AmalIconBadge extends StatelessWidget {
       width: 38,
       height: 38,
       decoration: BoxDecoration(
-          color: active ? activeColor.withOpacity(0.1) : _C.pageBg,
+          color: active ? color.withOpacity(0.1) : _C.pageBg,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-              color: active ? activeColor.withOpacity(0.25) : _C.border,
-              width: 0.5)),
-      child: Icon(icon, size: 18, color: active ? activeColor : _C.textHint),
+              color: active ? color.withOpacity(0.25) : _C.border, width: 0.5)),
+      child: Icon(icon, size: 18, color: active ? color : _C.textHint),
     );
   }
 }
 
 class _PtsTag extends StatelessWidget {
-  final int pts, maxPts;
+  final int pts;
+  final int? maxPts;
   final bool active;
   const _PtsTag(
       {required this.pts, required this.maxPts, required this.active});
@@ -5495,7 +8987,7 @@ class _PtsTag extends StatelessWidget {
           border: Border.all(
               color: active ? _C.green.withOpacity(0.3) : _C.border,
               width: 0.5)),
-      child: Text(active ? '+$pts pts' : '$maxPts pts',
+      child: Text(active ? '+$pts pts' : '${maxPts ?? pts} pts',
           style: TextStyle(
               fontSize: 10.5,
               fontWeight: FontWeight.w700,
@@ -5515,7 +9007,6 @@ class _CounterPtsTag extends StatelessWidget {
     final label = active
         ? (max != null ? '+$current / $max pts' : '+$current pts')
         : (max != null ? 'max $max pts' : '∞ pts');
-
     return AnimatedContainer(
       duration: 180.ms,
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
@@ -5534,53 +9025,226 @@ class _CounterPtsTag extends StatelessWidget {
   }
 }
 
+class _CounterDisplay extends StatelessWidget {
+  final int count;
+  final String unit;
+  final int? max;
+  final bool active;
+  const _CounterDisplay(
+      {required this.count,
+      required this.unit,
+      this.max,
+      required this.active});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 96,
+      height: 78,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+          color: active ? _C.greenLight : _C.pageBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+              color: active ? _C.green.withOpacity(0.3) : _C.border,
+              width: 0.5)),
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Text('$count',
+            style: TextStyle(
+                fontSize: 34,
+                fontWeight: FontWeight.w900,
+                height: 1,
+                color: active ? _C.darkGreen : _C.textHint)),
+        const SizedBox(height: 3),
+        Text(max != null ? '/ $max $unit' : unit,
+            style: TextStyle(
+                fontSize: 10, color: active ? _C.textSecondary : _C.textHint)),
+      ]),
+    );
+  }
+}
+
+class _StepBtn extends StatelessWidget {
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
+  const _StepBtn(
+      {required this.icon, required this.enabled, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+            color: enabled ? _C.greenLight : _C.pageBg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+                color: enabled ? _C.green.withOpacity(0.3) : _C.border,
+                width: 0.5)),
+        child:
+            Icon(icon, color: enabled ? _C.darkGreen : _C.textHint, size: 24),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WITR DOTS  (1, 3, 5, 7, 9)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _WitrDots extends StatelessWidget {
+  final int count;
+  const _WitrDots({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    const oddValues = [1, 3, 5, 7, 9];
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: oddValues.map((val) {
+        final filled = count >= val;
+        return AnimatedContainer(
+          duration: 140.ms,
+          width: 36,
+          height: 8,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          decoration: BoxDecoration(
+              color: filled ? _C.darkGreen : _C.border,
+              borderRadius: BorderRadius.circular(99)),
+          child: filled
+              ? Center(
+                  child: Text('$val',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 6,
+                          fontWeight: FontWeight.w800)))
+              : null,
+        );
+      }).toList(),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BOUNDED PROGRESS  (for counters with maxValue, e.g. fasting days)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _BoundedProgress extends StatelessWidget {
+  final int count, max;
+  const _BoundedProgress({required this.count, required this.max});
+
+  @override
+  Widget build(BuildContext context) {
+    if (max > 15) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text('$count',
+                style: const TextStyle(
+                    color: _C.darkGreen,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11)),
+            Text('$max',
+                style: const TextStyle(color: _C.textHint, fontSize: 11)),
+          ]),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              value: (count / max).clamp(0.0, 1.0),
+              backgroundColor: _C.border,
+              valueColor: const AlwaysStoppedAnimation(_C.darkGreen),
+              minHeight: 8,
+            ),
+          ),
+        ]),
+      );
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(
+          max,
+          (i) => AnimatedContainer(
+                duration: 140.ms,
+                width: max <= 7 ? 28 : 22,
+                height: 7,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                    color: i < count ? _C.darkGreen : _C.border,
+                    borderRadius: BorderRadius.circular(99)),
+              )),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UNBOUNDED PROGRESS
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _UnboundedProgress extends StatelessWidget {
+  final int count;
+  final String unitBn;
+  const _UnboundedProgress({required this.count, required this.unitBn});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+      Icon(Icons.trending_up_rounded,
+          color: count > 0 ? _C.darkGreen : _C.textHint, size: 16),
+      const SizedBox(width: 6),
+      Text(
+          count > 0
+              ? '$count $unitBn যোগ করা হয়েছে'
+              : 'যত বেশি, তত বেশি পয়েন্ট',
+          style: TextStyle(
+              color: count > 0 ? _C.darkGreen : _C.textHint,
+              fontSize: 11,
+              fontWeight: FontWeight.w500)),
+    ]);
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // LOCAL ITEM MODEL
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _LocalItem {
-  final String categoryId;
-  final int basePoints, congPoints;
-  final bool isExemptDuringPeriod;
-  final bool isPrayer;
-  final bool isFard; // ← from backend
-  final AmalInputType inputType;
-  final double? pointsPerUnit;
-  final num? maxValue;
+  final AmalCategory cat;
   bool completed;
-  bool isExempted; // ← true when female + exemptDay + isFard
+  bool isExempted;
   PrayerMode? prayerMode;
   int count;
 
   _LocalItem({
-    required this.categoryId,
-    required this.isPrayer,
-    required this.isFard,
-    required this.isExemptDuringPeriod,
-    required this.inputType,
-    required this.basePoints,
-    required this.congPoints,
+    required this.cat,
     required this.completed,
-    this.pointsPerUnit,
-    this.maxValue,
     this.prayerMode,
     this.count = 0,
     this.isExempted = false,
   });
 
   int get points {
-    // Exempted items always return 0 points
     if (isExempted) return 0;
 
-    if (isPrayer) {
-      if (prayerMode == PrayerMode.congregation) return congPoints;
-      if (prayerMode == PrayerMode.solo) return basePoints;
-      return 0;
+    switch (_resolveCardType(cat)) {
+      case _CardType.fardPrayer:
+        if (prayerMode == PrayerMode.congregation)
+          return cat.congregationPoints ?? cat.basePoints;
+        if (prayerMode == PrayerMode.solo) return cat.basePoints;
+        return 0;
+
+      case _CardType.rakaatCounter:
+      case _CardType.genericCounter:
+        return (count * (cat.pointsPerUnit ?? cat.basePoints.toDouble()))
+            .round();
+
+      case _CardType.sunnahToggle:
+      case _CardType.genericToggle:
+        return completed ? cat.basePoints : 0;
     }
-    if (inputType == AmalInputType.counter) {
-      return (count * (pointsPerUnit ?? basePoints.toDouble())).round();
-    }
-    if (!completed) return 0;
-    return basePoints;
   }
 }

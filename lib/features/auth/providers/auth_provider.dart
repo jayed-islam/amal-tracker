@@ -187,12 +187,14 @@ class AuthState {
   final bool isLoading;
   final String? error;
   final bool isAuthenticated;
+  final bool isInitializing;
 
   const AuthState({
     this.user,
     this.isLoading = false,
     this.error,
     this.isAuthenticated = false,
+    this.isInitializing = true,
   });
 
   AuthState copyWith({
@@ -200,12 +202,14 @@ class AuthState {
     bool? isLoading,
     String? error,
     bool? isAuthenticated,
+    bool? isInitializing,
   }) =>
       AuthState(
         user: user ?? this.user,
         isLoading: isLoading ?? this.isLoading,
         error: error,
         isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+        isInitializing: isInitializing ?? this.isInitializing,
       );
 }
 
@@ -252,13 +256,35 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final userJson = await storage.read(key: AppConstants.userKey);
       if (token != null && userJson != null) {
         final user = UserModel.fromJson(jsonDecode(userJson));
-        state = AuthState(user: user, isAuthenticated: true);
+        state = AuthState(
+          user: user,
+          isAuthenticated: true,
+          isInitializing: false, // ← done, router may now redirect
+        );
+      } else {
+        state = const AuthState(
+            isInitializing: false); // ← not logged in, go to login
       }
     } catch (e) {
       print('[AUTH] _loadFromStorage error: $e');
-      state = const AuthState();
+      state = const AuthState(isInitializing: false);
     }
   }
+
+  // Future<void> _loadFromStorage() async {
+  //   try {
+  //     final storage = _ref.read(secureStorageProvider);
+  //     final token = await storage.read(key: AppConstants.accessTokenKey);
+  //     final userJson = await storage.read(key: AppConstants.userKey);
+  //     if (token != null && userJson != null) {
+  //       final user = UserModel.fromJson(jsonDecode(userJson));
+  //       state = AuthState(user: user, isAuthenticated: true, );
+  //     }
+  //   } catch (e) {
+  //     print('[AUTH] _loadFromStorage error: $e');
+  //     state = const AuthState();
+  //   }
+  // }
 
   Future<bool> login(String email, String password) async {
     state = state.copyWith(isLoading: true, error: null);
@@ -434,4 +460,8 @@ final currentUserProvider = Provider<UserModel?>((ref) {
 
 final isAuthenticatedProvider = Provider<bool>((ref) {
   return ref.watch(authProvider).isAuthenticated;
+});
+
+final isInitializingProvider = Provider<bool>((ref) {
+  return ref.watch(authProvider).isInitializing;
 });

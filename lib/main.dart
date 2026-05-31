@@ -140,6 +140,7 @@
 import 'package:amal_tracker/core/services/connectivity_service.dart';
 import 'package:amal_tracker/core/services/notification_service.dart';
 import 'package:amal_tracker/core/services/push_notification_service.dart';
+import 'package:amal_tracker/features/auth/providers/auth_provider.dart';
 import 'package:amal_tracker/features/notification/model/notification_model.dart';
 import 'package:amal_tracker/features/notification/provider/notification_provider.dart';
 import 'package:amal_tracker/firebase_options.dart';
@@ -152,6 +153,8 @@ import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'package:flutter_native_splash/flutter_native_splash.dart';
+
 // Top-level FCM background handler — MUST be top-level
 @pragma('vm:entry-point')
 Future<void> _fbBgHandler(RemoteMessage message) async {
@@ -162,7 +165,9 @@ Future<void> _fbBgHandler(RemoteMessage message) async {
 }
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: binding);
+  // WidgetsFlutterBinding.ensureInitialized();
 
   await ConnectivityService.instance.initialize();
 
@@ -213,6 +218,14 @@ class _AmalTrackerAppState extends ConsumerState<AmalTrackerApp> {
     super.initState();
     _wirePushCallbacks();
     _wireLocalNotificationTap();
+    _dismissSplashWhenReady();
+  }
+
+  void _dismissSplashWhenReady() {
+    // Runs once when isInitializing flips false
+    ref.listenManual(isInitializingProvider, (_, isInitializing) {
+      if (!isInitializing) FlutterNativeSplash.remove();
+    });
   }
 
   // Foreground FCM + opened-from-notification callbacks

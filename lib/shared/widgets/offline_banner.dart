@@ -1,11 +1,10 @@
 import 'package:amal_tracker/core/exceptions/network_exceptions.dart';
+import 'package:amal_tracker/features/notification/widgets/notification_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:amal_tracker/core/providers/connectivity_provider.dart';
 import 'package:amal_tracker/core/services/connectivity_service.dart';
 import 'package:amal_tracker/core/services/api_service.dart';
-import 'package:amal_tracker/features/home/screens/home_screen.dart'
-    show ColorT;
 
 // ─── OfflineBanner ────────────────────────────────────────────────────────────
 //

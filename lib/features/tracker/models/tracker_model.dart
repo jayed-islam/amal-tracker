@@ -741,23 +741,64 @@ class LeaderboardEntry {
   }
 }
 
+// ─── Weekly Bar Data Model (নতুন যুক্ত করুন) ──────────────────────────────────
+class WeeklyBarData {
+  final String day;
+  final String date;
+  final int points;
+  final int fardDone;
+  final int totalFard;
+  final int jamatCount;
+  final int sunnahCount; // 👈 নতুন ফিল্ড
+  final bool hasData;
+  final bool isExemptDay;
+
+  WeeklyBarData({
+    required this.day,
+    required this.date,
+    required this.points,
+    required this.fardDone,
+    required this.totalFard,
+    required this.jamatCount,
+    required this.sunnahCount,
+    required this.hasData,
+    required this.isExemptDay,
+  });
+
+  factory WeeklyBarData.fromJson(Map<String, dynamic> json) => WeeklyBarData(
+        day: json['day'] ?? '',
+        date: json['date'] ?? '',
+        points: json['points'] ?? 0,
+        fardDone: json['fardDone'] ?? 0,
+        totalFard: json['totalFard'] ?? 0,
+        jamatCount: json['jamatCount'] ?? 0,
+        sunnahCount: json['sunnahCount'] ?? 0, // ম্যাপিং করা হলো
+        hasData: json['hasData'] ?? false,
+        isExemptDay: json['isExemptDay'] ?? false,
+      );
+}
 // ─── Progress Summary ─────────────────────────────────────────────────────────
 
 class ProgressSummary {
+  final String userGender;
   final MonthlyTracker? currentMonth;
   final List<MonthlyTracker> recentMonths;
   final DailyEntry? todayEntry;
   final int weeklyPoints;
+  final List<WeeklyBarData> currentWeek;
 
   ProgressSummary({
+    required this.userGender,
     this.currentMonth,
     required this.recentMonths,
     this.todayEntry,
     required this.weeklyPoints,
+    required this.currentWeek,
   });
 
   factory ProgressSummary.fromJson(Map<String, dynamic> json) =>
       ProgressSummary(
+        userGender: json['userGender'] ?? 'male', // ব্যাকএন্ড থেকে রিসিভ
         currentMonth: json['currentMonth'] != null
             ? MonthlyTracker.fromJson(json['currentMonth'])
             : null,
@@ -768,6 +809,10 @@ class ProgressSummary {
             ? DailyEntry.fromJson(json['todayEntry'])
             : null,
         weeklyPoints: json['weeklyPoints'] ?? 0,
+        currentWeek: (json['currentWeek'] as List<dynamic>? ??
+                []) // 👈 ব্যাকএন্ড অ্যারে ম্যাপিং
+            .map((w) => WeeklyBarData.fromJson(w))
+            .toList(),
       );
 }
 

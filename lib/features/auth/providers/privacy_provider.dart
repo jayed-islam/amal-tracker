@@ -178,6 +178,22 @@ class PrivacyNotifier extends StateNotifier<PrivacyState> {
     );
   }
 
+  void setLocalState({
+    bool? isPermanent,
+    bool? isHidden,
+    bool? showAnonymous,
+    bool? isPublic,
+    bool? canRejoinThisMonth,
+  }) {
+    state = state.copyWith(
+      isPermanent: isPermanent ?? state.isPermanent,
+      isHidden: isHidden ?? state.isHidden,
+      showAnonymous: showAnonymous ?? state.showAnonymous,
+      isPublic: isPublic ?? state.isPublic,
+      canRejoinThisMonth: canRejoinThisMonth ?? state.canRejoinThisMonth,
+    );
+  }
+
   Future<PrivacyState?> updatePrivacy({
     required bool isPermanent,
     required bool isHidden,
