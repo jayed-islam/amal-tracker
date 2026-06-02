@@ -1,4 +1,5 @@
 import 'package:amal_tracker/features/auth/providers/provider_reset.dart';
+import 'package:amal_tracker/shared/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/widgets/app_widgets.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -262,7 +262,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                           ),
                           const SizedBox(height: 28),
-                          AppButton(
+                          PrimaryButton(
                             onPressed: isLoading ? null : _login,
                             isLoading: isLoading,
                             label: 'লগইন করুন',

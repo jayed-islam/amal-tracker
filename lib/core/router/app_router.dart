@@ -1,4 +1,3 @@
-import 'package:amal_tracker/core/router/route_notifier.dart';
 import 'package:amal_tracker/features/auth/providers/auth_provider.dart';
 import 'package:amal_tracker/features/jannah_garden/screen/jannah_garden_screen.dart';
 import 'package:amal_tracker/features/notification/screen/notification_screen.dart';
@@ -65,72 +64,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
 
-    // redirect: (context, state) {
-    //   // 🟢 অ্যাপ যদি টোরেন চেকিংয়ের মাঝপথে থাকে, তবে রিডাইরেক্ট ব্লক করে রাখো
-    //   if (authState.status == AuthStatus.unknown) return null;
-
-    //   final isAuth = authState.status == AuthStatus.authenticated;
-    //   final loc = state.matchedLocation;
-    //   final isAuthPage = loc == AppRoutes.login || loc == AppRoutes.register;
-
-    //   if (!isAuth && !isAuthPage) return AppRoutes.login;
-    //   if (isAuth && isAuthPage) return AppRoutes.home;
-
-    //   return null;
-    // },
-    // navigatorKey: _rootNavigatorKey,
-    // initialLocation: AppRoutes.login,
-    // refreshListenable: notifier, // এখন এটি সঠিকভাবে নোটিফিকেশন রিসিভ করবে
-
-    // redirect: (context, state) {
-    //   if (authState.isInitializing) return null;
-
-    //   final isAuth = authState.isAuthenticated;
-    //   final loc = state.matchedLocation;
-    //   final isAuthPage = loc == AppRoutes.login || loc == AppRoutes.register;
-
-    //   if (!isAuth && !isAuthPage) return AppRoutes.login;
-    //   if (isAuth && isAuthPage) return AppRoutes.home;
-
-    //   return null;
-    // },
-    // navigatorKey: _rootNavigatorKey,
-    // initialLocation: AppRoutes.login,
-
-    // refreshListenable: notifier,
-
-    // redirect: (context, state) {
-    //   if (authState.isInitializing) return null;
-
-    //   final isAuth = authState.isAuthenticated;
-    //   final loc = state.matchedLocation;
-    //   final isAuthPage = loc == AppRoutes.login || loc == AppRoutes.register;
-
-    //   if (!isAuth && !isAuthPage) return AppRoutes.login;
-    //   if (isAuth && isAuthPage) return AppRoutes.home;
-
-    //   return null;
-    // },
-    // refreshListenable: notifier,
-    // // redirect: notifier.redirect,
-    // redirect: (context, state) {
-    //   if (authState.isInitializing) return null;
-
-    //   final isAuth = authState.isAuthenticated;
-    //   final loc = state.matchedLocation;
-    //   final isAuthPage = loc == AppRoutes.login || loc == AppRoutes.register;
-
-    //   if (!isAuth && !isAuthPage) return AppRoutes.login;
-    //   if (isAuth && isAuthPage) return AppRoutes.home;
-    //   return null;
-    // },
     routes: [
-      // ── Splash ────────────────────────────────────────────────────────
-      // GoRoute(
-      //   path: AppRoutes.splash,
-      //   builder: (_, __) => const SplashScreen(),
-      // ),
-
       // ── Auth ──────────────────────────────────────────────────────────
       GoRoute(
         path: AppRoutes.login,
