@@ -2084,8 +2084,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authError = ref.watch(authProvider.select((state) => state.error));
+
+    // লোকাল রানিং স্টেট চেক
+    final isLoading = _isRegistering;
     final auth = ref.watch(authProvider);
-    final isLoading = auth.isLoading || _isRegistering;
+    // final isLoading = auth.isLoading || _isRegistering;
     final size = MediaQuery.of(context).size;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -2219,7 +2223,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 children: [
                                   // API error banner
                                   if (auth.error != null) ...[
-                                    _ErrorBanner(auth.error!),
+                                    _ErrorBanner(authError!),
                                     const SizedBox(height: 20),
                                   ],
 

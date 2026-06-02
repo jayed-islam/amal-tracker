@@ -1,3 +1,4 @@
+import 'package:amal_tracker/features/leaderboard/widgets/gender_filter.dart';
 import 'package:amal_tracker/features/leaderboard/widgets/public_profile_sheet.dart';
 
 import 'package:flutter/material.dart';
@@ -246,6 +247,26 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
                 delegate: _MonthChipDelegate(
                   filter: filter,
                   onPick: _pickMonth,
+                ),
+              ),
+
+              SliverToBoxAdapter(
+                child: GenderFilterChips(
+                  selected: filter.gender,
+                  onChanged: (g) {
+                    final next = ref
+                        .read(leaderboardFilterProvider.notifier)
+                        .state
+                        .copyWith(
+                          gender: g,
+                          clearGender: g == null,
+                          page: 1,
+                        );
+                    ref.read(leaderboardFilterProvider.notifier).state = next;
+                    ref
+                        .read(leaderboardProvider.notifier)
+                        .load(next, refresh: true);
+                  },
                 ),
               ),
 

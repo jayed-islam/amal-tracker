@@ -1688,8 +1688,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _loadLeaderboard() {
     final now = DateTime.now();
+    final user = ref.read(currentUserProvider);
     ref.read(leaderboardPreviewProvider.notifier).load(
-          LeaderboardFilter(year: now.year, month: now.month, limit: 3),
+          LeaderboardFilter(
+            year: now.year,
+            month: now.month,
+            limit: 3,
+            gender: user?.gender,
+          ),
           refresh: true,
         );
   }
@@ -1724,9 +1730,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final progress = ref.watch(progressSummaryProvider);
     final board = ref.watch(leaderboardPreviewProvider);
 
-    ref.listen<LeaderboardState>(leaderboardPreviewProvider, (_, next) {
-      if (!next.isLoading && next.entries.isEmpty) _loadLeaderboard();
-    });
+    // ref.listen<LeaderboardState>(leaderboardPreviewProvider, (_, next) {
+    //   if (!next.isLoading && next.entries.isEmpty) _loadLeaderboard();
+    // });
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark,
@@ -1760,7 +1766,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               onTap: () => context.go(AppRoutes.tracker)),
                           data: (s) => _HeroCard(
                               summary: s,
-                              onTap: () => context.go(AppRoutes.tracker)),
+                              onTap: () => context.push(AppRoutes.tracker)),
                         )
                         .animate()
                         .fadeIn(delay: 50.ms, duration: 300.ms),
@@ -1826,7 +1832,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     const SizedBox(height: 20),
 
                     // ── How it works ──────────────────────────────────────
-                    _HowItWorks(onTap: () => context.go(AppRoutes.howItWorks))
+                    _HowItWorks(onTap: () => context.push(AppRoutes.howItWorks))
                         .animate()
                         .fadeIn(delay: 200.ms),
                   ]),

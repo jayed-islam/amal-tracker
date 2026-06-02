@@ -172,13 +172,14 @@ class ProfileSheet extends ConsumerWidget {
 
                   const SizedBox(height: 16),
 
-                  // Logout
                   _LogoutButton(
                     onTap: () async {
                       HapticFeedback.mediumImpact();
-                      Navigator.pop(context);
-                      invalidateUserProviders(ref);
+                      // ১. আগে logout করুন
                       await ref.read(authProvider.notifier).logout();
+                      invalidateUserProviders(ref);
+                      // ২. তারপর pop — কিন্তু context valid কিনা চেক করুন
+                      if (context.mounted) Navigator.pop(context);
                     },
                   ),
 

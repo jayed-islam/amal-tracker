@@ -218,15 +218,14 @@ class _AmalTrackerAppState extends ConsumerState<AmalTrackerApp> {
     super.initState();
     _wirePushCallbacks();
     _wireLocalNotificationTap();
-    _dismissSplashWhenReady();
   }
 
-  void _dismissSplashWhenReady() {
-    // Runs once when isInitializing flips false
-    ref.listenManual(isInitializingProvider, (_, isInitializing) {
-      if (!isInitializing) FlutterNativeSplash.remove();
-    });
-  }
+  // void _dismissSplashWhenReady() {
+  //   // Runs once when isInitializing flips false
+  //   ref.listenManual(isInitializingProvider, (_, isInitializing) {
+  //     if (!isInitializing) FlutterNativeSplash.remove();
+  //   });
+  // }
 
   // Foreground FCM + opened-from-notification callbacks
   void _wirePushCallbacks() {
@@ -280,7 +279,18 @@ class _AmalTrackerAppState extends ConsumerState<AmalTrackerApp> {
   @override
   Widget build(BuildContext context) {
     // Use ref.watch instead of ref.watch with BuildContext
+    // final router = ref.watch(routerProvider);
     final router = ref.watch(routerProvider);
+
+    // টোকেন চেকিং (Initializing) শেষ হওয়া মাত্র নেটিভ স্প্ল্যাশ স্ক্রিন রিমুভ হবে
+    ref.listen<AuthStatus>(
+      authProvider.select((state) => state.status),
+      (previous, next) {
+        if (previous == AuthStatus.unknown && next != AuthStatus.unknown) {
+          FlutterNativeSplash.remove();
+        }
+      },
+    );
 
     return MaterialApp.router(
       title: 'আমল ট্র্যাকার',
