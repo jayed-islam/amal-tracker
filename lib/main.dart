@@ -143,6 +143,7 @@ import 'package:amal_tracker/core/services/push_notification_service.dart';
 import 'package:amal_tracker/features/auth/providers/auth_provider.dart';
 import 'package:amal_tracker/features/notification/model/notification_model.dart';
 import 'package:amal_tracker/features/notification/provider/notification_provider.dart';
+import 'package:amal_tracker/features/onboarding/provider/onboarding_provider.dart';
 import 'package:amal_tracker/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -165,10 +166,9 @@ Future<void> _fbBgHandler(RemoteMessage message) async {
 }
 
 void main() async {
-  final binding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: binding);
-  // WidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
 
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   await ConnectivityService.instance.initialize();
 
   // Lock to portrait + landscape
@@ -198,6 +198,9 @@ void main() async {
 
   // FCM push service
   await PushNotificationService.instance.initialize();
+
+  final hasSeen = await loadOnboardingSeen();
+  onboardingSeenNotifier.value = hasSeen;
 
   runApp(const ProviderScope(child: AmalTrackerApp()));
 }
@@ -278,8 +281,21 @@ class _AmalTrackerAppState extends ConsumerState<AmalTrackerApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Use ref.watch instead of ref.watch with BuildContext
+    // // Use ref.watch instead of ref.watch with BuildContext
+    // // final router = ref.watch(routerProvider);
     // final router = ref.watch(routerProvider);
+
+    // // টোকেন চেকিং (Initializing) শেষ হওয়া মাত্র নেটিভ স্প্ল্যাশ স্ক্রিন রিমুভ হবে
+    // ref.listen<AuthStatus>(
+    //   authProvider.select((state) => state.status),
+    //   (previous, next) {
+    //     if (previous == AuthStatus.unknown && next != AuthStatus.unknown) {
+    //       FlutterNativeSplash.remove();
+    //     }
+    //   },
+    // );
+    // ১. কারেন্ট অথ স্ট্যাটাস এবং রাউটার ওয়াচ করা হচ্ছে
+    final authStatus = ref.watch(authProvider.select((state) => state.status));
     final router = ref.watch(routerProvider);
 
     // টোকেন চেকিং (Initializing) শেষ হওয়া মাত্র নেটিভ স্প্ল্যাশ স্ক্রিন রিমুভ হবে
@@ -291,6 +307,18 @@ class _AmalTrackerAppState extends ConsumerState<AmalTrackerApp> {
         }
       },
     );
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // আপডেট: টোকেন চেক চলাকালীন সময় GoRouter কে রেন্ডার হতে দেওয়া হবে না।
+    // এই সময় নেটিভ স্প্ল্যাশ স্ক্রিন একটিভ থাকায় ইউজার শুধু আপনার অ্যাপের লোগো দেখবে।
+    // ─────────────────────────────────────────────────────────────────────────
+    if (authStatus == AuthStatus.unknown) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        home: const Scaffold(body: SizedBox.shrink()),
+      );
+    }
 
     return MaterialApp.router(
       title: 'আমল ট্র্যাকার',

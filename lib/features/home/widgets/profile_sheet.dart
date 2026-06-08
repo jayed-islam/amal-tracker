@@ -44,7 +44,13 @@ class ProfileSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.of(context).size;
     final isFemale = user?.gender?.toLowerCase() == 'female';
-    final progress = ref.watch(progressSummaryProvider);
+    final now = DateTime.now();
+
+// হোম স্ক্রিন বা ড্যাশবোর্ডে এইভাবে কল করবেন
+    final progress = ref.watch(
+      progressSummaryProvider((year: now.year, month: now.month)),
+    );
+    // final progress = ref.watch(progressSummaryProvider);
     final totalPts =
         progress.whenOrNull(data: (s) => s.currentMonth?.totalPoints) ?? 0;
     final streak =

@@ -50,6 +50,8 @@ class AmalCategory {
   final int? minValue; // minimum allowed value (null = 0)
   final int? maxValue; // maximum allowed value (null = unlimited)
 
+  final List<int>? applicableDays; // null = সব দিন, [5] = শুধু Friday
+
   const AmalCategory({
     required this.id,
     required this.key,
@@ -71,6 +73,7 @@ class AmalCategory {
     this.unit,
     this.minValue,
     this.maxValue,
+    this.applicableDays,
   });
 
   factory AmalCategory.fromJson(Map<String, dynamic> json) => AmalCategory(
@@ -95,6 +98,9 @@ class AmalCategory {
         unit: json['unit'],
         minValue: (json['minValue'] as num?)?.toInt(),
         maxValue: (json['maxValue'] as num?)?.toInt(),
+        applicableDays: (json['applicableDays'] as List<dynamic>?)
+            ?.map((e) => e as int)
+            .toList(),
       );
 
   /// Effective points-per-unit: falls back to basePoints if backend omits it.
@@ -108,6 +114,14 @@ class AmalCategory {
   bool get isBounded => maxValue != null;
 
   bool get isExemptDuringPeriod => isPrayer || isFasting;
+
+  // Flutter weekday: Mon=1...Sun=7
+  // JS/seed getDay(): Sun=0, Mon=1...Sat=6
+  // Convert: Flutter weekday % 7 = JS day (Sun=0)
+  bool isApplicableOn(DateTime date) {
+    if (applicableDays == null || applicableDays!.isEmpty) return true;
+    return applicableDays!.contains(date.weekday % 7);
+  }
 }
 
 // ─── Prayer Mode ──────────────────────────────────────────────────────────────
@@ -269,12 +283,16 @@ class MonthlyTracker {
   final int daysCompleted;
   final int streakDays;
   final int weeklyPoints;
+  final int fardPoints;
   final int monthlyPoints;
   final int dailyPoints;
   final double completionPercentage;
   final int? rank;
   final bool isWinner;
   final String? winnerCategory;
+  final int exemptDays; // 👈 নতুন ফিল্ড যোগ করুন
+  final int farzCompletedDays; // 👈 নতুন ফিল্ড যোগ করুন
+  final int eligibleDays; // 👈 নতুন ফিল্ড যোগ করুন
 
   MonthlyTracker({
     required this.id,
@@ -284,6 +302,7 @@ class MonthlyTracker {
     required this.totalPoints,
     required this.daysCompleted,
     required this.streakDays,
+    required this.fardPoints,
     required this.weeklyPoints,
     required this.monthlyPoints,
     required this.dailyPoints,
@@ -291,6 +310,9 @@ class MonthlyTracker {
     this.rank,
     required this.isWinner,
     this.winnerCategory,
+    required this.exemptDays, // 👈
+    required this.farzCompletedDays, // 👈
+    required this.eligibleDays, // 👈
   });
 
   factory MonthlyTracker.fromJson(Map<String, dynamic> json) => MonthlyTracker(
@@ -301,6 +323,7 @@ class MonthlyTracker {
         totalPoints: json['totalPoints'] ?? 0,
         daysCompleted: json['daysCompleted'] ?? 0,
         streakDays: json['streakDays'] ?? 0,
+        fardPoints: json['fardPoints'] ?? 0,
         weeklyPoints: json['weeklyPoints'] ?? 0,
         monthlyPoints: json['monthlyPoints'] ?? 0,
         dailyPoints: json['dailyPoints'] ?? 0,
@@ -308,6 +331,9 @@ class MonthlyTracker {
         rank: json['rank'],
         isWinner: json['isWinner'] ?? false,
         winnerCategory: json['winnerCategory'],
+        exemptDays: json['exemptDays'] ?? 0, // 👈
+        farzCompletedDays: json['farzCompletedDays'] ?? 0, // 👈
+        eligibleDays: json['eligibleDays'] ?? 0, // 👈
       );
 }
 
@@ -374,10 +400,6 @@ class WeeklyBarData {
   final String day;
   final String date;
   final int points;
-  final int fardDone;
-  final int totalFard;
-  final int jamatCount;
-  final int sunnahCount; // 👈 নতুন ফিল্ড
   final bool hasData;
   final bool isExemptDay;
 
@@ -385,10 +407,6 @@ class WeeklyBarData {
     required this.day,
     required this.date,
     required this.points,
-    required this.fardDone,
-    required this.totalFard,
-    required this.jamatCount,
-    required this.sunnahCount,
     required this.hasData,
     required this.isExemptDay,
   });
@@ -397,10 +415,6 @@ class WeeklyBarData {
         day: json['day'] ?? '',
         date: json['date'] ?? '',
         points: json['points'] ?? 0,
-        fardDone: json['fardDone'] ?? 0,
-        totalFard: json['totalFard'] ?? 0,
-        jamatCount: json['jamatCount'] ?? 0,
-        sunnahCount: json['sunnahCount'] ?? 0, // ম্যাপিং করা হলো
         hasData: json['hasData'] ?? false,
         isExemptDay: json['isExemptDay'] ?? false,
       );

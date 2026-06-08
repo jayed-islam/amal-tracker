@@ -7325,7 +7325,13 @@ class _SS extends ConsumerState<JannahWorldScreen>
 
   @override
   Widget build(BuildContext ctx) {
-    final pa = ref.watch(progressSummaryProvider);
+    final now = DateTime.now();
+
+// হোম স্ক্রিন বা ড্যাশবোর্ডে এইভাবে কল করবেন
+    final pa = ref.watch(
+      progressSummaryProvider((year: now.year, month: now.month)),
+    );
+    // final pa = ref.watch(progressSummaryProvider);
     final ca = ref.watch(categoriesProvider);
     final s = ref.watch(_jp);
 

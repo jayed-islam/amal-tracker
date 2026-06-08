@@ -273,7 +273,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             child: GestureDetector(
                               onTap: isLoading
                                   ? null
-                                  : () => context.go(AppRoutes.register),
+                                  : () {
+                                      ref
+                                          .read(authProvider.notifier)
+                                          .clearError();
+                                      context.go(AppRoutes.register);
+                                    },
                               child: Opacity(
                                 opacity: isLoading ? 0.5 : 1.0,
                                 child: RichText(

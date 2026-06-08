@@ -17,7 +17,6 @@ class AuthState {
   final String? error;
   final AuthStatus status;
 
-  // 🟢 ক্লিন সিস্টেম: কোনো 'isInitializing' ভ্যারিয়েবল এখানে আর নেই।
   const AuthState({
     this.user,
     this.isLoading = false,
@@ -97,6 +96,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String email,
     required String password,
     required String district,
+    String? fullLocation,
     String? department,
     String? designation,
     String? phone,
@@ -114,6 +114,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
           'district': district,
           if (department != null && department.isNotEmpty)
             'department': department,
+          if (fullLocation != null && fullLocation.isNotEmpty)
+            'fullLocation': fullLocation,
           if (designation != null && designation.isNotEmpty)
             'designation': designation,
           if (phone != null && phone.isNotEmpty) 'phone': phone,

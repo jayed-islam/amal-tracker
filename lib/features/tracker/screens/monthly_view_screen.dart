@@ -1,4 +1,2254 @@
-import 'package:amal_tracker/features/leaderboard/providers/leaderboard_provider.dart';
+// import 'package:amal_tracker/features/leaderboard/providers/leaderboard_provider.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
+// import 'package:flutter_animate/flutter_animate.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import '../providers/tracker_provider.dart';
+// import '../models/tracker_model.dart';
+// import '../../../core/constants/app_constants.dart';
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // DESIGN TOKENS — same as home_screen.dart ColorT
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _C {
+//   static const pageBg = Color(0xFFF4F6F1);
+//   static const cardBg = Color(0xFFFFFFFF);
+//   static const darkGreen = Color(0xFF0E3D22);
+//   static const midGreen = Color(0xFF1B7045);
+//   static const gold = Color(0xFFD4A843);
+//   static const goldLight = Color(0xFFFFF3E0);
+//   static const goldBorder = Color(0xFFFFCC80);
+//   static const goldPale = Color(0xFFFFFBF0);
+//   static const green = Color(0xFF16A34A);
+//   static const greenLight = Color(0xFFE8F5EE);
+//   static const amber = Color(0xFFFF6B35);
+//   static const amberLight = Color(0xFFFFF3E0);
+//   static const purple = Color(0xFF7C3AED);
+//   static const purpleLight = Color(0xFFEDE9FE);
+//   static const red = Color(0xFFEF4444);
+//   static const textPrimary = Color(0xFF0A1A0F);
+//   static const textSecondary = Color(0xFF6B7C6E);
+//   static const textHint = Color(0xFFABBAAE);
+//   static const border = Color(0xFFE4EAE4);
+//   static const borderMid = Color(0xFFD0DAD2);
+//   static const goldLight2 = Color(0xFFFFF8E7); // for ⭐ card
+//   static const darkGreenLight =
+//       Color(0xFFE8F0EC); // for 🎯 card (lighter version of darkGreen)
+//   static const redLight = Color(0xFFFEE2E2);
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // SCREEN
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class MonthlyViewScreen extends ConsumerStatefulWidget {
+//   const MonthlyViewScreen({super.key});
+
+//   @override
+//   ConsumerState<MonthlyViewScreen> createState() => _MonthlyViewScreenState();
+// }
+
+// class _MonthlyViewScreenState extends ConsumerState<MonthlyViewScreen> {
+//   late int _year;
+//   late int _month;
+//   final _sc = ScrollController();
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     final now = DateTime.now();
+//     _year = now.year;
+//     _month = now.month;
+//   }
+
+//   @override
+//   void dispose() {
+//     _sc.dispose();
+//     super.dispose();
+//   }
+
+//   void _showPeriodPicker() {
+//     showModalBottomSheet(
+//       context: context,
+//       backgroundColor: Colors.transparent,
+//       isScrollControlled: true,
+//       builder: (_) => _PeriodPickerSheet(
+//         year: _year,
+//         month: _month,
+//         onPicked: (y, m) => setState(() {
+//           _year = y;
+//           _month = m;
+//         }),
+//       ),
+//     );
+//   }
+
+//   Future<void> _refreshTracker() async {
+//     final f = ref.read(leaderboardFilterProvider);
+//     // Invalidate both providers to force refresh
+//     ref.invalidate(monthlyTrackerProvider((year: f.year, month: f.month)));
+//     await Future.microtask(() {
+//       ref.refresh(monthlyTrackerProvider((year: f.year, month: f.month)));
+//     });
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final params = (year: _year, month: _month);
+//     final entriesAsync = ref.watch(monthlyEntriesProvider(params));
+//     final trackerAsync = ref.watch(monthlyTrackerProvider(params));
+//     final monthName = AppConstants.bengaliMonths[_month - 1];
+
+//     return AnnotatedRegion<SystemUiOverlayStyle>(
+//       value:
+//           SystemUiOverlayStyle.light, // dark → light (dark green bar-এর জন্য)
+//       child: Scaffold(
+//         backgroundColor: _C.pageBg,
+//         // appBar সরিয়ে দাও — এখন SliverAppBar ব্যবহার হবে
+//         body: RefreshIndicator(
+//           color: _C.darkGreen,
+//           onRefresh: () async {
+//             ref.invalidate(monthlyEntriesProvider(params));
+//             ref.invalidate(monthlyTrackerProvider(params));
+//           },
+//           child: CustomScrollView(
+//             controller: _sc,
+//             physics: const AlwaysScrollableScrollPhysics(),
+//             slivers: [
+//               // ── Zone 1: STICKY APP BAR ───────────────────────────────────
+//               SliverAppBar(
+//                 pinned: true,
+//                 floating: false,
+//                 snap: false,
+//                 expandedHeight: 0,
+//                 toolbarHeight: 56,
+//                 backgroundColor: _C.darkGreen,
+//                 surfaceTintColor: Colors.transparent,
+//                 shadowColor: Colors.transparent,
+//                 automaticallyImplyLeading: false,
+//                 systemOverlayStyle: SystemUiOverlayStyle.light,
+//                 title: Row(
+//                   children: [
+//                     // Icon badge
+//                     Container(
+//                       width: 30,
+//                       height: 30,
+//                       decoration: BoxDecoration(
+//                         color: Colors.white.withOpacity(0.1),
+//                         borderRadius: BorderRadius.circular(8),
+//                         border: Border.all(
+//                           color: Colors.white.withOpacity(0.15),
+//                           width: 0.5,
+//                         ),
+//                       ),
+//                       child: const Icon(
+//                         Icons.calendar_month_outlined,
+//                         color: Colors.white,
+//                         size: 15,
+//                       ),
+//                     ),
+//                     const SizedBox(width: 10),
+//                     Column(
+//                       crossAxisAlignment: CrossAxisAlignment.start,
+//                       mainAxisSize: MainAxisSize.min,
+//                       children: [
+//                         Text(
+//                           'মাসিক রিপোর্ট',
+//                           style: TextStyle(
+//                             color: Colors.white.withOpacity(0.55),
+//                             fontSize: 10,
+//                             fontWeight: FontWeight.w500,
+//                           ),
+//                         ),
+//                         Text(
+//                           '$monthName $_year',
+//                           style: const TextStyle(
+//                             color: Colors.white,
+//                             fontSize: 14,
+//                             fontWeight: FontWeight.w800,
+//                             letterSpacing: -0.3,
+//                             height: 1.1,
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                   ],
+//                 ),
+//                 actions: [
+//                   GestureDetector(
+//                     onTap: _showPeriodPicker,
+//                     child: Container(
+//                       margin: const EdgeInsets.only(right: 16),
+//                       padding: const EdgeInsets.symmetric(
+//                           horizontal: 11, vertical: 6),
+//                       decoration: BoxDecoration(
+//                         color: Colors.white.withOpacity(0.1),
+//                         borderRadius: BorderRadius.circular(10),
+//                         border: Border.all(
+//                           color: Colors.white.withOpacity(0.18),
+//                           width: 0.5,
+//                         ),
+//                       ),
+//                       child: Row(
+//                         mainAxisSize: MainAxisSize.min,
+//                         children: [
+//                           Icon(
+//                             Icons.swap_horiz_rounded,
+//                             size: 13,
+//                             color: Colors.white.withOpacity(0.7),
+//                           ),
+//                           const SizedBox(width: 5),
+//                           const Text(
+//                             'মাস বদলান',
+//                             style: TextStyle(
+//                               color: Colors.white,
+//                               fontWeight: FontWeight.w700,
+//                               fontSize: 12,
+//                             ),
+//                           ),
+//                         ],
+//                       ),
+//                     ),
+//                   ),
+//                 ],
+//               ),
+
+//               // ── Zone 2: HERO BAND (scrolls away) ─────────────────────────
+//               SliverToBoxAdapter(
+//                 child: trackerAsync
+//                     .when(
+//                       loading: () => const _HeroBandSkeleton(),
+//                       error: (error, stackTrace) => _HeroBandErrorCard(
+//                         message: error.toString(),
+//                         onRetry: () => _refreshTracker(),
+//                       ),
+//                       data: (t) => _HeroBand(
+//                         year: _year,
+//                         month: _month,
+//                         tracker: t,
+//                       ),
+//                     )
+//                     .animate()
+//                     .fadeIn(duration: 280.ms),
+//               ),
+
+//               // ── Zone 3: STAT STRIP (scrolls with content) ─────────────────
+//               // SliverToBoxAdapter(
+//               //   child: trackerAsync
+//               //       .when(
+//               //         loading: () => const _StatStripSkeleton(),
+//               //         error: (_, __) => const _StatStrip(tracker: null),
+//               //         data: (t) => _StatStrip(
+//               //           tracker: t,
+//               //           entries: entriesAsync.valueOrNull,
+//               //         ),
+//               //       )
+//               //       .animate()
+//               //       .fadeIn(delay: 60.ms, duration: 260.ms),
+//               // ),
+//               SliverToBoxAdapter(
+//                 child: Consumer(
+//                   builder: (context, ref, _) {
+//                     final trackerAsync =
+//                         ref.watch(monthlyTrackerProvider(params));
+//                     final entriesAsync =
+//                         ref.watch(monthlyEntriesProvider(params));
+
+//                     return trackerAsync.when(
+//                       loading: () => const _StatStripSkeleton(),
+//                       error: (_, __) =>
+//                           const _StatStrip(tracker: null, entries: null),
+//                       data: (tracker) => _StatStrip(
+//                         tracker: tracker,
+//                         entries: entriesAsync.valueOrNull,
+//                       ),
+//                     );
+//                   },
+//                 ),
+//               ),
+
+//               // ── Zone 4: CALENDAR + DAY LIST ───────────────────────────────
+//               SliverPadding(
+//                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+//                 sliver: entriesAsync.when(
+//                   loading: () => SliverToBoxAdapter(
+//                     child: _EntriesSkeleton()
+//                         .animate()
+//                         .fadeIn(delay: 80.ms, duration: 260.ms),
+//                   ),
+//                   error: (_, __) => SliverToBoxAdapter(
+//                     child: _ErrorCard(
+//                       onRetry: () {
+//                         ref.invalidate(monthlyEntriesProvider(params));
+//                       },
+//                     ).animate().fadeIn(duration: 260.ms),
+//                   ),
+//                   data: (entries) => SliverList(
+//                     delegate: SliverChildListDelegate([
+//                       const SizedBox(height: 15),
+//                       _SectionHeader(title: 'দৈনিক ক্যালেন্ডার', emoji: '📅')
+//                           .animate()
+//                           .fadeIn(delay: 100.ms),
+//                       const SizedBox(height: 10),
+//                       _HeatmapCalendar(
+//                         year: _year,
+//                         month: _month,
+//                         entries: entries,
+//                       ).animate().fadeIn(delay: 120.ms, duration: 300.ms),
+//                       const SizedBox(height: 22),
+//                       _SectionHeader(title: 'দিন অনুযায়ী পয়েন্ট', emoji: '📋')
+//                           .animate()
+//                           .fadeIn(delay: 150.ms),
+//                       const SizedBox(height: 10),
+//                       if (entries.isEmpty)
+//                         _EmptyCard(
+//                           label:
+//                               '${AppConstants.bengaliMonths[_month - 1]} মাসে কোনো আমল নেই',
+//                         ).animate().fadeIn(delay: 160.ms)
+//                       else
+//                         Container(
+//                           decoration: BoxDecoration(
+//                             color: _C.cardBg,
+//                             borderRadius: BorderRadius.circular(16),
+//                             border: Border.all(color: _C.border, width: 0.5),
+//                           ),
+//                           child: Column(
+//                             children: List.generate(entries.length, (i) {
+//                               final e = entries[i];
+//                               final isLast = i == entries.length - 1;
+//                               return _DayRow(
+//                                 entry: e,
+//                                 isLast: isLast,
+//                                 delay: 160 + i * 30,
+//                               );
+//                             }),
+//                           ),
+//                         ).animate().fadeIn(delay: 160.ms, duration: 280.ms),
+//                     ]),
+//                   ),
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // STICKY TOP BAR  (PreferredSizeWidget, same as home_screen.dart _TopBar)
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _TopBar extends StatelessWidget implements PreferredSizeWidget {
+//   final int year, month;
+//   final VoidCallback onBack;
+//   final VoidCallback onChangePeriod;
+
+//   const _TopBar({
+//     required this.year,
+//     required this.month,
+//     required this.onBack,
+//     required this.onChangePeriod,
+//   });
+
+//   @override
+//   Size get preferredSize => const Size.fromHeight(62);
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final monthName = AppConstants.bengaliMonths[month - 1];
+
+//     return Container(
+//       color: _C.cardBg,
+//       child: SafeArea(
+//         bottom: false,
+//         child: Container(
+//           height: 62,
+//           padding: const EdgeInsets.symmetric(horizontal: 16),
+//           decoration: const BoxDecoration(
+//             color: _C.cardBg,
+//             border: Border(bottom: BorderSide(color: _C.border, width: 0.5)),
+//           ),
+//           child: Row(
+//             children: [
+//               // Back button
+//               Container(
+//                 width: 36,
+//                 height: 36,
+//                 decoration: BoxDecoration(
+//                   color: _C.pageBg,
+//                   borderRadius: BorderRadius.circular(10),
+//                   border: Border.all(color: _C.border, width: 0.5),
+//                 ),
+//                 child: const Icon(
+//                   Icons.calendar_month_outlined,
+//                   color: _C.darkGreen,
+//                   size: 16,
+//                 ),
+//               ),
+
+//               const SizedBox(width: 12),
+
+//               // Title block
+//               Expanded(
+//                 child: Column(
+//                   mainAxisAlignment: MainAxisAlignment.center,
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     const Text(
+//                       'মাসিক রিপোর্ট',
+//                       style: TextStyle(
+//                         color: _C.textSecondary,
+//                         fontSize: 10,
+//                         fontWeight: FontWeight.w500,
+//                       ),
+//                     ),
+//                     Text(
+//                       '$monthName $year',
+//                       style: const TextStyle(
+//                         color: _C.textPrimary,
+//                         fontWeight: FontWeight.w800,
+//                         fontSize: 15,
+//                         letterSpacing: -0.3,
+//                         height: 1.2,
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+
+//               // Month switcher button
+//               GestureDetector(
+//                 onTap: onChangePeriod,
+//                 child: Container(
+//                   padding:
+//                       const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+//                   decoration: BoxDecoration(
+//                     color: _C.greenLight,
+//                     borderRadius: BorderRadius.circular(10),
+//                     border: Border.all(color: _C.border, width: 0.5),
+//                   ),
+//                   child: Row(
+//                     mainAxisSize: MainAxisSize.min,
+//                     children: const [
+//                       Icon(
+//                         Icons.swap_horiz_rounded,
+//                         color: _C.darkGreen,
+//                         size: 15,
+//                       ),
+//                       SizedBox(width: 5),
+//                       Text(
+//                         'মাস বদলান',
+//                         style: TextStyle(
+//                           color: _C.darkGreen,
+//                           fontSize: 12,
+//                           fontWeight: FontWeight.w700,
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // HERO BAND  (dark-green, scrolls with content)
+// // ─────────────────────────────────────────────────────────────────────────────
+// class _HeroBand extends StatelessWidget {
+//   final int year, month;
+//   final MonthlyTracker? tracker;
+
+//   const _HeroBand({
+//     required this.year,
+//     required this.month,
+//     required this.tracker,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final screenWidth = MediaQuery.of(context).size.width;
+//     final isSmallScreen = screenWidth < 380;
+//     final isTablet = screenWidth >= 600;
+
+//     final totalPts = tracker?.totalPoints ?? 0;
+//     final pct = (tracker?.completionPercentage ?? 0).clamp(0.0, 100.0);
+//     final daysInMonth = DateUtils.getDaysInMonth(year, month);
+//     final daysCompleted = tracker?.daysCompleted ?? 0;
+//     final isWinner = tracker?.isWinner ?? false;
+//     final winnerCat = tracker?.winnerCategory;
+
+//     return Container(
+//       color: _C.darkGreen,
+//       child: Stack(
+//         children: [
+//           // Decorative circles - responsive positioning
+//           Positioned(
+//             top: -45,
+//             right: isSmallScreen ? -30 : -45,
+//             child: Container(
+//               width: isSmallScreen ? 100 : 140,
+//               height: isSmallScreen ? 100 : 140,
+//               decoration: const BoxDecoration(
+//                 shape: BoxShape.circle,
+//                 color: Color(0x0AFFFFFF),
+//               ),
+//             ),
+//           ),
+//           Positioned(
+//             bottom: -25,
+//             left: isSmallScreen ? 10 : 18,
+//             child: Container(
+//               width: isSmallScreen ? 60 : 88,
+//               height: isSmallScreen ? 60 : 88,
+//               decoration: const BoxDecoration(
+//                 shape: BoxShape.circle,
+//                 color: Color(0x07FFFFFF),
+//               ),
+//             ),
+//           ),
+
+//           Padding(
+//             padding: EdgeInsets.fromLTRB(
+//                 16, isSmallScreen ? 12 : 16, 16, isSmallScreen ? 16 : 20),
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 // Tag pill
+//                 Text(
+//                   'মাসের আমলের সারসংক্ষেপ',
+//                   style: TextStyle(
+//                     color: Colors.white.withOpacity(0.4),
+//                     fontSize: isSmallScreen ? 10 : 11,
+//                     fontWeight: FontWeight.w500,
+//                   ),
+//                 ),
+//                 const SizedBox(height: 5),
+
+//                 // Progress summary card
+//                 Container(
+//                   padding: EdgeInsets.all(isSmallScreen ? 10 : 14),
+//                   decoration: BoxDecoration(
+//                     color: const Color(0x17FFFFFF),
+//                     borderRadius: BorderRadius.circular(14),
+//                     border:
+//                         Border.all(color: const Color(0x2EFFFFFF), width: 0.5),
+//                   ),
+//                   child: LayoutBuilder(
+//                     builder: (context, constraints) {
+//                       // Responsive layout based on available width
+//                       if (constraints.maxWidth < 400) {
+//                         return _buildCompactLayout(
+//                           pct: pct,
+//                           totalPts: totalPts,
+//                           daysCompleted: daysCompleted,
+//                           daysInMonth: daysInMonth,
+//                           isWinner: isWinner,
+//                           winnerCat: winnerCat,
+//                           isSmallScreen: isSmallScreen,
+//                         );
+//                       } else {
+//                         return _buildNormalLayout(
+//                           pct: pct,
+//                           totalPts: totalPts,
+//                           daysCompleted: daysCompleted,
+//                           daysInMonth: daysInMonth,
+//                           isWinner: isWinner,
+//                           winnerCat: winnerCat,
+//                           isSmallScreen: isSmallScreen,
+//                           isTablet: isTablet,
+//                         );
+//                       }
+//                     },
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildNormalLayout({
+//     required double pct,
+//     required int totalPts,
+//     required int daysCompleted,
+//     required int daysInMonth,
+//     required bool isWinner,
+//     required String? winnerCat,
+//     required bool isSmallScreen,
+//     required bool isTablet,
+//   }) {
+//     return Row(
+//       children: [
+//         // Circular progress ring
+//         _CircularProgressWidget(percentage: pct, size: isTablet ? 70 : 56),
+
+//         SizedBox(width: isSmallScreen ? 10 : 14),
+
+//         // Points block
+//         Expanded(
+//           flex: 2,
+//           child: Column(
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: [
+//               Text(
+//                 _formatNumber(totalPts),
+//                 style: TextStyle(
+//                   color: Colors.white,
+//                   fontWeight: FontWeight.w900,
+//                   fontSize: isTablet ? 32 : (isSmallScreen ? 22 : 26),
+//                   letterSpacing: -0.5,
+//                   height: 1,
+//                 ),
+//                 maxLines: 1,
+//                 overflow: TextOverflow.ellipsis,
+//               ),
+//               const SizedBox(height: 4),
+//               Text(
+//                 'মোট পয়েন্ট',
+//                 style: TextStyle(
+//                   color: Colors.white.withOpacity(0.45),
+//                   fontSize: isSmallScreen ? 9 : 10,
+//                 ),
+//               ),
+//               if (isWinner) ...[
+//                 const SizedBox(height: 6),
+//                 Flexible(
+//                   child: Container(
+//                     padding:
+//                         const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+//                     decoration: BoxDecoration(
+//                       color: _C.gold,
+//                       borderRadius: BorderRadius.circular(20),
+//                     ),
+//                     child: Row(
+//                       mainAxisSize: MainAxisSize.min,
+//                       children: [
+//                         const Text('🏆', style: TextStyle(fontSize: 10)),
+//                         const SizedBox(width: 4),
+//                         Flexible(
+//                           child: Text(
+//                             winnerCat ?? 'মাসিক বিজয়ী',
+//                             style: const TextStyle(
+//                               color: Colors.white,
+//                               fontSize: 10,
+//                               fontWeight: FontWeight.w700,
+//                             ),
+//                             overflow: TextOverflow.ellipsis,
+//                             maxLines: 1,
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                   ),
+//                 ),
+//               ],
+//             ],
+//           ),
+//         ),
+
+//         SizedBox(width: isSmallScreen ? 8 : 10),
+
+//         // Days completed
+//         Column(
+//           crossAxisAlignment: CrossAxisAlignment.end,
+//           children: [
+//             Text(
+//               '$daysCompleted/$daysInMonth',
+//               style: TextStyle(
+//                 color: Colors.white,
+//                 fontWeight: FontWeight.w800,
+//                 fontSize: isTablet ? 22 : (isSmallScreen ? 16 : 18),
+//                 letterSpacing: -0.4,
+//                 height: 1,
+//               ),
+//             ),
+//             const SizedBox(height: 4),
+//             Text(
+//               'সম্পন্ন দিন',
+//               style: TextStyle(
+//                 color: Colors.white.withOpacity(0.45),
+//                 fontSize: isSmallScreen ? 9 : 10,
+//               ),
+//             ),
+//           ],
+//         ),
+//       ],
+//     );
+//   }
+
+//   Widget _buildCompactLayout({
+//     required double pct,
+//     required int totalPts,
+//     required int daysCompleted,
+//     required int daysInMonth,
+//     required bool isWinner,
+//     required String? winnerCat,
+//     required bool isSmallScreen,
+//   }) {
+//     return Column(
+//       children: [
+//         // Top row with progress and points
+//         Row(
+//           children: [
+//             // Circular progress ring
+//             _CircularProgressWidget(percentage: pct, size: 50),
+
+//             const SizedBox(width: 12),
+
+//             // Points block
+//             Expanded(
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   Text(
+//                     _formatNumber(totalPts),
+//                     style: TextStyle(
+//                       color: Colors.white,
+//                       fontWeight: FontWeight.w900,
+//                       fontSize: 22,
+//                       letterSpacing: -0.5,
+//                       height: 1,
+//                     ),
+//                     maxLines: 1,
+//                     overflow: TextOverflow.ellipsis,
+//                   ),
+//                   const SizedBox(height: 2),
+//                   Text(
+//                     'মোট পয়েন্ট',
+//                     style: TextStyle(
+//                       color: Colors.white.withOpacity(0.45),
+//                       fontSize: 9,
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             ),
+
+//             // Days completed
+//             Column(
+//               crossAxisAlignment: CrossAxisAlignment.end,
+//               children: [
+//                 Text(
+//                   '$daysCompleted/$daysInMonth',
+//                   style: TextStyle(
+//                     color: Colors.white,
+//                     fontWeight: FontWeight.w800,
+//                     fontSize: 16,
+//                     letterSpacing: -0.4,
+//                     height: 1,
+//                   ),
+//                 ),
+//                 const SizedBox(height: 2),
+//                 Text(
+//                   'সম্পন্ন দিন',
+//                   style: TextStyle(
+//                     color: Colors.white.withOpacity(0.45),
+//                     fontSize: 9,
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ],
+//         ),
+
+//         // Winner badge in a new row for compact layout
+//         if (isWinner) ...[
+//           const SizedBox(height: 10),
+//           Align(
+//             alignment: Alignment.centerLeft,
+//             child: Container(
+//               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+//               decoration: BoxDecoration(
+//                 color: _C.gold,
+//                 borderRadius: BorderRadius.circular(20),
+//               ),
+//               child: Row(
+//                 mainAxisSize: MainAxisSize.min,
+//                 children: [
+//                   const Text('🏆', style: TextStyle(fontSize: 10)),
+//                   const SizedBox(width: 4),
+//                   Flexible(
+//                     child: Text(
+//                       winnerCat ?? 'মাসিক বিজয়ী',
+//                       style: const TextStyle(
+//                         color: Colors.white,
+//                         fontSize: 10,
+//                         fontWeight: FontWeight.w700,
+//                       ),
+//                       overflow: TextOverflow.ellipsis,
+//                       maxLines: 1,
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//           ),
+//         ],
+//       ],
+//     );
+//   }
+
+//   String _formatNumber(int number) {
+//     if (number >= 1000) {
+//       return '${(number / 1000).toStringAsFixed(1)}K';
+//     }
+//     return number.toString();
+//   }
+// }
+
+// // Separate widget for circular progress to keep code clean
+// class _CircularProgressWidget extends StatelessWidget {
+//   final double percentage;
+//   final double size;
+
+//   const _CircularProgressWidget({
+//     required this.percentage,
+//     required this.size,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final percentageStr = '${percentage.toInt()}%';
+//     final digitCount = percentageStr.length;
+
+//     // Adjust font size based on number of digits and container size
+//     double fontSize;
+//     if (size <= 50) {
+//       fontSize = digitCount == 3 ? 9 : (digitCount == 2 ? 11 : 12);
+//     } else if (size <= 56) {
+//       fontSize = digitCount == 3 ? 10 : (digitCount == 2 ? 12 : 14);
+//     } else {
+//       fontSize = digitCount == 3 ? 12 : (digitCount == 2 ? 14 : 16);
+//     }
+
+//     final innerSize = size - (size * 0.18); // Inner circle size (82% of outer)
+
+//     return SizedBox(
+//       width: size,
+//       height: size,
+//       child: Stack(
+//         alignment: Alignment.center,
+//         children: [
+//           // Progress circle
+//           SizedBox.expand(
+//             child: CircularProgressIndicator(
+//               value: percentage / 100,
+//               backgroundColor: Colors.white.withOpacity(0.12),
+//               valueColor: const AlwaysStoppedAnimation(_C.gold),
+//               strokeWidth: size * 0.09, // Responsive stroke width
+//               strokeCap: StrokeCap.round,
+//             ),
+//           ),
+//           // Inner circle mask to prevent overlap
+//           Container(
+//             width: innerSize,
+//             height: innerSize,
+//             decoration: BoxDecoration(
+//               color: _C.darkGreen,
+//               shape: BoxShape.circle,
+//             ),
+//             child: Center(
+//               child: FittedBox(
+//                 fit: BoxFit.scaleDown,
+//                 child: Padding(
+//                   padding: EdgeInsets.all(size * 0.05),
+//                   child: Column(
+//                     mainAxisSize: MainAxisSize.min,
+//                     mainAxisAlignment: MainAxisAlignment.center,
+//                     children: [
+//                       Text(
+//                         percentageStr,
+//                         style: TextStyle(
+//                           color: Colors.white,
+//                           fontWeight: FontWeight.w900,
+//                           fontSize: fontSize,
+//                           height: 1,
+//                         ),
+//                         textAlign: TextAlign.center,
+//                       ),
+//                       SizedBox(height: size * 0.02),
+//                       Text(
+//                         'সম্পন্ন',
+//                         style: TextStyle(
+//                           color: Colors.white.withOpacity(0.45),
+//                           fontSize: size * 0.13,
+//                         ),
+//                         textAlign: TextAlign.center,
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
+// class _HeroBandSkeleton extends StatelessWidget {
+//   const _HeroBandSkeleton();
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       color: _C.darkGreen,
+//       child: Padding(
+//         padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             // Tag pill skeleton with shimmer
+//             Container(
+//               width: 120,
+//               height: 11,
+//               decoration: BoxDecoration(
+//                 color: Colors.white.withOpacity(0.1),
+//                 borderRadius: BorderRadius.circular(4),
+//               ),
+//             ),
+//             const SizedBox(height: 12),
+//             // Main card skeleton
+//             Container(
+//               height: 92,
+//               decoration: BoxDecoration(
+//                 color: Colors.white.withOpacity(0.08),
+//                 borderRadius: BorderRadius.circular(14),
+//               ),
+//               child: Row(
+//                 children: [
+//                   // Left side skeleton
+//                   Padding(
+//                     padding: const EdgeInsets.all(14),
+//                     child: Row(
+//                       children: [
+//                         // Circle progress placeholder
+//                         Container(
+//                           width: 56,
+//                           height: 56,
+//                           decoration: BoxDecoration(
+//                             color: Colors.white.withOpacity(0.05),
+//                             shape: BoxShape.circle,
+//                           ),
+//                         ),
+//                         const SizedBox(width: 14),
+//                         // Text placeholders
+//                         Column(
+//                           crossAxisAlignment: CrossAxisAlignment.start,
+//                           mainAxisAlignment: MainAxisAlignment.center,
+//                           children: [
+//                             Container(
+//                               width: 60,
+//                               height: 20,
+//                               color: Colors.white.withOpacity(0.05),
+//                             ),
+//                             const SizedBox(height: 4),
+//                             Container(
+//                               width: 80,
+//                               height: 10,
+//                               color: Colors.white.withOpacity(0.03),
+//                             ),
+//                           ],
+//                         ),
+//                       ],
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             ).animate(onPlay: (c) => c.repeat()).shimmer(
+//               duration: 1200.ms,
+//               colors: [
+//                 Colors.white.withOpacity(0.02),
+//                 Colors.white.withOpacity(0.08),
+//                 Colors.white.withOpacity(0.02),
+//               ],
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// // HeroBand Error Card - matches the error style from your app
+// class _HeroBandErrorCard extends StatelessWidget {
+//   final String message;
+//   final VoidCallback onRetry;
+
+//   const _HeroBandErrorCard({
+//     required this.message,
+//     required this.onRetry,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       color: _C.darkGreen,
+//       child: Padding(
+//         padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             Text(
+//               'মাসের আমলের সারসংক্ষেপ',
+//               style: TextStyle(
+//                 color: Colors.white.withOpacity(0.4),
+//                 fontSize: 11,
+//                 fontWeight: FontWeight.w500,
+//               ),
+//             ),
+//             const SizedBox(height: 12),
+//             Container(
+//               padding: const EdgeInsets.all(14),
+//               decoration: BoxDecoration(
+//                 color: Colors.white.withOpacity(0.09),
+//                 borderRadius: BorderRadius.circular(14),
+//                 border: Border.all(
+//                   color: Colors.white.withOpacity(0.18),
+//                   width: 0.5,
+//                 ),
+//               ),
+//               child: Row(
+//                 children: [
+//                   // Error icon in circle
+//                   Container(
+//                     width: 56,
+//                     height: 56,
+//                     decoration: BoxDecoration(
+//                       color: _C.red.withOpacity(0.2),
+//                       shape: BoxShape.circle,
+//                     ),
+//                     child: const Icon(
+//                       Icons.error_outline_rounded,
+//                       color: Colors.white,
+//                       size: 28,
+//                     ),
+//                   ),
+//                   const SizedBox(width: 14),
+//                   Expanded(
+//                     child: Column(
+//                       crossAxisAlignment: CrossAxisAlignment.start,
+//                       children: [
+//                         const Text(
+//                           'লোড করতে পারেনি',
+//                           style: TextStyle(
+//                             color: Colors.white,
+//                             fontWeight: FontWeight.w800,
+//                             fontSize: 16,
+//                             letterSpacing: -0.3,
+//                           ),
+//                         ),
+//                         const SizedBox(height: 4),
+//                         Text(
+//                           message.length > 40
+//                               ? '${message.substring(0, 40)}...'
+//                               : message,
+//                           style: TextStyle(
+//                             color: Colors.white.withOpacity(0.5),
+//                             fontSize: 10,
+//                           ),
+//                           maxLines: 2,
+//                           overflow: TextOverflow.ellipsis,
+//                         ),
+//                         const SizedBox(height: 8),
+//                         GestureDetector(
+//                           onTap: onRetry,
+//                           child: Container(
+//                             padding: const EdgeInsets.symmetric(
+//                               horizontal: 14,
+//                               vertical: 5,
+//                             ),
+//                             decoration: BoxDecoration(
+//                               color: Colors.white.withOpacity(0.15),
+//                               borderRadius: BorderRadius.circular(8),
+//                               border: Border.all(
+//                                 color: Colors.white.withOpacity(0.2),
+//                                 width: 0.5,
+//                               ),
+//                             ),
+//                             child: const Text(
+//                               'পুনরায় চেষ্টা করুন →',
+//                               style: TextStyle(
+//                                 color: Colors.white,
+//                                 fontWeight: FontWeight.w700,
+//                                 fontSize: 11,
+//                               ),
+//                             ),
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // STAT STRIP  (3 cards — streak, weekly, prayer)
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _StatStrip extends StatelessWidget {
+//   final MonthlyTracker? tracker;
+//   final List<DailyEntry>? entries;
+//   const _StatStrip({this.tracker, this.entries});
+
+//   int _getTotalAmalCount() {
+//     if (entries == null) return 0;
+//     int totalAmals = 0;
+//     for (var day in entries!) {
+//       for (var item in day.entries) {
+//         // Count ALL completed items (both prayer and non-prayer)
+//         if (item.completed) {
+//           totalAmals++;
+//         }
+//       }
+//     }
+//     return totalAmals;
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final streak = tracker?.streakDays ?? 0;
+//     final weekly = tracker?.weeklyPoints ?? 0;
+//     final totalAmals = _getTotalAmalCount();
+//     // weeklyPrayer if available, else 0
+
+//     // replace with tracker?.prayerPoints if model has it
+
+//     return Padding(
+//       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+//       child: Row(
+//         children: [
+//           Expanded(
+//             child: _StatCard(
+//               emoji: '🔥',
+//               emojiBgColor: _C.amberLight,
+//               value: '$streak',
+//               label: 'স্ট্রিক দিন',
+//               valueColor: _C.amber,
+//             ),
+//           ),
+//           const SizedBox(width: 8),
+//           Expanded(
+//             child: _StatCard(
+//               emoji: '📿',
+//               emojiBgColor: _C.greenLight,
+//               value: '$weekly',
+//               label: 'সাপ্তাহিক',
+//               valueColor: _C.green,
+//             ),
+//           ),
+//           const SizedBox(width: 8),
+//           Expanded(
+//             child: _StatCard(
+//               emoji: '⭐', // Changed from 🕌
+//               emojiBgColor: _C.goldLight2,
+//               value: '$totalAmals',
+//               label: 'মোট আমল',
+//               valueColor: _C.gold,
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
+// class _StatCard extends StatelessWidget {
+//   final String emoji;
+//   final String value;
+//   final String label;
+//   final Color emojiBgColor;
+//   final Color valueColor;
+
+//   const _StatCard({
+//     required this.emoji,
+//     required this.emojiBgColor,
+//     required this.value,
+//     required this.label,
+//     required this.valueColor,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       padding: const EdgeInsets.all(12),
+//       decoration: BoxDecoration(
+//         color: _C.cardBg,
+//         borderRadius: BorderRadius.circular(14),
+//         border: Border.all(color: _C.border, width: 0.5),
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Container(
+//             width: 30,
+//             height: 30,
+//             decoration: BoxDecoration(
+//               color: emojiBgColor, // ✅ Now using the Color directly
+//               borderRadius: BorderRadius.circular(8),
+//             ),
+//             child: Center(
+//               child: Text(emoji, style: const TextStyle(fontSize: 14)),
+//             ),
+//           ),
+//           const SizedBox(height: 8),
+//           Text(
+//             value,
+//             style: TextStyle(
+//               color: valueColor,
+//               fontWeight: FontWeight.w800,
+//               fontSize: 20,
+//               letterSpacing: -0.4,
+//               height: 1,
+//             ),
+//           ),
+//           const SizedBox(height: 2),
+//           Text(
+//             label,
+//             style: const TextStyle(
+//               color: _C.textSecondary,
+//               fontSize: 9.5,
+//               fontWeight: FontWeight.w500,
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
+// // class _StatStrip extends StatelessWidget {
+// //   final MonthlyTracker? tracker;
+// //   const _StatStrip({this.tracker});
+
+// //   @override
+// //   Widget build(BuildContext context) {
+// //     final streak = tracker?.streakDays ?? 0;
+// //     final weekly = tracker?.weeklyPoints ?? 0;
+// //     // weeklyPrayer if available, else 0
+// //     final prayer = 0; // replace with tracker?.prayerPoints if model has it
+
+// //     return Padding(
+// //       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+// //       child: Row(
+// //         children: [
+// //           Expanded(
+// //             child: _StatCard(
+// //               emoji: '🔥',
+// //               emojiBg: _C.amberLight,
+// //               value: '$streak',
+// //               label: 'স্ট্রিক দিন',
+// //               valueColor: _C.amber,
+// //             ),
+// //           ),
+// //           const SizedBox(width: 8),
+// //           Expanded(
+// //             child: _StatCard(
+// //               emoji: '📿',
+// //               emojiBg: _C.greenLight,
+// //               value: '$weekly',
+// //               label: 'সাপ্তাহিক',
+// //               valueColor: _C.green,
+// //             ),
+// //           ),
+// //           const SizedBox(width: 8),
+// //           Expanded(
+// //             child: _StatCard(
+// //               emoji: '🕌',
+// //               emojiBg: _C.purpleLight,
+// //               value: '$prayer',
+// //               label: 'নামাজ pts',
+// //               valueColor: _C.purple,
+// //             ),
+// //           ),
+// //         ],
+// //       ),
+// //     );
+// //   }
+// // }
+
+// // class _StatCard extends StatelessWidget {
+// //   final String emoji, emojiBg, value, label;
+// //   final Color emojiBgColor, valueColor;
+
+// //   const _StatCard({
+// //     required this.emoji,
+// //     required this.emojiBgColor, // Change to Color type
+// //     required this.value,
+// //     required this.label,
+// //     required this.valueColor,
+// //   });
+
+// //   // const _StatCard({
+// //   //   required this.emoji,
+// //   //   required this.emojiBgColor,
+// //   //   required this.value,
+// //   //   required this.label,
+// //   //   required this.valueColor,
+// //   // })  : emojiBgColor = const Color(0xFFE8F5EE), // unused, see below
+// //   //       super();
+
+// //   // Re-declare properly
+// //   // const _StatCard._({
+// //   //   required this.emoji,
+// //   //   required this.emojiBgColor,
+// //   //   required this.value,
+// //   //   required this.label,
+// //   //   required this.valueColor,
+// //   //   String emojiBg = '',
+// //   //   String label2 = '',
+// //   // });
+
+// //   @override
+// //   Widget build(BuildContext context) {
+// //     return Container(
+// //       padding: const EdgeInsets.all(12),
+// //       decoration: BoxDecoration(
+// //         color: _C.cardBg,
+// //         borderRadius: BorderRadius.circular(14),
+// //         border: Border.all(color: _C.border, width: 0.5),
+// //       ),
+// //       child: Column(
+// //         crossAxisAlignment: CrossAxisAlignment.start,
+// //         children: [
+// //           Container(
+// //             width: 30,
+// //             height: 30,
+// //             decoration: BoxDecoration(
+// //               color: emojiBgColor,
+// //               borderRadius: BorderRadius.circular(8),
+// //             ),
+// //             child: Center(
+// //               child: Text(emoji, style: const TextStyle(fontSize: 14)),
+// //             ),
+// //           ),
+// //           const SizedBox(height: 8),
+// //           Text(
+// //             value,
+// //             style: TextStyle(
+// //               color: valueColor,
+// //               fontWeight: FontWeight.w800,
+// //               fontSize: 20,
+// //               letterSpacing: -0.4,
+// //               height: 1,
+// //             ),
+// //           ),
+// //           const SizedBox(height: 2),
+// //           Text(
+// //             label,
+// //             style: const TextStyle(
+// //               color: _C.textSecondary,
+// //               fontSize: 9.5,
+// //               fontWeight: FontWeight.w500,
+// //             ),
+// //           ),
+// //         ],
+// //       ),
+// //     );
+// //   }
+// // }
+
+// // Fix: proper _StatCard with named emojiBg color parameter
+// // Re-written cleanly below as a standalone widget used by _StatStrip
+
+// class _SC extends StatelessWidget {
+//   final String emoji;
+//   final Color emojiBg;
+//   final String value, label;
+//   final Color valueColor;
+
+//   const _SC({
+//     required this.emoji,
+//     required this.emojiBg,
+//     required this.value,
+//     required this.label,
+//     required this.valueColor,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       padding: const EdgeInsets.all(12),
+//       decoration: BoxDecoration(
+//         color: _C.cardBg,
+//         borderRadius: BorderRadius.circular(14),
+//         border: Border.all(color: _C.border, width: 0.5),
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Container(
+//             width: 30,
+//             height: 30,
+//             decoration: BoxDecoration(
+//               color: emojiBg,
+//               borderRadius: BorderRadius.circular(8),
+//             ),
+//             child: Center(
+//               child: Text(emoji, style: const TextStyle(fontSize: 14)),
+//             ),
+//           ),
+//           const SizedBox(height: 8),
+//           Text(
+//             value,
+//             style: TextStyle(
+//               color: valueColor,
+//               fontWeight: FontWeight.w800,
+//               fontSize: 20,
+//               letterSpacing: -0.4,
+//               height: 1,
+//             ),
+//           ),
+//           const SizedBox(height: 2),
+//           Text(
+//             label,
+//             style: const TextStyle(
+//               color: _C.textSecondary,
+//               fontSize: 9.5,
+//               fontWeight: FontWeight.w500,
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
+// class _StatStripSkeleton extends StatelessWidget {
+//   const _StatStripSkeleton();
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Padding(
+//       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+//       child: Row(
+//         children: List.generate(3, (i) {
+//           return Expanded(
+//             child: Container(
+//               margin: EdgeInsets.only(left: i == 0 ? 0 : 8),
+//               height: 86,
+//               decoration: BoxDecoration(
+//                 color: _C.cardBg,
+//                 borderRadius: BorderRadius.circular(14),
+//               ),
+//             ).animate(onPlay: (c) => c.repeat()).shimmer(
+//               duration: 1200.ms,
+//               delay: Duration(milliseconds: i * 60),
+//               colors: [_C.cardBg, const Color(0xFFE8ECE8), _C.cardBg],
+//             ),
+//           );
+//         }),
+//       ),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // SECTION HEADER  (same as home_screen.dart)
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _SectionHeader extends StatelessWidget {
+//   final String title, emoji;
+
+//   const _SectionHeader({required this.title, required this.emoji});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Row(
+//       children: [
+//         Text(emoji, style: const TextStyle(fontSize: 14)),
+//         const SizedBox(width: 7),
+//         Text(
+//           title,
+//           style: const TextStyle(
+//             color: _C.textPrimary,
+//             fontWeight: FontWeight.w800,
+//             fontSize: 15,
+//             letterSpacing: -0.2,
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // HEATMAP CALENDAR
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _HeatmapCalendar extends StatelessWidget {
+//   final int year, month;
+//   final List<DailyEntry> entries;
+
+//   const _HeatmapCalendar({
+//     required this.year,
+//     required this.month,
+//     required this.entries,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final daysInMonth = DateUtils.getDaysInMonth(year, month);
+//     final entryMap = {for (final e in entries) e.day: e};
+//     final maxPts = entries.isEmpty
+//         ? 1
+//         : entries
+//             .map((e) => e.totalPoints)
+//             .reduce((a, b) => a > b ? a : b)
+//             .clamp(1, 9999);
+//     final today = DateTime.now();
+//     final firstDay = DateTime(year, month, 1).weekday % 7;
+//     final totalCells = ((firstDay + daysInMonth) / 7).ceil() * 7;
+
+//     const weekdays = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহঃ', 'শুক্র', 'শনি'];
+
+//     return Container(
+//       padding: const EdgeInsets.all(14),
+//       decoration: BoxDecoration(
+//         color: _C.cardBg,
+//         borderRadius: BorderRadius.circular(16),
+//         border: Border.all(color: _C.border, width: 0.5),
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           // Weekday labels
+//           Row(
+//             children: weekdays
+//                 .map(
+//                   (d) => Expanded(
+//                     child: Center(
+//                       child: Text(
+//                         d,
+//                         style: const TextStyle(
+//                           color: _C.textHint,
+//                           fontSize: 9.5,
+//                           fontWeight: FontWeight.w500,
+//                         ),
+//                       ),
+//                     ),
+//                   ),
+//                 )
+//                 .toList(),
+//           ),
+
+//           const SizedBox(height: 6),
+
+//           // Day grid
+//           GridView.builder(
+//             shrinkWrap: true,
+//             physics: const NeverScrollableScrollPhysics(),
+//             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+//               crossAxisCount: 7,
+//               crossAxisSpacing: 3,
+//               mainAxisSpacing: 3,
+//               childAspectRatio: 1.1,
+//             ),
+//             itemCount: totalCells,
+//             itemBuilder: (ctx, index) {
+//               final dayNum = index - firstDay + 1;
+
+//               if (dayNum < 1 || dayNum > daysInMonth) {
+//                 return const SizedBox.shrink();
+//               }
+
+//               final pts = entryMap[dayNum]?.totalPoints ?? 0;
+//               final intensity = pts / maxPts;
+//               final isToday = today.year == year &&
+//                   today.month == month &&
+//                   today.day == dayNum;
+//               final isFuture = DateTime(year, month, dayNum).isAfter(today);
+
+//               // Colour based on intensity
+//               Color cellColor;
+//               Color numColor;
+//               if (isFuture) {
+//                 cellColor = _C.pageBg;
+//                 numColor = _C.textHint;
+//               } else if (pts == 0) {
+//                 cellColor = _C.greenLight.withOpacity(0.5);
+//                 numColor = _C.textHint;
+//               } else if (intensity < 0.25) {
+//                 cellColor = _C.green.withOpacity(0.18);
+//                 numColor = _C.green;
+//               } else if (intensity < 0.5) {
+//                 cellColor = _C.green.withOpacity(0.38);
+//                 numColor = _C.green;
+//               } else if (intensity < 0.75) {
+//                 cellColor = _C.green.withOpacity(0.60);
+//                 numColor = Colors.white;
+//               } else {
+//                 cellColor = _C.green.withOpacity(0.85);
+//                 numColor = Colors.white;
+//               }
+
+//               return Container(
+//                 decoration: BoxDecoration(
+//                   color: cellColor,
+//                   borderRadius: BorderRadius.circular(5),
+//                   border:
+//                       isToday ? Border.all(color: _C.gold, width: 1.5) : null,
+//                 ),
+//                 child: Column(
+//                   mainAxisAlignment: MainAxisAlignment.center,
+//                   children: [
+//                     Text(
+//                       '$dayNum',
+//                       style: TextStyle(
+//                         fontSize: 10,
+//                         fontWeight: FontWeight.w700,
+//                         color: numColor,
+//                         height: 1,
+//                       ),
+//                     ),
+//                     if (pts > 0 && !isFuture) ...[
+//                       Text(
+//                         '$pts',
+//                         style: TextStyle(
+//                           fontSize: 7.5,
+//                           color: numColor.withOpacity(0.7),
+//                           fontWeight: FontWeight.w600,
+//                           height: 1,
+//                         ),
+//                       ),
+//                     ],
+//                   ],
+//                 ),
+//               ).animate(delay: Duration(milliseconds: dayNum * 8)).scale(
+//                     begin: const Offset(0.7, 0.7),
+//                     duration: 200.ms,
+//                     curve: Curves.easeOut,
+//                   );
+//             },
+//           ),
+
+//           const SizedBox(height: 10),
+
+//           // Legend
+//           Row(
+//             mainAxisAlignment: MainAxisAlignment.end,
+//             children: [
+//               const Text(
+//                 'কম  ',
+//                 style: TextStyle(color: _C.textHint, fontSize: 9.5),
+//               ),
+//               ...List.generate(5, (i) {
+//                 return Container(
+//                   width: 12,
+//                   height: 12,
+//                   margin: const EdgeInsets.only(right: 3),
+//                   decoration: BoxDecoration(
+//                     color: i == 0
+//                         ? _C.greenLight
+//                         : _C.green.withOpacity(0.15 + i * 0.18),
+//                     borderRadius: BorderRadius.circular(3),
+//                   ),
+//                 );
+//               }),
+//               const Text(
+//                 '  বেশি',
+//                 style: TextStyle(color: _C.textHint, fontSize: 9.5),
+//               ),
+//             ],
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // DAY ROW  (inside grouped card, same divider pattern as _MonthList in home)
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _DayRow extends StatelessWidget {
+//   final DailyEntry entry;
+//   final bool isLast;
+//   final int delay;
+
+//   const _DayRow({
+//     required this.entry,
+//     required this.isLast,
+//     required this.delay,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final completedCount = entry.entries.where((e) => e.completed).length;
+//     final prayerCount = entry.entries
+//         .where((e) =>
+//             e.completed &&
+//             e.prayerMode != null &&
+//             e.prayerMode != PrayerMode.missed)
+//         .length;
+//     final hasPoints = entry.totalPoints > 0;
+
+//     // Progress bar colour
+//     final barColor = completedCount > 15
+//         ? _C.green
+//         : completedCount > 8
+//             ? _C.amber
+//             : _C.darkGreen;
+
+//     String getMonthShortName(int monthIndex) {
+//       final fullMonthName = AppConstants.bengaliMonths[monthIndex];
+//       if (fullMonthName.length >= 3) {
+//         return fullMonthName.substring(0, 3);
+//       } else {
+//         return fullMonthName; // Return full name if shorter than 3 chars
+//       }
+//     }
+
+//     return Container(
+//       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+//       decoration: BoxDecoration(
+//         color: hasPoints ? _C.greenLight.withOpacity(0.18) : Colors.transparent,
+//         border: isLast
+//             ? null
+//             : const Border(
+//                 bottom: BorderSide(color: _C.border, width: 0.5),
+//               ),
+//         borderRadius: isLast
+//             ? const BorderRadius.vertical(bottom: Radius.circular(16))
+//             : null,
+//       ),
+//       child: Row(
+//         children: [
+//           // Day number box
+//           Container(
+//             width: 42,
+//             height: 42,
+//             decoration: BoxDecoration(
+//               gradient: hasPoints
+//                   ? const LinearGradient(
+//                       colors: [_C.darkGreen, _C.midGreen],
+//                       begin: Alignment.topLeft,
+//                       end: Alignment.bottomRight,
+//                     )
+//                   : null,
+//               color: hasPoints ? null : _C.pageBg,
+//               borderRadius: BorderRadius.circular(12),
+//             ),
+//             child: Column(
+//               mainAxisAlignment: MainAxisAlignment.center,
+//               children: [
+//                 Text(
+//                   '${entry.day}',
+//                   style: TextStyle(
+//                     color: hasPoints ? Colors.white : _C.textHint,
+//                     fontWeight: FontWeight.w800,
+//                     fontSize: 16,
+//                     height: 1,
+//                   ),
+//                 ),
+//                 Text(
+//                   // ✅ Fixed: Use safe getMonthShortName function
+//                   getMonthShortName(entry.month - 1),
+//                   style: TextStyle(
+//                     color:
+//                         hasPoints ? Colors.white.withOpacity(0.6) : _C.textHint,
+//                     fontSize: 8.5,
+//                   ),
+//                 ),
+//                 // Text(
+//                 //   AppConstants.bengaliMonths[entry.month - 1].substring(0, 3),
+//                 //   style: TextStyle(
+//                 //     color:
+//                 //         hasPoints ? Colors.white.withOpacity(0.6) : _C.textHint,
+//                 //     fontSize: 8.5,
+//                 //   ),
+//                 // ),
+//               ],
+//             ),
+//           ),
+
+//           const SizedBox(width: 12),
+
+//           // Info block
+//           Expanded(
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Row(
+//                   children: [
+//                     Text(
+//                       '$completedCount টি আমল',
+//                       style: TextStyle(
+//                         color: hasPoints ? _C.textPrimary : _C.textSecondary,
+//                         fontWeight: FontWeight.w700,
+//                         fontSize: 13,
+//                       ),
+//                     ),
+//                     if (prayerCount > 0) ...[
+//                       const SizedBox(width: 6),
+//                       Container(
+//                         padding: const EdgeInsets.symmetric(
+//                             horizontal: 7, vertical: 2),
+//                         decoration: BoxDecoration(
+//                           color: _C.greenLight,
+//                           borderRadius: BorderRadius.circular(99),
+//                         ),
+//                         child: Text(
+//                           '🕌 $prayerCount নামাজ',
+//                           style: const TextStyle(
+//                             color: _C.green,
+//                             fontSize: 9.5,
+//                             fontWeight: FontWeight.w700,
+//                           ),
+//                         ),
+//                       ),
+//                     ],
+//                   ],
+//                 ),
+//                 const SizedBox(height: 5),
+//                 ClipRRect(
+//                   borderRadius: BorderRadius.circular(99),
+//                   child: LinearProgressIndicator(
+//                     value: (completedCount / 20).clamp(0.0, 1.0),
+//                     minHeight: 4,
+//                     backgroundColor: _C.pageBg,
+//                     valueColor: AlwaysStoppedAnimation(
+//                         hasPoints ? barColor : _C.border),
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ),
+
+//           const SizedBox(width: 12),
+
+//           // Points
+//           Column(
+//             crossAxisAlignment: CrossAxisAlignment.end,
+//             children: [
+//               Text(
+//                 '${entry.totalPoints}',
+//                 style: TextStyle(
+//                   color: hasPoints ? _C.darkGreen : _C.textHint,
+//                   fontWeight: FontWeight.w900,
+//                   fontSize: 18,
+//                   height: 1,
+//                 ),
+//               ),
+//               Text(
+//                 'pts',
+//                 style: TextStyle(
+//                   color: hasPoints ? _C.textSecondary : _C.textHint,
+//                   fontSize: 9.5,
+//                   fontWeight: FontWeight.w500,
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ],
+//       ),
+//     )
+//         .animate(delay: Duration(milliseconds: delay))
+//         .fadeIn(duration: 240.ms)
+//         .slideX(begin: 0.04, curve: Curves.easeOut);
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // PERIOD PICKER SHEET  (same handle + card style as home ProfileSheet)
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _PeriodPickerSheet extends StatefulWidget {
+//   final int year, month;
+//   final void Function(int, int) onPicked;
+
+//   const _PeriodPickerSheet({
+//     required this.year,
+//     required this.month,
+//     required this.onPicked,
+//   });
+
+//   @override
+//   State<_PeriodPickerSheet> createState() => _PeriodPickerSheetState();
+// }
+
+// class _PeriodPickerSheetState extends State<_PeriodPickerSheet> {
+//   late int _y, _m;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _y = widget.year;
+//     _m = widget.month;
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final now = DateTime.now();
+
+//     return Container(
+//       decoration: const BoxDecoration(
+//         color: _C.cardBg,
+//         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+//       ),
+//       padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+//       child: Column(
+//         mainAxisSize: MainAxisSize.min,
+//         children: [
+//           // Handle
+//           Container(
+//             width: 40,
+//             height: 4,
+//             decoration: BoxDecoration(
+//               color: _C.border,
+//               borderRadius: BorderRadius.circular(99),
+//             ),
+//           ),
+
+//           const SizedBox(height: 22),
+
+//           const Text(
+//             'মাস বেছে নিন',
+//             style: TextStyle(
+//               color: _C.textPrimary,
+//               fontSize: 16,
+//               fontWeight: FontWeight.w700,
+//             ),
+//           ),
+
+//           const SizedBox(height: 18),
+
+//           // Year selector
+//           Row(
+//             mainAxisAlignment: MainAxisAlignment.center,
+//             children: [
+//               _YearArrow(
+//                 icon: Icons.chevron_left_rounded,
+//                 onTap: () => setState(() => _y--),
+//                 enabled: true,
+//               ),
+//               Container(
+//                 padding:
+//                     const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+//                 decoration: BoxDecoration(
+//                   color: _C.greenLight,
+//                   borderRadius: BorderRadius.circular(12),
+//                 ),
+//                 child: Text(
+//                   '$_y',
+//                   style: const TextStyle(
+//                     color: _C.darkGreen,
+//                     fontWeight: FontWeight.w800,
+//                     fontSize: 18,
+//                   ),
+//                 ),
+//               ),
+//               _YearArrow(
+//                 icon: Icons.chevron_right_rounded,
+//                 onTap: _y < now.year ? () => setState(() => _y++) : null,
+//                 enabled: _y < now.year,
+//               ),
+//             ],
+//           ),
+
+//           const SizedBox(height: 16),
+
+//           // Month grid
+//           GridView.builder(
+//             shrinkWrap: true,
+//             physics: const NeverScrollableScrollPhysics(),
+//             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+//               crossAxisCount: 4,
+//               crossAxisSpacing: 8,
+//               mainAxisSpacing: 8,
+//               childAspectRatio: 1.75,
+//             ),
+//             itemCount: 12,
+//             itemBuilder: (_, i) {
+//               final isSelected = i + 1 == _m;
+//               final isFuture = _y == now.year && i + 1 > now.month;
+
+//               return GestureDetector(
+//                 onTap: isFuture
+//                     ? null
+//                     : () {
+//                         widget.onPicked(_y, i + 1);
+//                         Navigator.pop(context);
+//                       },
+//                 child: AnimatedContainer(
+//                   duration: const Duration(milliseconds: 180),
+//                   decoration: BoxDecoration(
+//                     color: isSelected
+//                         ? _C.darkGreen
+//                         : isFuture
+//                             ? _C.pageBg
+//                             : _C.pageBg,
+//                     borderRadius: BorderRadius.circular(10),
+//                     border: Border.all(
+//                       color: isSelected
+//                           ? _C.darkGreen
+//                           : isFuture
+//                               ? _C.border.withOpacity(0.4)
+//                               : _C.border,
+//                       width: 0.5,
+//                     ),
+//                   ),
+//                   child: Center(
+//                     child: Text(
+//                       AppConstants.bengaliMonths[i],
+//                       style: TextStyle(
+//                         color: isSelected
+//                             ? Colors.white
+//                             : isFuture
+//                                 ? _C.textHint
+//                                 : _C.textSecondary,
+//                         fontSize: 12,
+//                         fontWeight:
+//                             isSelected ? FontWeight.w700 : FontWeight.w500,
+//                       ),
+//                     ),
+//                   ),
+//                 ),
+//               );
+//             },
+//           ),
+
+//           const SizedBox(height: 4),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
+// class _YearArrow extends StatelessWidget {
+//   final IconData icon;
+//   final VoidCallback? onTap;
+//   final bool enabled;
+
+//   const _YearArrow({
+//     required this.icon,
+//     required this.onTap,
+//     required this.enabled,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return GestureDetector(
+//       onTap: onTap,
+//       child: Container(
+//         width: 38,
+//         height: 38,
+//         margin: const EdgeInsets.symmetric(horizontal: 12),
+//         decoration: BoxDecoration(
+//           color: enabled ? _C.greenLight : _C.pageBg,
+//           borderRadius: BorderRadius.circular(10),
+//           border: Border.all(
+//             color: enabled ? _C.borderMid : _C.border,
+//             width: 0.5,
+//           ),
+//         ),
+//         child: Icon(
+//           icon,
+//           color: enabled ? _C.darkGreen : _C.textHint,
+//           size: 20,
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // SKELETONS  (same shimmer pattern as home_screen.dart)
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _EntriesSkeleton extends StatelessWidget {
+//   const _EntriesSkeleton();
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         const SizedBox(height: 22),
+//         // Section label
+//         _shimmerBar(width: 130, height: 14),
+//         const SizedBox(height: 12),
+//         // Calendar
+//         _shimmerBox(height: 240),
+//         const SizedBox(height: 22),
+//         // Section label
+//         _shimmerBar(width: 150, height: 14),
+//         const SizedBox(height: 12),
+//         // List
+//         Container(
+//           decoration: BoxDecoration(
+//             color: _C.cardBg,
+//             borderRadius: BorderRadius.circular(16),
+//             border: Border.all(color: _C.border, width: 0.5),
+//           ),
+//           child: Column(
+//             children: List.generate(5, (i) {
+//               final isLast = i == 4;
+//               return Container(
+//                 height: 64,
+//                 margin: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+//                 decoration: BoxDecoration(
+//                   color: _C.pageBg,
+//                   borderRadius: BorderRadius.circular(10),
+//                   border: isLast
+//                       ? null
+//                       : const Border(
+//                           bottom: BorderSide(color: _C.border, width: 0.5),
+//                         ),
+//                 ),
+//               ).animate(onPlay: (c) => c.repeat()).shimmer(
+//                 duration: 1200.ms,
+//                 delay: Duration(milliseconds: i * 70),
+//                 colors: [_C.pageBg, const Color(0xFFE8ECE8), _C.pageBg],
+//               );
+//             }),
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+
+//   Widget _shimmerBar({required double width, required double height}) {
+//     return Container(
+//       width: width,
+//       height: height,
+//       decoration: BoxDecoration(
+//         color: _C.cardBg,
+//         borderRadius: BorderRadius.circular(8),
+//       ),
+//     ).animate(onPlay: (c) => c.repeat()).shimmer(
+//       duration: 1200.ms,
+//       colors: [_C.cardBg, const Color(0xFFE8ECE8), _C.cardBg],
+//     );
+//   }
+
+//   Widget _shimmerBox({required double height}) {
+//     return Container(
+//       width: double.infinity,
+//       height: height,
+//       decoration: BoxDecoration(
+//         color: _C.cardBg,
+//         borderRadius: BorderRadius.circular(16),
+//         border: Border.all(color: _C.border, width: 0.5),
+//       ),
+//     ).animate(onPlay: (c) => c.repeat()).shimmer(
+//       duration: 1200.ms,
+//       colors: [_C.cardBg, const Color(0xFFE8ECE8), _C.cardBg],
+//     );
+//   }
+// }
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // ERROR + EMPTY CARDS
+// // ─────────────────────────────────────────────────────────────────────────────
+
+// class _ErrorCard extends StatelessWidget {
+//   final VoidCallback onRetry;
+//   const _ErrorCard({required this.onRetry});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       margin: const EdgeInsets.only(top: 24),
+//       padding: const EdgeInsets.all(24),
+//       decoration: BoxDecoration(
+//         color: _C.cardBg,
+//         borderRadius: BorderRadius.circular(16),
+//         border: Border.all(color: _C.border, width: 0.5),
+//       ),
+//       child: Column(
+//         children: [
+//           const Icon(
+//             Icons.error_outline_rounded,
+//             color: Color(0xFFEF4444),
+//             size: 30,
+//           ),
+//           const SizedBox(height: 8),
+//           const Text(
+//             'ডেটা লোড ব্যর্থ হয়েছে',
+//             style: TextStyle(
+//               color: _C.textPrimary,
+//               fontWeight: FontWeight.w700,
+//               fontSize: 14,
+//             ),
+//           ),
+//           const SizedBox(height: 12),
+//           GestureDetector(
+//             onTap: onRetry,
+//             child: Container(
+//               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
+//               decoration: BoxDecoration(
+//                 color: _C.greenLight,
+//                 borderRadius: BorderRadius.circular(10),
+//               ),
+//               child: const Text(
+//                 'পুনরায় চেষ্টা করুন',
+//                 style: TextStyle(
+//                   color: _C.darkGreen,
+//                   fontWeight: FontWeight.w700,
+//                   fontSize: 12,
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
+// class _EmptyCard extends StatelessWidget {
+//   final String label;
+//   const _EmptyCard({required this.label});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       height: 110,
+//       decoration: BoxDecoration(
+//         color: _C.cardBg,
+//         borderRadius: BorderRadius.circular(16),
+//         border: Border.all(color: _C.border, width: 0.5),
+//       ),
+//       child: Center(
+//         child: Column(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: [
+//             const Text('📭', style: TextStyle(fontSize: 22)),
+//             const SizedBox(height: 6),
+//             Text(
+//               label,
+//               textAlign: TextAlign.center,
+//               style: const TextStyle(
+//                 color: _C.textHint,
+//                 fontSize: 12,
+//                 fontWeight: FontWeight.w500,
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -8,7 +2258,7 @@ import '../models/tracker_model.dart';
 import '../../../core/constants/app_constants.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DESIGN TOKENS — same as home_screen.dart ColorT
+// DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _C {
@@ -17,26 +2267,25 @@ class _C {
   static const darkGreen = Color(0xFF0E3D22);
   static const midGreen = Color(0xFF1B7045);
   static const gold = Color(0xFFD4A843);
-  static const goldLight = Color(0xFFFFF3E0);
-  static const goldBorder = Color(0xFFFFCC80);
-  static const goldPale = Color(0xFFFFFBF0);
+  static const goldLight2 = Color(0xFFFFF8E7);
   static const green = Color(0xFF16A34A);
   static const greenLight = Color(0xFFE8F5EE);
   static const amber = Color(0xFFFF6B35);
   static const amberLight = Color(0xFFFFF3E0);
   static const purple = Color(0xFF7C3AED);
   static const purpleLight = Color(0xFFEDE9FE);
+  static const purplePale = Color(0xFFF3F0FF);
   static const red = Color(0xFFEF4444);
+  static const redLight = Color(0xFFFEE2E2);
   static const textPrimary = Color(0xFF0A1A0F);
   static const textSecondary = Color(0xFF6B7C6E);
   static const textHint = Color(0xFFABBAAE);
   static const border = Color(0xFFE4EAE4);
   static const borderMid = Color(0xFFD0DAD2);
-  static const goldLight2 = Color(0xFFFFF8E7); // for ⭐ card
-  static const darkGreenLight =
-      Color(0xFFE8F0EC); // for 🎯 card (lighter version of darkGreen)
-  static const redLight = Color(0xFFFEE2E2);
 }
+
+// Simple number formatter — no business logic
+String _fmt(int n) => n >= 1000 ? '${(n / 1000).toStringAsFixed(1)}K' : '$n';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SCREEN
@@ -84,228 +2333,250 @@ class _MonthlyViewScreenState extends ConsumerState<MonthlyViewScreen> {
     );
   }
 
-  Future<void> _refreshTracker() async {
-    final f = ref.read(leaderboardFilterProvider);
-    // Invalidate both providers to force refresh
-    ref.invalidate(monthlyTrackerProvider((year: f.year, month: f.month)));
-    await Future.microtask(() {
-      ref.refresh(monthlyTrackerProvider((year: f.year, month: f.month)));
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    // কারেন্ট সিলেক্টেড বছর ও মাসের প্যারামিটার রেকর্ড
     final params = (year: _year, month: _month);
-    final entriesAsync = ref.watch(monthlyEntriesProvider(params));
-    final trackerAsync = ref.watch(monthlyTrackerProvider(params));
-    final monthName = AppConstants.bengaliMonths[_month - 1];
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value:
-          SystemUiOverlayStyle.light, // dark → light (dark green bar-এর জন্য)
-      child: Scaffold(
-        backgroundColor: _C.pageBg,
-        // appBar সরিয়ে দাও — এখন SliverAppBar ব্যবহার হবে
-        body: RefreshIndicator(
-          color: _C.darkGreen,
-          onRefresh: () async {
-            ref.invalidate(monthlyEntriesProvider(params));
-            ref.invalidate(monthlyTrackerProvider(params));
-          },
-          child: CustomScrollView(
-            controller: _sc,
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              // ── Zone 1: STICKY APP BAR ───────────────────────────────────
-              SliverAppBar(
-                pinned: true,
-                floating: false,
-                snap: false,
-                expandedHeight: 0,
-                toolbarHeight: 56,
-                backgroundColor: _C.darkGreen,
-                surfaceTintColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                automaticallyImplyLeading: false,
-                systemOverlayStyle: SystemUiOverlayStyle.light,
-                title: Row(
-                  children: [
-                    // Icon badge
-                    Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.15),
-                          width: 0.5,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.calendar_month_outlined,
-                        color: Colors.white,
-                        size: 15,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'মাসিক রিপোর্ট',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.55),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          '$monthName $_year',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.3,
-                            height: 1.1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+    // ২টা প্রোভাইডারই এখন (year, month) প্যারামিটার ট্র্যাক করবে
+    final entriesAsync = ref.watch(monthlyEntriesProvider(params));
+    final progressAsync = ref
+        .watch(progressSummaryProvider(params)); // <-- প্যারামিটার পাস করা হলো
+
+    final monthName = AppConstants.bengaliMonths[_month - 1];
+    final now = DateTime.now();
+    final isCurrentMonth = _year == now.year && _month == now.month;
+
+    return Scaffold(
+      backgroundColor: _C.pageBg,
+      body: RefreshIndicator(
+        color: _C.darkGreen,
+        onRefresh: () async {
+          ref.invalidate(monthlyEntriesProvider(params));
+          ref.invalidate(progressSummaryProvider(params));
+        },
+        child: CustomScrollView(
+          controller: _sc,
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // ── App Bar ────────────────────────────────────────────────────────
+            SliverAppBar(
+              pinned: true,
+              expandedHeight: 0,
+              toolbarHeight: 56,
+              backgroundColor: _C.darkGreen,
+              surfaceTintColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              automaticallyImplyLeading: false,
+              systemOverlayStyle: SystemUiOverlayStyle.light,
+              title: Row(children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: Colors.white.withOpacity(0.15), width: 0.5),
+                  ),
+                  child: const Icon(Icons.calendar_month_outlined,
+                      color: Colors.white, size: 15),
                 ),
-                actions: [
-                  GestureDetector(
-                    onTap: _showPeriodPicker,
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 16),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 11, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.18),
-                          width: 0.5,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.swap_horiz_rounded,
-                            size: 13,
-                            color: Colors.white.withOpacity(0.7),
-                          ),
-                          const SizedBox(width: 5),
-                          const Text(
-                            'মাস বদলান',
-                            style: TextStyle(
+                const SizedBox(width: 10),
+                Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('মাসিক রিপোর্ট',
+                          style: TextStyle(
+                              color: Colors.white.withOpacity(0.55),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500)),
+                      Text('$monthName $_year',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.3,
+                              height: 1.1)),
+                    ]),
+              ]),
+              actions: [
+                GestureDetector(
+                  onTap: _showPeriodPicker,
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 16),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                          color: Colors.white.withOpacity(0.18), width: 0.5),
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.swap_horiz_rounded,
+                          size: 13, color: Colors.white.withOpacity(0.7)),
+                      const SizedBox(width: 5),
+                      const Text('মাস বদলান',
+                          style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                              fontSize: 12)),
+                    ]),
                   ),
-                ],
+                ),
+              ],
+            ),
+
+            // ── Hero Band (Uses dynamic progressAsync) ─────────────────────────
+            SliverToBoxAdapter(
+              child: progressAsync.when(
+                loading: () => const _HeroBandSkeleton(),
+                error: (_, __) => const _HeroBandSkeleton(),
+                data: (p) => _HeroBand(
+                  year: _year,
+                  month: _month,
+                  tracker: p.currentMonth, // ডাইনামিক মাসের ট্র্যাকার ডেটা
+                ),
               ),
+            ),
 
-              // ── Zone 2: HERO BAND (scrolls away) ─────────────────────────
-              SliverToBoxAdapter(
-                child: trackerAsync
-                    .when(
-                      loading: () => const _HeroBandSkeleton(),
-                      error: (error, stackTrace) => _HeroBandErrorCard(
-                        message: error.toString(),
-                        onRetry: () => _refreshTracker(),
-                      ),
-                      data: (t) => _HeroBand(
-                        year: _year,
-                        month: _month,
-                        tracker: t,
-                      ),
-                    )
-                    .animate()
-                    .fadeIn(duration: 280.ms),
+            // ── Female Exempt Banner ───────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: progressAsync.whenOrNull(
+                data: (p) {
+                  if (p.userGender != 'female') return const SizedBox.shrink();
+                  final n = p.currentMonth?.exemptDays ?? 0;
+                  if (n == 0) return const SizedBox.shrink();
+                  return _ExemptBanner(exemptCount: n);
+                },
               ),
+            ),
 
-              // ── Zone 3: STAT STRIP (scrolls with content) ─────────────────
-              // SliverToBoxAdapter(
-              //   child: trackerAsync
-              //       .when(
-              //         loading: () => const _StatStripSkeleton(),
-              //         error: (_, __) => const _StatStrip(tracker: null),
-              //         data: (t) => _StatStrip(
-              //           tracker: t,
-              //           entries: entriesAsync.valueOrNull,
-              //         ),
-              //       )
-              //       .animate()
-              //       .fadeIn(delay: 60.ms, duration: 260.ms),
-              // ),
+            // ── Stat Strip (Uses dynamic progressAsync - Optimized 3x2 Grid) ──
+            SliverToBoxAdapter(
+              child: progressAsync.when(
+                loading: () => const _StatStripSkeleton(),
+                error: (_, __) => const _StatStripSkeleton(),
+                data: (p) => _StatStrip(
+                  tracker: p.currentMonth,
+                  userGender: p.userGender,
+                ),
+              ),
+            ),
+
+            // ── Weekly Chart (শুধুমাত্র চলতি মাসের জন্যই লজিক্যাল) ─────────────────
+            if (isCurrentMonth)
               SliverToBoxAdapter(
-                child: Consumer(
-                  builder: (context, ref, _) {
-                    final trackerAsync =
-                        ref.watch(monthlyTrackerProvider(params));
-                    final entriesAsync =
-                        ref.watch(monthlyEntriesProvider(params));
-
-                    return trackerAsync.when(
-                      loading: () => const _StatStripSkeleton(),
-                      error: (_, __) =>
-                          const _StatStrip(tracker: null, entries: null),
-                      data: (tracker) => _StatStrip(
-                        tracker: tracker,
-                        entries: entriesAsync.valueOrNull,
-                      ),
-                    );
-                  },
+                child: progressAsync.when(
+                  loading: () => const _SectionSkeleton(height: 160),
+                  error: (_, __) => const SizedBox.shrink(),
+                  data: (p) => _WeeklyChartSection(
+                    weekData: p.currentWeek,
+                    userGender: p.userGender,
+                  ),
                 ),
               ),
 
-              // ── Zone 4: CALENDAR + DAY LIST ───────────────────────────────
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                sliver: entriesAsync.when(
-                  loading: () => SliverToBoxAdapter(
-                    child: _EntriesSkeleton()
-                        .animate()
-                        .fadeIn(delay: 80.ms, duration: 260.ms),
-                  ),
-                  error: (_, __) => SliverToBoxAdapter(
+            // ── Fard Performance (Uses dynamic progressAsync) ──────────────────
+            SliverToBoxAdapter(
+              child: progressAsync.when(
+                loading: () => const _SectionSkeleton(height: 120),
+                error: (_, __) => const SizedBox.shrink(),
+                data: (p) {
+                  if (p.currentMonth == null ||
+                      p.currentMonth!.eligibleDays == 0) {
+                    return const SizedBox.shrink();
+                  }
+                  return _FardSection(tracker: p.currentMonth!);
+                },
+              ),
+            ),
+
+            // ── Amal Type Breakdown Section (Uses dynamic progressAsync) ───────
+            SliverToBoxAdapter(
+              child: progressAsync.when(
+                loading: () => const _SectionSkeleton(height: 130),
+                error: (_, __) => const SizedBox.shrink(),
+                data: (p) {
+                  if (p.currentMonth == null) return const SizedBox.shrink();
+                  return _AmalTypeBreakdownSection(tracker: p.currentMonth!);
+                },
+              ),
+            ),
+
+            // ── Previous Months Chart (Fixed: Clean & No Garbage // ── Previous Months Chart (Fixed: Permanent Solution for Family Provider Bug) ───
+            SliverToBoxAdapter(
+              child: progressAsync.when(
+                // ১. এপিআই কল চলাকালীন (লোডিং টাইমে) শুধুমাত্র স্কেলিটন বা লোডিং দেখাবে
+                loading: () => const _SectionSkeleton(height: 140),
+                error: (_, __) => const SizedBox.shrink(),
+                data: (p) {
+                  // 🔥 বুলেটের মতো ফিক্স: নতুন প্রোভাইডার ফার্স্ট টাইম লোড হলেও এই কন্ডিশন তাকে ধরে ফেলবে
+                  if (progressAsync is AsyncLoading) {
+                    return const _SectionSkeleton(height: 140);
+                  }
+
+                  // ১. ব্যাকএন্ডের ডাটা জাস্ট এক লাইনে জোড়া দিন
+                  final allMonths = p.recentMonths;
+
+                  // ২. যদি কোনো ডাটায় না থাকে, তবে এম্পটি কার্ড
+                  if (allMonths.isEmpty) {
+                    return const _EmptyCard(
+                        label: 'মাসিক তুলনামূলক কোনো ডেটা নেই');
+                  }
+
+                  // ৩. চার্টের সিরিয়াল ঠিক করতে (ওল্ড টু নিউ) জাস্ট লিস্টটা উল্টে পাস করে দিন!
+                  return _PrevMonthsSection(
+                      months: allMonths.reversed.toList());
+                },
+              ),
+            ),
+
+            // ── Rank Card (Uses dynamic progressAsync) ─────────────────────────
+            SliverToBoxAdapter(
+              child: progressAsync.when(
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+                data: (p) {
+                  if (p.currentMonth == null || p.currentMonth!.rank == null) {
+                    return const SizedBox.shrink();
+                  }
+                  return _RankSection(tracker: p.currentMonth!);
+                },
+              ),
+            ),
+
+            // ── Heatmap + Day List (ক্যালেন্ডার ডেটা) ───────────────────────────
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+              sliver: entriesAsync.when(
+                loading: () =>
+                    SliverToBoxAdapter(child: const _EntriesSkeleton()),
+                error: (_, __) => SliverToBoxAdapter(
                     child: _ErrorCard(
-                      onRetry: () {
-                        ref.invalidate(monthlyEntriesProvider(params));
-                      },
-                    ).animate().fadeIn(duration: 260.ms),
-                  ),
-                  data: (entries) => SliverList(
+                        onRetry: () =>
+                            ref.invalidate(monthlyEntriesProvider(params)))),
+                data: (entries) {
+                  final userGender =
+                      progressAsync.valueOrNull?.userGender ?? 'male';
+                  return SliverList(
                     delegate: SliverChildListDelegate([
                       const SizedBox(height: 15),
-                      _SectionHeader(title: 'দৈনিক ক্যালেন্ডার', emoji: '📅')
-                          .animate()
-                          .fadeIn(delay: 100.ms),
+                      _SectionHeader(title: 'দৈনিক ক্যালেন্ডার', emoji: '📅'),
                       const SizedBox(height: 10),
                       _HeatmapCalendar(
-                        year: _year,
-                        month: _month,
-                        entries: entries,
-                      ).animate().fadeIn(delay: 120.ms, duration: 300.ms),
+                          year: _year,
+                          month: _month,
+                          entries: entries,
+                          userGender: userGender),
                       const SizedBox(height: 22),
-                      _SectionHeader(title: 'দিন অনুযায়ী পয়েন্ট', emoji: '📋')
-                          .animate()
-                          .fadeIn(delay: 150.ms),
+                      _SectionHeader(
+                          title: 'দিন অনুযায়ী বিস্তারিত', emoji: '📋'),
                       const SizedBox(height: 10),
                       if (entries.isEmpty)
-                        _EmptyCard(
-                          label:
-                              '${AppConstants.bengaliMonths[_month - 1]} মাসে কোনো আমল নেই',
-                        ).animate().fadeIn(delay: 160.ms)
+                        _EmptyCard(label: '$monthName মাসে কোনো আমল নেই')
                       else
                         Container(
                           decoration: BoxDecoration(
@@ -314,145 +2585,23 @@ class _MonthlyViewScreenState extends ConsumerState<MonthlyViewScreen> {
                             border: Border.all(color: _C.border, width: 0.5),
                           ),
                           child: Column(
-                            children: List.generate(entries.length, (i) {
-                              final e = entries[i];
-                              final isLast = i == entries.length - 1;
-                              return _DayRow(
-                                entry: e,
-                                isLast: isLast,
-                                delay: 160 + i * 30,
-                              );
-                            }),
+                            children: List.generate(
+                              entries.length,
+                              (i) => _DayRow(
+                                entry: entries[i],
+                                isLast: i == entries.length - 1,
+                                delay: 220 + i * 25,
+                                userGender: userGender,
+                              ),
+                            ),
                           ),
-                        ).animate().fadeIn(delay: 160.ms, duration: 280.ms),
-                    ]),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// STICKY TOP BAR  (PreferredSizeWidget, same as home_screen.dart _TopBar)
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _TopBar extends StatelessWidget implements PreferredSizeWidget {
-  final int year, month;
-  final VoidCallback onBack;
-  final VoidCallback onChangePeriod;
-
-  const _TopBar({
-    required this.year,
-    required this.month,
-    required this.onBack,
-    required this.onChangePeriod,
-  });
-
-  @override
-  Size get preferredSize => const Size.fromHeight(62);
-
-  @override
-  Widget build(BuildContext context) {
-    final monthName = AppConstants.bengaliMonths[month - 1];
-
-    return Container(
-      color: _C.cardBg,
-      child: SafeArea(
-        bottom: false,
-        child: Container(
-          height: 62,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: const BoxDecoration(
-            color: _C.cardBg,
-            border: Border(bottom: BorderSide(color: _C.border, width: 0.5)),
-          ),
-          child: Row(
-            children: [
-              // Back button
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: _C.pageBg,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: _C.border, width: 0.5),
-                ),
-                child: const Icon(
-                  Icons.calendar_month_outlined,
-                  color: _C.darkGreen,
-                  size: 16,
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              // Title block
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'মাসিক রিপোর্ট',
-                      style: TextStyle(
-                        color: _C.textSecondary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      '$monthName $year',
-                      style: const TextStyle(
-                        color: _C.textPrimary,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                        letterSpacing: -0.3,
-                        height: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Month switcher button
-              GestureDetector(
-                onTap: onChangePeriod,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: _C.greenLight,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: _C.border, width: 0.5),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(
-                        Icons.swap_horiz_rounded,
-                        color: _C.darkGreen,
-                        size: 15,
-                      ),
-                      SizedBox(width: 5),
-                      Text(
-                        'মাস বদলান',
-                        style: TextStyle(
-                          color: _C.darkGreen,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
+                    ]),
+                  );
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -460,1049 +2609,1312 @@ class _TopBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HERO BAND  (dark-green, scrolls with content)
+// HERO BAND
+// Backend fields: totalPoints, completionPercentage, daysCompleted,
+//                 isWinner, winnerCategory ('TOP_FARZ'|'TOP_EFFORT'|'TOP_STREAK'),
+//                 rank (nullable)
 // ─────────────────────────────────────────────────────────────────────────────
+
 class _HeroBand extends StatelessWidget {
   final int year, month;
   final MonthlyTracker? tracker;
+  const _HeroBand(
+      {required this.year, required this.month, required this.tracker});
 
-  const _HeroBand({
-    required this.year,
-    required this.month,
-    required this.tracker,
-  });
+  String _winnerLabel(String? cat) {
+    switch (cat) {
+      case 'TOP_FARZ':
+        return 'ফরজ চ্যাম্পিয়ন 🕌';
+      case 'TOP_EFFORT':
+        return 'সর্বোচ্চ পয়েন্ট 🌟';
+      case 'TOP_STREAK':
+        return 'সেরা স্ট্রিক 🔥';
+      default:
+        return 'মাসিক বিজয়ী';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth < 380;
-    final isTablet = screenWidth >= 600;
-
     final totalPts = tracker?.totalPoints ?? 0;
     final pct = (tracker?.completionPercentage ?? 0).clamp(0.0, 100.0);
     final daysInMonth = DateUtils.getDaysInMonth(year, month);
     final daysCompleted = tracker?.daysCompleted ?? 0;
     final isWinner = tracker?.isWinner ?? false;
-    final winnerCat = tracker?.winnerCategory;
+    final rank = tracker?.rank;
 
     return Container(
       color: _C.darkGreen,
-      child: Stack(
-        children: [
-          // Decorative circles - responsive positioning
-          Positioned(
+      child: Stack(children: [
+        Positioned(
             top: -45,
-            right: isSmallScreen ? -30 : -45,
+            right: -40,
             child: Container(
-              width: isSmallScreen ? 100 : 140,
-              height: isSmallScreen ? 100 : 140,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0x0AFFFFFF),
-              ),
-            ),
-          ),
-          Positioned(
+                width: 140,
+                height: 140,
+                decoration: const BoxDecoration(
+                    shape: BoxShape.circle, color: Color(0x0AFFFFFF)))),
+        Positioned(
             bottom: -25,
-            left: isSmallScreen ? 10 : 18,
+            left: 18,
             child: Container(
-              width: isSmallScreen ? 60 : 88,
-              height: isSmallScreen ? 60 : 88,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0x07FFFFFF),
-              ),
-            ),
-          ),
-
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-                16, isSmallScreen ? 12 : 16, 16, isSmallScreen ? 16 : 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Tag pill
-                Text(
-                  'মাসের আমলের সারসংক্ষেপ',
-                  style: TextStyle(
+                width: 88,
+                height: 88,
+                decoration: const BoxDecoration(
+                    shape: BoxShape.circle, color: Color(0x07FFFFFF)))),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('মাসের আমলের সারসংক্ষেপ',
+                style: TextStyle(
                     color: Colors.white.withOpacity(0.4),
-                    fontSize: isSmallScreen ? 10 : 11,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 5),
-
-                // Progress summary card
-                Container(
-                  padding: EdgeInsets.all(isSmallScreen ? 10 : 14),
-                  decoration: BoxDecoration(
-                    color: const Color(0x17FFFFFF),
-                    borderRadius: BorderRadius.circular(14),
-                    border:
-                        Border.all(color: const Color(0x2EFFFFFF), width: 0.5),
-                  ),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      // Responsive layout based on available width
-                      if (constraints.maxWidth < 400) {
-                        return _buildCompactLayout(
-                          pct: pct,
-                          totalPts: totalPts,
-                          daysCompleted: daysCompleted,
-                          daysInMonth: daysInMonth,
-                          isWinner: isWinner,
-                          winnerCat: winnerCat,
-                          isSmallScreen: isSmallScreen,
-                        );
-                      } else {
-                        return _buildNormalLayout(
-                          pct: pct,
-                          totalPts: totalPts,
-                          daysCompleted: daysCompleted,
-                          daysInMonth: daysInMonth,
-                          isWinner: isWinner,
-                          winnerCat: winnerCat,
-                          isSmallScreen: isSmallScreen,
-                          isTablet: isTablet,
-                        );
-                      }
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNormalLayout({
-    required double pct,
-    required int totalPts,
-    required int daysCompleted,
-    required int daysInMonth,
-    required bool isWinner,
-    required String? winnerCat,
-    required bool isSmallScreen,
-    required bool isTablet,
-  }) {
-    return Row(
-      children: [
-        // Circular progress ring
-        _CircularProgressWidget(percentage: pct, size: isTablet ? 70 : 56),
-
-        SizedBox(width: isSmallScreen ? 10 : 14),
-
-        // Points block
-        Expanded(
-          flex: 2,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _formatNumber(totalPts),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: isTablet ? 32 : (isSmallScreen ? 22 : 26),
-                  letterSpacing: -0.5,
-                  height: 1,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500)),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0x17FFFFFF),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0x2EFFFFFF), width: 0.5),
               ),
-              const SizedBox(height: 4),
-              Text(
-                'মোট পয়েন্ট',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.45),
-                  fontSize: isSmallScreen ? 9 : 10,
-                ),
-              ),
-              if (isWinner) ...[
-                const SizedBox(height: 6),
-                Flexible(
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: _C.gold,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('🏆', style: TextStyle(fontSize: 10)),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            winnerCat ?? 'মাসিক বিজয়ী',
+              child: Row(children: [
+                _CircularProgress(percentage: pct, size: 60),
+                const SizedBox(width: 14),
+                Expanded(
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(_fmt(totalPts),
                             style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 28,
+                                letterSpacing: -0.5,
+                                height: 1)),
+                      ),
+                      const SizedBox(height: 3),
+                      Text('মোট পয়েন্ট',
+                          style: TextStyle(
+                              color: Colors.white.withOpacity(0.45),
+                              fontSize: 10)),
+                      if (isWinner) ...[
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                              color: _C.gold,
+                              borderRadius: BorderRadius.circular(20)),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            const Text('🏆', style: TextStyle(fontSize: 10)),
+                            const SizedBox(width: 4),
+                            Flexible(
+                                child: Text(
+                                    _winnerLabel(tracker?.winnerCategory),
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1)),
+                          ]),
                         ),
                       ],
-                    ),
+                    ])),
+                const SizedBox(width: 12),
+                Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('$daysCompleted/$daysInMonth',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                            letterSpacing: -0.4,
+                            height: 1)),
                   ),
-                ),
-              ],
-            ],
-          ),
-        ),
-
-        SizedBox(width: isSmallScreen ? 8 : 10),
-
-        // Days completed
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              '$daysCompleted/$daysInMonth',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                fontSize: isTablet ? 22 : (isSmallScreen ? 16 : 18),
-                letterSpacing: -0.4,
-                height: 1,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'সম্পন্ন দিন',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.45),
-                fontSize: isSmallScreen ? 9 : 10,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCompactLayout({
-    required double pct,
-    required int totalPts,
-    required int daysCompleted,
-    required int daysInMonth,
-    required bool isWinner,
-    required String? winnerCat,
-    required bool isSmallScreen,
-  }) {
-    return Column(
-      children: [
-        // Top row with progress and points
-        Row(
-          children: [
-            // Circular progress ring
-            _CircularProgressWidget(percentage: pct, size: 50),
-
-            const SizedBox(width: 12),
-
-            // Points block
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _formatNumber(totalPts),
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 22,
-                      letterSpacing: -0.5,
-                      height: 1,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'মোট পয়েন্ট',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.45),
-                      fontSize: 9,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Days completed
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '$daysCompleted/$daysInMonth',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    letterSpacing: -0.4,
-                    height: 1,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'সম্পন্ন দিন',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.45),
-                    fontSize: 9,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-
-        // Winner badge in a new row for compact layout
-        if (isWinner) ...[
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: _C.gold,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('🏆', style: TextStyle(fontSize: 10)),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      winnerCat ?? 'মাসিক বিজয়ী',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
+                  const SizedBox(height: 3),
+                  Text('সম্পন্ন দিন',
+                      style: TextStyle(
+                          color: Colors.white.withOpacity(0.45), fontSize: 10)),
+                  if (rank != null) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                            color: Colors.white.withOpacity(0.15), width: 0.5),
                       ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
+                      child: Column(children: [
+                        Text('র‍্যাংক',
+                            style: TextStyle(
+                                color: Colors.white.withOpacity(0.45),
+                                fontSize: 8)),
+                        Text('#$rank',
+                            style: const TextStyle(
+                                color: _C.gold,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w900,
+                                height: 1.1)),
+                      ]),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ]),
+              ]),
             ),
-          ),
-        ],
-      ],
+          ]),
+        ),
+      ]),
     );
-  }
-
-  String _formatNumber(int number) {
-    if (number >= 1000) {
-      return '${(number / 1000).toStringAsFixed(1)}K';
-    }
-    return number.toString();
   }
 }
 
-// Separate widget for circular progress to keep code clean
-class _CircularProgressWidget extends StatelessWidget {
+class _CircularProgress extends StatelessWidget {
   final double percentage;
   final double size;
-
-  const _CircularProgressWidget({
-    required this.percentage,
-    required this.size,
-  });
+  const _CircularProgress({required this.percentage, required this.size});
 
   @override
   Widget build(BuildContext context) {
-    final percentageStr = '${percentage.toInt()}%';
-    final digitCount = percentageStr.length;
-
-    // Adjust font size based on number of digits and container size
-    double fontSize;
-    if (size <= 50) {
-      fontSize = digitCount == 3 ? 9 : (digitCount == 2 ? 11 : 12);
-    } else if (size <= 56) {
-      fontSize = digitCount == 3 ? 10 : (digitCount == 2 ? 12 : 14);
-    } else {
-      fontSize = digitCount == 3 ? 12 : (digitCount == 2 ? 14 : 16);
-    }
-
-    final innerSize = size - (size * 0.18); // Inner circle size (82% of outer)
+    final str = '${percentage.toInt()}%';
+    final digits = str.length;
+    final fontSize = digits >= 4
+        ? 9.0
+        : digits == 3
+            ? 10.0
+            : 12.0;
+    final innerSize = size * 0.82;
 
     return SizedBox(
       width: size,
       height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Progress circle
-          SizedBox.expand(
+      child: Stack(alignment: Alignment.center, children: [
+        SizedBox.expand(
             child: CircularProgressIndicator(
-              value: percentage / 100,
-              backgroundColor: Colors.white.withOpacity(0.12),
-              valueColor: const AlwaysStoppedAnimation(_C.gold),
-              strokeWidth: size * 0.09, // Responsive stroke width
-              strokeCap: StrokeCap.round,
-            ),
-          ),
-          // Inner circle mask to prevent overlap
-          Container(
-            width: innerSize,
-            height: innerSize,
-            decoration: BoxDecoration(
-              color: _C.darkGreen,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
+          value: percentage / 100,
+          backgroundColor: Colors.white.withOpacity(0.12),
+          valueColor: const AlwaysStoppedAnimation(_C.gold),
+          strokeWidth: size * 0.09,
+          strokeCap: StrokeCap.round,
+        )),
+        Container(
+          width: innerSize,
+          height: innerSize,
+          decoration:
+              const BoxDecoration(color: _C.darkGreen, shape: BoxShape.circle),
+          child: Center(
               child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Padding(
-                  padding: EdgeInsets.all(size * 0.05),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        percentageStr,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: fontSize,
-                          height: 1,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: size * 0.02),
-                      Text(
-                        'সম্পন্ন',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.45),
-                          fontSize: size * 0.13,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            fit: BoxFit.scaleDown,
+            child: Padding(
+              padding: EdgeInsets.all(size * 0.05),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text(str,
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: fontSize,
+                        height: 1),
+                    textAlign: TextAlign.center),
+                SizedBox(height: size * 0.02),
+                Text('সম্পন্ন',
+                    style: TextStyle(
+                        color: Colors.white.withOpacity(0.45),
+                        fontSize: size * 0.13),
+                    textAlign: TextAlign.center),
+              ]),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HeroBandSkeleton extends StatelessWidget {
-  const _HeroBandSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: _C.darkGreen,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Tag pill skeleton with shimmer
-            Container(
-              width: 120,
-              height: 11,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Main card skeleton
-            Container(
-              height: 92,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Row(
-                children: [
-                  // Left side skeleton
-                  Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Row(
-                      children: [
-                        // Circle progress placeholder
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.05),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        // Text placeholders
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 60,
-                              height: 20,
-                              color: Colors.white.withOpacity(0.05),
-                            ),
-                            const SizedBox(height: 4),
-                            Container(
-                              width: 80,
-                              height: 10,
-                              color: Colors.white.withOpacity(0.03),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ).animate(onPlay: (c) => c.repeat()).shimmer(
-              duration: 1200.ms,
-              colors: [
-                Colors.white.withOpacity(0.02),
-                Colors.white.withOpacity(0.08),
-                Colors.white.withOpacity(0.02),
-              ],
-            ),
-          ],
+          )),
         ),
-      ),
-    );
-  }
-}
-
-// HeroBand Error Card - matches the error style from your app
-class _HeroBandErrorCard extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-
-  const _HeroBandErrorCard({
-    required this.message,
-    required this.onRetry,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: _C.darkGreen,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'মাসের আমলের সারসংক্ষেপ',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.4),
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.09),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.18),
-                  width: 0.5,
-                ),
-              ),
-              child: Row(
-                children: [
-                  // Error icon in circle
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: _C.red.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.error_outline_rounded,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'লোড করতে পারেনি',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          message.length > 40
-                              ? '${message.substring(0, 40)}...'
-                              : message,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
-                            fontSize: 10,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 8),
-                        GestureDetector(
-                          onTap: onRetry,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.2),
-                                width: 0.5,
-                              ),
-                            ),
-                            child: const Text(
-                              'পুনরায় চেষ্টা করুন →',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+      ]),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STAT STRIP  (3 cards — streak, weekly, prayer)
+// FEMALE EXEMPT BANNER
+// Only rendered: userGender == 'female' AND tracker.exemptDays > 0
+// exemptCount = tracker.exemptDays (backend field)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ExemptBanner extends StatelessWidget {
+  final int exemptCount;
+  const _ExemptBanner({required this.exemptCount});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: _C.purplePale,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _C.purple.withOpacity(0.25), width: 0.5),
+      ),
+      child: Row(children: [
+        Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+                color: _C.purpleLight, borderRadius: BorderRadius.circular(8)),
+            child: const Center(
+                child: Text('🌙', style: TextStyle(fontSize: 15)))),
+        const SizedBox(width: 10),
+        Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('মাফের দিন চিহ্নিত',
+              style: TextStyle(
+                  color: _C.purple, fontSize: 12, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 2),
+          Text(
+              '$exemptCount দিন মাফ — নামাজ ও রোজার ক্যাটাগরি বাদ দেওয়া হয়েছে',
+              style: TextStyle(
+                  color: _C.purple.withOpacity(0.7),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500)),
+        ])),
+      ]),
+    );
+  }
+}
+// STAT STRIP (Gender-Optimized 3x2 Balanced Grid)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _StatStrip extends StatelessWidget {
   final MonthlyTracker? tracker;
-  final List<DailyEntry>? entries;
-  const _StatStrip({this.tracker, this.entries});
-
-  int _getTotalAmalCount() {
-    if (entries == null) return 0;
-    int totalAmals = 0;
-    for (var day in entries!) {
-      for (var item in day.entries) {
-        // Count ALL completed items (both prayer and non-prayer)
-        if (item.completed) {
-          totalAmals++;
-        }
-      }
-    }
-    return totalAmals;
-  }
+  final String userGender;
+  const _StatStrip({this.tracker, required this.userGender});
 
   @override
   Widget build(BuildContext context) {
+    // ব্যাকএন্ড ফিল্ডস
     final streak = tracker?.streakDays ?? 0;
-    final weekly = tracker?.weeklyPoints ?? 0;
-    final totalAmals = _getTotalAmalCount();
-    // weeklyPrayer if available, else 0
+    final daysCompleted = tracker?.daysCompleted ?? 0;
+    final fardPts = tracker?.fardPoints ?? 0;
+    final farzDays = tracker?.farzCompletedDays ?? 0;
+    final totalPts = tracker?.totalPoints ?? 0;
+    final eligible = tracker?.eligibleDays ?? 0;
+    final exemptDays = tracker?.exemptDays ?? 0;
+    final isFemale = userGender == 'female';
 
-    // replace with tracker?.prayerPoints if model has it
+    return Column(children: [
+      // ─── লাইন ১: ট্র্যাকিং ও অ্যাক্টিভিটি (সবার জন্য সমান) ─────────────────────────
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        child: Row(children: [
+          Expanded(
+              child: _StatCard(
+                  emoji: '🔥',
+                  emojiBg: _C.amberLight,
+                  value: '$streak',
+                  label: 'স্ট্রিক দিন',
+                  valueColor: _C.amber)),
+          const SizedBox(width: 8),
+          Expanded(
+              child: _StatCard(
+                  emoji: '📅',
+                  emojiBg: _C.greenLight,
+                  value: '$daysCompleted',
+                  label: 'আমল করা দিন',
+                  valueColor: _C.green)),
+          const SizedBox(width: 8),
+          Expanded(
+              child: _StatCard(
+                  emoji: '🏆',
+                  emojiBg: _C.goldLight2,
+                  value: _fmt(totalPts),
+                  label: 'মোট পয়েন্ট',
+                  valueColor: _C.gold)),
+        ]),
+      ),
+
+      // ─── LINE 2: GENDER-SPECIFIC OPTIMIZED GRID ────────────────────────────
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: Row(
+          children: [
+            // ১. ফরজ পয়েন্ট (সবার জন্য কমন)
+            Expanded(
+                child: _StatCard(
+                    emoji: '🕌',
+                    emojiBg: _C.purpleLight,
+                    value: _fmt(fardPts),
+                    label: 'ফরজ pts',
+                    valueColor: _C.purple)),
+            const SizedBox(width: 8),
+
+            // মেয়েদের এবং ছেলেদের জন্য কন্ডিশনাল বাকি ২টি কার্ড
+            if (isFemale) ...[
+              // নারীদের জন্য: হিসাবের দিন ও মাফের দিন
+              Expanded(
+                  child: _StatCard(
+                      emoji: '⏳',
+                      emojiBg: _C.greenLight,
+                      value: '$eligible',
+                      label: 'হিসাবের দিন',
+                      valueColor: _C.green)),
+              const SizedBox(width: 8),
+              Expanded(
+                  child: _StatCard(
+                      emoji: '🌙',
+                      emojiBg: _C.purplePale,
+                      value: '$exemptDays',
+                      label: 'মাফের দিন',
+                      valueColor: _C.purple)),
+            ] else ...[
+              // পুরুষদের জন্য: পূর্ণ ফরজ দিন এবং বাকি ১টি সেলে ফাঁকা না রেখে 'র‍্যাংক' বা গুরুত্বপূর্ণ স্ট্যাট দেখানো
+              Expanded(
+                  child: _StatCard(
+                      emoji: '✅',
+                      emojiBg: _C.greenLight,
+                      value: '$farzDays',
+                      label: 'পূর্ণ ফরজ দিন',
+                      valueColor: _C.green)),
+              const SizedBox(width: 8),
+              Expanded(
+                  child: _StatCard(
+                      emoji: '🏅',
+                      emojiBg: _C.goldLight2,
+                      value:
+                          tracker?.rank != null ? '#${tracker!.rank}' : '---',
+                      label:
+                          'বর্তমান র‍্যাংক', // ডুপ্লিকেট এড়াতে সরাসরি লিডারবোর্ড র‍্যাংক
+                      valueColor: _C.gold)),
+            ],
+          ],
+        ),
+      ),
+    ]);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NEW SECTION: AMAL TYPE BREAKDOWN
+// স্পষ্ট করে বুঝিয়ে দেওয়া হয়েছে যে এগুলো রুটিন আমলের স্কোর, কারেন্ট সপ্তাহের ভ্যালু নয়।
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _AmalTypeBreakdownSection extends StatelessWidget {
+  final MonthlyTracker tracker;
+  const _AmalTypeBreakdownSection({required this.tracker});
+
+  @override
+  Widget build(BuildContext context) {
+    final weeklyTypePts = tracker.weeklyPoints;
+    final monthlyTypePts = tracker.monthlyPoints;
+    final dailyTypePts = tracker.dailyPoints;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Row(
-        children: [
-          Expanded(
-            child: _StatCard(
-              emoji: '🔥',
-              emojiBgColor: _C.amberLight,
-              value: '$streak',
-              label: 'স্ট্রিক দিন',
-              valueColor: _C.amber,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _SectionHeader(title: 'নিয়মিত আমলের স্কোর', emoji: '✨'),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+              color: _C.cardBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _C.border, width: 0.5)),
+          child: Column(children: [
+            _AmalTypeRow(
+              icon: '⭐',
+              title: 'দৈনিক রুটিন আমল',
+              subtitle: 'যেমন: সকাল-সন্ধ্যার জিকির, দান-সদকা বা তাসবিহ',
+              points: dailyTypePts,
+              color: _C.gold,
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _StatCard(
-              emoji: '📿',
-              emojiBgColor: _C.greenLight,
-              value: '$weekly',
-              label: 'সাপ্তাহিক',
-              valueColor: _C.green,
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 10),
+              child: Divider(height: 1, thickness: 0.5, color: _C.border),
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _StatCard(
-              emoji: '⭐', // Changed from 🕌
-              emojiBgColor: _C.goldLight2,
-              value: '$totalAmals',
-              label: 'মোট আমল',
-              valueColor: _C.gold,
+            _AmalTypeRow(
+              icon: '📿',
+              title: 'সাপ্তাহিক রুটিন আমল',
+              subtitle: 'যেমন: জুমা’র আমল, সূরা কাহাফ ইত্যাদি',
+              points: weeklyTypePts,
+              color: _C.midGreen,
             ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 10),
+              child: Divider(height: 1, thickness: 0.5, color: _C.border),
+            ),
+            _AmalTypeRow(
+              icon: '🌙',
+              title: 'মাসিক রুটিন আমল',
+              subtitle: 'যেমন: আইয়ামে বিজের রোজা বা নির্দিষ্ট আমল',
+              points: monthlyTypePts,
+              color: _C.purple,
+            ),
+          ]),
+        ),
+      ]),
+    );
+  }
+}
+
+class _AmalTypeRow extends StatelessWidget {
+  final String icon;
+  final String title;
+  final String subtitle;
+  final int points;
+  final Color color;
+
+  const _AmalTypeRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.points,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(icon, style: const TextStyle(fontSize: 20)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: _C.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: _C.textSecondary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              _fmt(points),
+              style: TextStyle(
+                color: color,
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const Text(
+              'পয়েন্ট',
+              style: TextStyle(
+                color: _C.textHint,
+                fontSize: 8.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
 
 class _StatCard extends StatelessWidget {
-  final String emoji;
-  final String value;
-  final String label;
-  final Color emojiBgColor;
-  final Color valueColor;
-
-  const _StatCard({
-    required this.emoji,
-    required this.emojiBgColor,
-    required this.value,
-    required this.label,
-    required this.valueColor,
-  });
+  final String emoji, value, label;
+  final Color emojiBg, valueColor;
+  const _StatCard(
+      {required this.emoji,
+      required this.emojiBg,
+      required this.value,
+      required this.label,
+      required this.valueColor});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
-        color: _C.cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _C.border, width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 30,
-            height: 30,
+          color: _C.cardBg,
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: _C.border, width: 0.5)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+            width: 28,
+            height: 28,
             decoration: BoxDecoration(
-              color: emojiBgColor, // ✅ Now using the Color directly
-              borderRadius: BorderRadius.circular(8),
-            ),
+                color: emojiBg, borderRadius: BorderRadius.circular(7)),
             child: Center(
-              child: Text(emoji, style: const TextStyle(fontSize: 14)),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              color: valueColor,
-              fontWeight: FontWeight.w800,
-              fontSize: 20,
-              letterSpacing: -0.4,
-              height: 1,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
+                child: Text(emoji, style: const TextStyle(fontSize: 13)))),
+        const SizedBox(height: 7),
+        FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(value,
+                style: TextStyle(
+                    color: valueColor,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 19,
+                    letterSpacing: -0.4,
+                    height: 1))),
+        const SizedBox(height: 2),
+        Text(label,
             style: const TextStyle(
-              color: _C.textSecondary,
-              fontSize: 9.5,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
+                color: _C.textSecondary,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w500)),
+      ]),
     );
   }
 }
 
-// class _StatStrip extends StatelessWidget {
-//   final MonthlyTracker? tracker;
-//   const _StatStrip({this.tracker});
+// ─────────────────────────────────────────────────────────────────────────────
+// WEEKLY CHART
+// Source: ProgressSummary.currentWeek — List<WeeklyBarData>
+// Backend model fields (doc 5): day, date, points, hasData, isExemptDay
+// Backend service (doc 4): does NOT add fardDone/jamatCount to WeeklyBarData
+// So: simple points-only bar chart. Exempt moon only when gender == female.
+// Fully responsive via LayoutBuilder — zero hardcoded pixel heights.
+// ─────────────────────────────────────────────────────────────────────────────
 
-//   @override
-//   Widget build(BuildContext context) {
-//     final streak = tracker?.streakDays ?? 0;
-//     final weekly = tracker?.weeklyPoints ?? 0;
-//     // weeklyPrayer if available, else 0
-//     final prayer = 0; // replace with tracker?.prayerPoints if model has it
-
-//     return Padding(
-//       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-//       child: Row(
-//         children: [
-//           Expanded(
-//             child: _StatCard(
-//               emoji: '🔥',
-//               emojiBg: _C.amberLight,
-//               value: '$streak',
-//               label: 'স্ট্রিক দিন',
-//               valueColor: _C.amber,
-//             ),
-//           ),
-//           const SizedBox(width: 8),
-//           Expanded(
-//             child: _StatCard(
-//               emoji: '📿',
-//               emojiBg: _C.greenLight,
-//               value: '$weekly',
-//               label: 'সাপ্তাহিক',
-//               valueColor: _C.green,
-//             ),
-//           ),
-//           const SizedBox(width: 8),
-//           Expanded(
-//             child: _StatCard(
-//               emoji: '🕌',
-//               emojiBg: _C.purpleLight,
-//               value: '$prayer',
-//               label: 'নামাজ pts',
-//               valueColor: _C.purple,
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-// class _StatCard extends StatelessWidget {
-//   final String emoji, emojiBg, value, label;
-//   final Color emojiBgColor, valueColor;
-
-//   const _StatCard({
-//     required this.emoji,
-//     required this.emojiBgColor, // Change to Color type
-//     required this.value,
-//     required this.label,
-//     required this.valueColor,
-//   });
-
-//   // const _StatCard({
-//   //   required this.emoji,
-//   //   required this.emojiBgColor,
-//   //   required this.value,
-//   //   required this.label,
-//   //   required this.valueColor,
-//   // })  : emojiBgColor = const Color(0xFFE8F5EE), // unused, see below
-//   //       super();
-
-//   // Re-declare properly
-//   // const _StatCard._({
-//   //   required this.emoji,
-//   //   required this.emojiBgColor,
-//   //   required this.value,
-//   //   required this.label,
-//   //   required this.valueColor,
-//   //   String emojiBg = '',
-//   //   String label2 = '',
-//   // });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       padding: const EdgeInsets.all(12),
-//       decoration: BoxDecoration(
-//         color: _C.cardBg,
-//         borderRadius: BorderRadius.circular(14),
-//         border: Border.all(color: _C.border, width: 0.5),
-//       ),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Container(
-//             width: 30,
-//             height: 30,
-//             decoration: BoxDecoration(
-//               color: emojiBgColor,
-//               borderRadius: BorderRadius.circular(8),
-//             ),
-//             child: Center(
-//               child: Text(emoji, style: const TextStyle(fontSize: 14)),
-//             ),
-//           ),
-//           const SizedBox(height: 8),
-//           Text(
-//             value,
-//             style: TextStyle(
-//               color: valueColor,
-//               fontWeight: FontWeight.w800,
-//               fontSize: 20,
-//               letterSpacing: -0.4,
-//               height: 1,
-//             ),
-//           ),
-//           const SizedBox(height: 2),
-//           Text(
-//             label,
-//             style: const TextStyle(
-//               color: _C.textSecondary,
-//               fontSize: 9.5,
-//               fontWeight: FontWeight.w500,
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-// Fix: proper _StatCard with named emojiBg color parameter
-// Re-written cleanly below as a standalone widget used by _StatStrip
-
-class _SC extends StatelessWidget {
-  final String emoji;
-  final Color emojiBg;
-  final String value, label;
-  final Color valueColor;
-
-  const _SC({
-    required this.emoji,
-    required this.emojiBg,
-    required this.value,
-    required this.label,
-    required this.valueColor,
-  });
+class _WeeklyChartSection extends StatelessWidget {
+  final List<WeeklyBarData> weekData;
+  final String userGender;
+  const _WeeklyChartSection({required this.weekData, required this.userGender});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: _C.cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _C.border, width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: emojiBg,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Center(
-              child: Text(emoji, style: const TextStyle(fontSize: 14)),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              color: valueColor,
-              fontWeight: FontWeight.w800,
-              fontSize: 20,
-              letterSpacing: -0.4,
-              height: 1,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              color: _C.textSecondary,
-              fontSize: 9.5,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+    if (weekData.isEmpty) return const SizedBox.shrink();
 
-class _StatStripSkeleton extends StatelessWidget {
-  const _StatStripSkeleton();
+    final isFemale = userGender == 'female';
+    final maxPts =
+        weekData.map((d) => d.points).fold(0, (a, b) => a > b ? a : b);
+    final safePts = maxPts < 1 ? 1 : maxPts;
+    final today = DateTime.now();
+    final weekTotal = weekData.fold(0, (s, d) => s + d.points);
+    final activeDays = weekData.where((d) => d.hasData).length;
+    final exemptCnt = weekData.where((d) => d.isExemptDay).length;
 
-  @override
-  Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Row(
-        children: List.generate(3, (i) {
-          return Expanded(
-            child: Container(
-              margin: EdgeInsets.only(left: i == 0 ? 0 : 8),
-              height: 86,
-              decoration: BoxDecoration(
-                color: _C.cardBg,
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ).animate(onPlay: (c) => c.repeat()).shimmer(
-              duration: 1200.ms,
-              delay: Duration(milliseconds: i * 60),
-              colors: [_C.cardBg, const Color(0xFFE8ECE8), _C.cardBg],
-            ),
-          );
-        }),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _SectionHeader(title: 'এই সপ্তাহের ব্রেকডাউন', emoji: '📊'),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+          decoration: BoxDecoration(
+              color: _C.cardBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _C.border, width: 0.5)),
+          child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Bars — LayoutBuilder so height is always relative to card width
+                LayoutBuilder(builder: (ctx, constraints) {
+                  // Chart occupies 38% of card width; clamped for tiny/large screens
+                  final chartH =
+                      (constraints.maxWidth * 0.38).clamp(80.0, 150.0);
+                  const ptsLblH = 14.0; // pts label above bar
+                  const dayLblH = 14.0; // day label below bar
+                  const gapH = 8.0; // gaps (above + below bar)
+                  final barAreaH =
+                      (chartH - ptsLblH - dayLblH - gapH).clamp(20.0, chartH);
+
+                  return SizedBox(
+                    height: chartH,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: weekData.map((d) {
+                        final dayDate = DateTime.tryParse(d.date);
+                        final isToday = dayDate != null &&
+                            dayDate.year == today.year &&
+                            dayDate.month == today.month &&
+                            dayDate.day == today.day;
+                        final showExempt = d.isExemptDay && isFemale;
+                        final fillFrac = d.points > 0
+                            ? (d.points / safePts).clamp(0.0, 1.0)
+                            : 0.0;
+                        final fillH = fillFrac > 0
+                            ? (fillFrac * barAreaH).clamp(4.0, barAreaH)
+                            : 0.0;
+
+                        return Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: Column(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Points label
+                                  SizedBox(
+                                      height: ptsLblH,
+                                      child: d.points > 0
+                                          ? FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: Text('${d.points}',
+                                                  style: TextStyle(
+                                                      fontSize: 8,
+                                                      color: isToday
+                                                          ? _C.darkGreen
+                                                          : _C.textHint,
+                                                      fontWeight: isToday
+                                                          ? FontWeight.w700
+                                                          : FontWeight.w500)))
+                                          : const SizedBox.shrink()),
+                                  const SizedBox(height: 2),
+
+                                  // Bar
+                                  if (showExempt)
+                                    Container(
+                                      height: (barAreaH * 0.45)
+                                          .clamp(18.0, barAreaH),
+                                      decoration: BoxDecoration(
+                                        color: _C.purpleLight,
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(
+                                            color: _C.purple.withOpacity(0.3),
+                                            width: 0.5),
+                                      ),
+                                      child: const Center(
+                                          child: Text('🌙',
+                                              style: TextStyle(fontSize: 8))),
+                                    )
+                                  else if (fillH > 0)
+                                    Container(
+                                      height: fillH,
+                                      decoration: BoxDecoration(
+                                        color: isToday
+                                            ? _C.darkGreen
+                                            : _C.midGreen,
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                                top: Radius.circular(4)),
+                                      ),
+                                    )
+                                  else
+                                    Container(
+                                        height: 4,
+                                        decoration: BoxDecoration(
+                                            color: _C.pageBg,
+                                            borderRadius:
+                                                BorderRadius.circular(3),
+                                            border: Border.all(
+                                                color: _C.border, width: 0.5))),
+
+                                  const SizedBox(height: 4),
+                                  // Day label
+                                  SizedBox(
+                                      height: dayLblH,
+                                      child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(d.day,
+                                              style: TextStyle(
+                                                  fontSize: 9,
+                                                  color: isToday
+                                                      ? _C.darkGreen
+                                                      : _C.textSecondary,
+                                                  fontWeight: isToday
+                                                      ? FontWeight.w800
+                                                      : FontWeight.w500)))),
+                                ]),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  );
+                }),
+
+                const SizedBox(height: 10),
+                const Divider(height: 1, thickness: 0.5, color: _C.border),
+                const SizedBox(height: 10),
+
+                // Summary row — derived only from weekData fields
+                Row(children: [
+                  _WeekChip(
+                      label: 'সপ্তাহের pts',
+                      value: _fmt(weekTotal),
+                      color: _C.green),
+                  const SizedBox(width: 8),
+                  _WeekChip(
+                      label: 'সক্রিয় দিন',
+                      value: '$activeDays/7',
+                      color: _C.darkGreen),
+                  if (isFemale && exemptCnt > 0) ...[
+                    const SizedBox(width: 8),
+                    _WeekChip(
+                        label: 'মাফ দিন',
+                        value: '$exemptCnt',
+                        color: _C.purple),
+                  ],
+                ]),
+
+                if (isFemale) ...[
+                  const SizedBox(height: 10),
+                  Wrap(spacing: 12, runSpacing: 4, children: [
+                    _LegendDot(color: _C.midGreen, label: 'আমল pts'),
+                    _LegendDot(color: _C.darkGreen, label: 'আজ'),
+                    _LegendDot(color: _C.purpleLight, label: 'মাফ দিন'),
+                  ]),
+                ],
+              ]),
+        ),
+      ]),
+    );
+  }
+}
+
+class _WeekChip extends StatelessWidget {
+  final String label, value;
+  final Color color;
+  const _WeekChip(
+      {required this.label, required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+        decoration: BoxDecoration(
+            color: _C.pageBg, borderRadius: BorderRadius.circular(8)),
+        child: Column(children: [
+          FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(value,
+                  style: TextStyle(
+                      color: color,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      height: 1))),
+          const SizedBox(height: 2),
+          FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(label,
+                  style: const TextStyle(color: _C.textHint, fontSize: 8.5),
+                  textAlign: TextAlign.center)),
+        ]),
+      ),
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+  const _LegendDot({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      Container(
+          width: 9,
+          height: 9,
+          decoration: BoxDecoration(
+              color: color, borderRadius: BorderRadius.circular(2))),
+      const SizedBox(width: 4),
+      Text(label, style: const TextStyle(color: _C.textHint, fontSize: 9.5)),
+    ]);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FARD PERFORMANCE SECTION
+// Source: MonthlyTracker backend fields only:
+//   completionPercentage — backend: (farzCompletedDays + exemptDays) / eligibleDays * 100
+//   fardPoints           — partial fard tracking (jamat=8, solo=3, missed=0)
+//   farzCompletedDays    — days where ALL 5 fard completed
+//   eligibleDays         — daysElapsed - exemptDays
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _FardSection extends StatelessWidget {
+  final MonthlyTracker tracker;
+  const _FardSection({required this.tracker});
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = tracker.completionPercentage.clamp(0.0, 100.0);
+    final farzDays = tracker.farzCompletedDays;
+    final eligible = tracker.eligibleDays;
+    final fardPts = tracker.fardPoints;
+
+    String statusLabel() {
+      if (pct >= 90) return 'চমৎকার';
+      if (pct >= 70) return 'ভালো';
+      if (pct >= 50) return 'মাঝামাঝি';
+      return 'উন্নতি দরকার';
+    }
+
+    Color statusColor() {
+      if (pct >= 90) return _C.green;
+      if (pct >= 70) return _C.amber;
+      return _C.red;
+    }
+
+    // fardPoints bar: max theoretical = eligibleDays * 5 prayers * 8 pts (jamat)
+    final fardBarMax = eligible * 40;
+    final fardBarVal =
+        fardBarMax > 0 ? (fardPts / fardBarMax).clamp(0.0, 1.0) : 0.0;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _SectionHeader(title: 'ফরজ পারফরম্যান্স', emoji: '🕌'),
+        const SizedBox(height: 10),
+        Row(children: [
+          Expanded(
+              child: _FardCard(
+            title: 'পূর্ণ ফরজ দিন',
+            bigValue: '${pct.toInt()}%',
+            subValue: '$farzDays/$eligible দিন',
+            status: statusLabel(),
+            statusColor: statusColor(),
+            barValue: pct / 100,
+            barColor: statusColor(),
+          )),
+          const SizedBox(width: 10),
+          Expanded(
+              child: _FardCard(
+            title: 'ফরজ পয়েন্ট',
+            bigValue: _fmt(fardPts),
+            subValue: 'জামাত+একাকী থেকে',
+            status: 'tiebreak',
+            statusColor: _C.purple,
+            barValue: fardBarVal,
+            barColor: _C.purple,
+          )),
+        ]),
+      ]),
+    );
+  }
+}
+
+class _FardCard extends StatelessWidget {
+  final String title, bigValue, subValue, status;
+  final Color statusColor, barColor;
+  final double barValue;
+  const _FardCard(
+      {required this.title,
+      required this.bigValue,
+      required this.subValue,
+      required this.status,
+      required this.statusColor,
+      required this.barColor,
+      required this.barValue});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+          color: _C.cardBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _C.border, width: 0.5)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Expanded(
+              child: Text(title,
+                  style: const TextStyle(
+                      color: _C.textPrimary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700))),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20)),
+            child: Text(status,
+                style: TextStyle(
+                    color: statusColor,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700)),
+          ),
+        ]),
+        const SizedBox(height: 8),
+        FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(bigValue,
+                style: TextStyle(
+                    color: statusColor,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    height: 1))),
+        const SizedBox(height: 2),
+        Text(subValue,
+            style: const TextStyle(color: _C.textHint, fontSize: 9.5)),
+        const SizedBox(height: 8),
+        ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+                value: barValue.clamp(0.0, 1.0),
+                minHeight: 5,
+                backgroundColor: _C.pageBg,
+                valueColor: AlwaysStoppedAnimation(barColor))),
+      ]),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PREVIOUS MONTHS CHART
+// Source: ProgressSummary.recentMonths (backend: sorted desc, limit 3)
+//         + currentMonth — merged and deduped by caller before passing here.
+// months list arrives already: deduped, sorted ascending (oldest → newest).
+// Bar stacking: fardPoints (gold, bottom) + rest (green, top) from totalPoints.
+// Summary chips: conditional on unique.length — no phantom "গত মাস" when only 1 month.
+// Fully responsive via LayoutBuilder.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PrevMonthsSection extends StatelessWidget {
+  final List<MonthlyTracker> months; // already deduped + sorted asc by caller
+  const _PrevMonthsSection({required this.months});
+
+  @override
+  Widget build(BuildContext context) {
+    if (months.isEmpty) return const SizedBox.shrink();
+
+    final maxPts =
+        months.map((m) => m.totalPoints).fold(0, (a, b) => a > b ? a : b);
+    final safePts = maxPts < 1 ? 1 : maxPts;
+    final current = months.last;
+    final prev = months.length >= 2 ? months[months.length - 2] : null;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _SectionHeader(title: 'মাসিক তুলনা', emoji: '📈'),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+              color: _C.cardBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _C.border, width: 0.5)),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            // Bars — LayoutBuilder
+            LayoutBuilder(builder: (ctx, constraints) {
+              final chartH = (constraints.maxWidth * 0.36).clamp(80.0, 140.0);
+              const ptsLblH = 14.0;
+              const mthLblH = 12.0; // month name
+              const pctLblH = 11.0; // completion %
+              const gapH = 12.0; // spacing
+              final barAreaH = (chartH - ptsLblH - mthLblH - pctLblH - gapH)
+                  .clamp(16.0, chartH);
+
+              return SizedBox(
+                height: chartH,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: months.map((m) {
+                    final isActive =
+                        m.year == current.year && m.month == current.month;
+                    final fillFrac = m.totalPoints > 0
+                        ? (m.totalPoints / safePts).clamp(0.0, 1.0)
+                        : 0.0;
+                    // fardPoints share — from backend MonthlyTracker.fardPoints
+                    final fardFrac = (m.totalPoints > 0 && m.fardPoints > 0)
+                        ? (m.fardPoints / m.totalPoints).clamp(0.0, 1.0)
+                        : 0.0;
+                    final fillH = fillFrac > 0
+                        ? (fillFrac * barAreaH).clamp(4.0, barAreaH)
+                        : 4.0;
+                    final fardH = fardFrac > 0
+                        ? (fardFrac * fillH).clamp(2.0, fillH)
+                        : 0.0;
+                    final restH = fillH - fardH;
+
+                    final mName = AppConstants.bengaliMonths[m.month - 1];
+                    final mShort =
+                        mName.length > 3 ? mName.substring(0, 3) : mName;
+
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
+                        child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Points label
+                              SizedBox(
+                                  height: ptsLblH,
+                                  child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(_fmt(m.totalPoints),
+                                          style: TextStyle(
+                                              fontSize: 8,
+                                              color: isActive
+                                                  ? _C.darkGreen
+                                                  : _C.textHint,
+                                              fontWeight: isActive
+                                                  ? FontWeight.w800
+                                                  : FontWeight.w500)))),
+                              const SizedBox(height: 2),
+
+                              // Stacked bar: green (non-fard) top + gold (fard) bottom
+                              ClipRRect(
+                                borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(5)),
+                                child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (restH > 0)
+                                        Container(
+                                            height: restH,
+                                            width: double.infinity,
+                                            color: isActive
+                                                ? _C.darkGreen
+                                                : _C.midGreen.withOpacity(0.5)),
+                                      if (fardH > 0)
+                                        Container(
+                                            height: fardH,
+                                            width: double.infinity,
+                                            color: isActive
+                                                ? _C.gold.withOpacity(0.85)
+                                                : _C.gold.withOpacity(0.4)),
+                                      if (fillFrac == 0)
+                                        Container(
+                                            height: 4,
+                                            width: double.infinity,
+                                            decoration: BoxDecoration(
+                                                color: _C.pageBg,
+                                                border: Border.all(
+                                                    color: _C.border,
+                                                    width: 0.5))),
+                                    ]),
+                              ),
+
+                              const SizedBox(height: 4),
+                              // Month name
+                              SizedBox(
+                                  height: mthLblH,
+                                  child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(mShort,
+                                          style: TextStyle(
+                                              fontSize: 9,
+                                              color: isActive
+                                                  ? _C.darkGreen
+                                                  : _C.textSecondary,
+                                              fontWeight: isActive
+                                                  ? FontWeight.w800
+                                                  : FontWeight.w500),
+                                          textAlign: TextAlign.center))),
+                              // Completion %
+                              SizedBox(
+                                  height: pctLblH,
+                                  child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                          '${m.completionPercentage.toInt()}%',
+                                          style: TextStyle(
+                                              fontSize: 8,
+                                              color: isActive
+                                                  ? _C.gold
+                                                  : _C.textHint),
+                                          textAlign: TextAlign.center))),
+                            ]),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              );
+            }),
+
+            const SizedBox(height: 12),
+            const Divider(height: 1, thickness: 0.5, color: _C.border),
+            const SizedBox(height: 10),
+
+            // Summary chips — only show "গত মাস" when prev actually exists and differs
+            Row(children: [
+              _MonthChip(
+                  label: 'এ মাস',
+                  value: _fmt(current.totalPoints),
+                  color: _C.darkGreen),
+              if (prev != null) ...[
+                const SizedBox(width: 8),
+                _MonthChip(
+                    label: 'গত মাস',
+                    value: _fmt(prev.totalPoints),
+                    color: _C.textSecondary),
+              ],
+              const SizedBox(width: 8),
+              _MonthChip(
+                  label: 'ফরজ %',
+                  value: '${current.completionPercentage.toInt()}%',
+                  color: _C.gold),
+              const SizedBox(width: 8),
+              _MonthChip(
+                  label: 'ফরজ pts',
+                  value: _fmt(current.fardPoints),
+                  color: _C.amber),
+            ]),
+
+            const SizedBox(height: 10),
+            Wrap(spacing: 12, runSpacing: 4, children: [
+              _LegendDot(color: _C.midGreen, label: 'অন্যান্য pts'),
+              _LegendDot(color: _C.gold, label: 'ফরজ pts'),
+            ]),
+          ]),
+        ),
+      ]),
+    );
+  }
+}
+
+class _MonthChip extends StatelessWidget {
+  final String label, value;
+  final Color color;
+  const _MonthChip(
+      {required this.label, required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 6),
+        decoration: BoxDecoration(
+            color: _C.pageBg, borderRadius: BorderRadius.circular(8)),
+        child: Column(children: [
+          FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(value,
+                  style: TextStyle(
+                      color: color,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      height: 1))),
+          const SizedBox(height: 2),
+          FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(label,
+                  style: const TextStyle(color: _C.textHint, fontSize: 8.5),
+                  textAlign: TextAlign.center)),
+        ]),
       ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION HEADER  (same as home_screen.dart)
+// RANK SECTION
+// Source: MonthlyTracker — rank, completionPercentage, totalPoints,
+//         isWinner, winnerCategory
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _SectionHeader extends StatelessWidget {
-  final String title, emoji;
-
-  const _SectionHeader({required this.title, required this.emoji});
+class _RankSection extends StatelessWidget {
+  final MonthlyTracker tracker;
+  const _RankSection({required this.tracker});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(emoji, style: const TextStyle(fontSize: 14)),
-        const SizedBox(width: 7),
-        Text(
-          title,
-          style: const TextStyle(
-            color: _C.textPrimary,
-            fontWeight: FontWeight.w800,
-            fontSize: 15,
-            letterSpacing: -0.2,
-          ),
+    final rank = tracker.rank!;
+    final pct = tracker.completionPercentage.clamp(0.0, 100.0);
+
+    String rankLabel() {
+      if (rank <= 1) return 'সর্বোচ্চ অবস্থানে আছেন!';
+      if (rank <= 3) return 'শীর্ষ ৩ জনের মধ্যে!';
+      if (rank <= 10) return 'শীর্ষ ১০ জনের মধ্যে';
+      return 'র‍্যাংক #$rank তে আছেন';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _SectionHeader(title: 'লিডারবোর্ড অবস্থান', emoji: '🏅'),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+              color: _C.cardBg,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _C.border, width: 0.5)),
+          child: Row(children: [
+            Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                    color: _C.greenLight,
+                    borderRadius: BorderRadius.circular(14)),
+                child: Center(
+                    child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Text('#$rank',
+                                style: const TextStyle(
+                                    color: _C.darkGreen,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900)))))),
+            const SizedBox(width: 14),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text(rankLabel(),
+                      style: const TextStyle(
+                          color: _C.textPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 3),
+                  Text(
+                      'সম্পন্ন ${pct.toInt()}% · ${_fmt(tracker.totalPoints)} pts',
+                      style: const TextStyle(
+                          color: _C.textSecondary,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                      borderRadius: BorderRadius.circular(99),
+                      child: LinearProgressIndicator(
+                          value: pct / 100,
+                          minHeight: 5,
+                          backgroundColor: _C.pageBg,
+                          valueColor:
+                              const AlwaysStoppedAnimation(_C.darkGreen))),
+                ])),
+            if (tracker.isWinner) ...[
+              const SizedBox(width: 12),
+              Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                      color: _C.goldLight2,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                          color: _C.gold.withOpacity(0.3), width: 0.5)),
+                  child: const Text('🏆', style: TextStyle(fontSize: 22))),
+            ],
+          ]),
         ),
-      ],
+      ]),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HEATMAP CALENDAR
+// Source: List<DailyEntry> — day, totalPoints, isExemptDay
+// isExemptDay moon styling only when userGender == 'female'
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _HeatmapCalendar extends StatelessWidget {
   final int year, month;
   final List<DailyEntry> entries;
-
-  const _HeatmapCalendar({
-    required this.year,
-    required this.month,
-    required this.entries,
-  });
+  final String userGender;
+  const _HeatmapCalendar(
+      {required this.year,
+      required this.month,
+      required this.entries,
+      required this.userGender});
 
   @override
   Widget build(BuildContext context) {
@@ -1517,349 +3929,301 @@ class _HeatmapCalendar extends StatelessWidget {
     final today = DateTime.now();
     final firstDay = DateTime(year, month, 1).weekday % 7;
     final totalCells = ((firstDay + daysInMonth) / 7).ceil() * 7;
-
+    final isFemale = userGender == 'female';
     const weekdays = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহঃ', 'শুক্র', 'শনি'];
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _C.cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _C.border, width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Weekday labels
-          Row(
+          color: _C.cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _C.border, width: 0.5)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(
             children: weekdays
-                .map(
-                  (d) => Expanded(
+                .map((d) => Expanded(
                     child: Center(
-                      child: Text(
-                        d,
-                        style: const TextStyle(
-                          color: _C.textHint,
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-
-          const SizedBox(height: 6),
-
-          // Day grid
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        child: Text(d,
+                            style: const TextStyle(
+                                color: _C.textHint,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w500)))))
+                .toList()),
+        const SizedBox(height: 6),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
               crossAxisSpacing: 3,
               mainAxisSpacing: 3,
-              childAspectRatio: 1.1,
-            ),
-            itemCount: totalCells,
-            itemBuilder: (ctx, index) {
-              final dayNum = index - firstDay + 1;
+              childAspectRatio: 1.1),
+          itemCount: totalCells,
+          itemBuilder: (ctx, index) {
+            final dayNum = index - firstDay + 1;
+            if (dayNum < 1 || dayNum > daysInMonth)
+              return const SizedBox.shrink();
 
-              if (dayNum < 1 || dayNum > daysInMonth) {
-                return const SizedBox.shrink();
-              }
+            final entry = entryMap[dayNum];
+            final pts = entry?.totalPoints ?? 0;
+            final isExempt = (entry?.isExemptDay ?? false) && isFemale;
+            final intensity = pts / maxPts;
+            final isToday = today.year == year &&
+                today.month == month &&
+                today.day == dayNum;
+            final isFuture = DateTime(year, month, dayNum).isAfter(today);
 
-              final pts = entryMap[dayNum]?.totalPoints ?? 0;
-              final intensity = pts / maxPts;
-              final isToday = today.year == year &&
-                  today.month == month &&
-                  today.day == dayNum;
-              final isFuture = DateTime(year, month, dayNum).isAfter(today);
+            Color cellColor;
+            Color numColor;
+            if (isExempt) {
+              cellColor = _C.purplePale;
+              numColor = _C.purple;
+            } else if (isFuture) {
+              cellColor = _C.pageBg;
+              numColor = _C.textHint;
+            } else if (pts == 0) {
+              cellColor = _C.greenLight.withOpacity(0.5);
+              numColor = _C.textHint;
+            } else if (intensity < 0.25) {
+              cellColor = _C.green.withOpacity(0.18);
+              numColor = _C.green;
+            } else if (intensity < 0.5) {
+              cellColor = _C.green.withOpacity(0.38);
+              numColor = _C.green;
+            } else if (intensity < 0.75) {
+              cellColor = _C.green.withOpacity(0.60);
+              numColor = Colors.white;
+            } else {
+              cellColor = _C.green.withOpacity(0.85);
+              numColor = Colors.white;
+            }
 
-              // Colour based on intensity
-              Color cellColor;
-              Color numColor;
-              if (isFuture) {
-                cellColor = _C.pageBg;
-                numColor = _C.textHint;
-              } else if (pts == 0) {
-                cellColor = _C.greenLight.withOpacity(0.5);
-                numColor = _C.textHint;
-              } else if (intensity < 0.25) {
-                cellColor = _C.green.withOpacity(0.18);
-                numColor = _C.green;
-              } else if (intensity < 0.5) {
-                cellColor = _C.green.withOpacity(0.38);
-                numColor = _C.green;
-              } else if (intensity < 0.75) {
-                cellColor = _C.green.withOpacity(0.60);
-                numColor = Colors.white;
-              } else {
-                cellColor = _C.green.withOpacity(0.85);
-                numColor = Colors.white;
-              }
-
-              return Container(
-                decoration: BoxDecoration(
-                  color: cellColor,
-                  borderRadius: BorderRadius.circular(5),
-                  border:
-                      isToday ? Border.all(color: _C.gold, width: 1.5) : null,
-                ),
-                child: Column(
+            return Container(
+              decoration: BoxDecoration(
+                color: cellColor,
+                borderRadius: BorderRadius.circular(5),
+                border: isToday ? Border.all(color: _C.gold, width: 1.5) : null,
+              ),
+              child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      '$dayNum',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: numColor,
-                        height: 1,
-                      ),
-                    ),
-                    if (pts > 0 && !isFuture) ...[
-                      Text(
-                        '$pts',
+                    Text('$dayNum',
                         style: TextStyle(
-                          fontSize: 7.5,
-                          color: numColor.withOpacity(0.7),
-                          fontWeight: FontWeight.w600,
-                          height: 1,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ).animate(delay: Duration(milliseconds: dayNum * 8)).scale(
-                    begin: const Offset(0.7, 0.7),
-                    duration: 200.ms,
-                    curve: Curves.easeOut,
-                  );
-            },
-          ),
-
-          const SizedBox(height: 10),
-
-          // Legend
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              const Text(
-                'কম  ',
-                style: TextStyle(color: _C.textHint, fontSize: 9.5),
-              ),
-              ...List.generate(5, (i) {
-                return Container(
-                  width: 12,
-                  height: 12,
-                  margin: const EdgeInsets.only(right: 3),
-                  decoration: BoxDecoration(
-                    color: i == 0
-                        ? _C.greenLight
-                        : _C.green.withOpacity(0.15 + i * 0.18),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: numColor,
+                            height: 1)),
+                    if (isExempt)
+                      const Text('🌙',
+                          style: TextStyle(fontSize: 6.5, height: 1))
+                    else if (pts > 0 && !isFuture)
+                      Text('$pts',
+                          style: TextStyle(
+                              fontSize: 7.5,
+                              color: numColor.withOpacity(0.7),
+                              fontWeight: FontWeight.w600,
+                              height: 1)),
+                  ]),
+            ).animate(delay: Duration(milliseconds: dayNum * 8)).scale(
+                begin: const Offset(0.7, 0.7),
+                duration: 200.ms,
+                curve: Curves.easeOut);
+          },
+        ),
+        const SizedBox(height: 10),
+        Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+          const Text('কম  ',
+              style: TextStyle(color: _C.textHint, fontSize: 9.5)),
+          ...List.generate(
+              5,
+              (i) => Container(
+                    width: 12,
+                    height: 12,
+                    margin: const EdgeInsets.only(right: 3),
+                    decoration: BoxDecoration(
+                        color: i == 0
+                            ? _C.greenLight
+                            : _C.green.withOpacity(0.15 + i * 0.18),
+                        borderRadius: BorderRadius.circular(3)),
+                  )),
+          const Text('  বেশি',
+              style: TextStyle(color: _C.textHint, fontSize: 9.5)),
+          if (isFemale) ...[
+            const SizedBox(width: 8),
+            Container(
+                width: 12,
+                height: 12,
+                margin: const EdgeInsets.only(right: 3),
+                decoration: BoxDecoration(
+                    color: _C.purplePale,
                     borderRadius: BorderRadius.circular(3),
-                  ),
-                );
-              }),
-              const Text(
-                '  বেশি',
-                style: TextStyle(color: _C.textHint, fontSize: 9.5),
-              ),
-            ],
-          ),
-        ],
-      ),
+                    border: Border.all(
+                        color: _C.purple.withOpacity(0.3), width: 0.5))),
+            const Text('মাফ',
+                style: TextStyle(color: _C.textHint, fontSize: 9.5)),
+          ],
+        ]),
+      ]),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DAY ROW  (inside grouped card, same divider pattern as _MonthList in home)
+// DAY ROW
+// Source: DailyEntry — day, month, totalPoints, isExemptDay, entries[]
+//   entries[]: completed, prayerMode (congregation/solo/missed), points
+// isExemptDay purple styling only when userGender == 'female'
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _DayRow extends StatelessWidget {
   final DailyEntry entry;
   final bool isLast;
   final int delay;
-
-  const _DayRow({
-    required this.entry,
-    required this.isLast,
-    required this.delay,
-  });
+  final String userGender;
+  const _DayRow(
+      {required this.entry,
+      required this.isLast,
+      required this.delay,
+      required this.userGender});
 
   @override
   Widget build(BuildContext context) {
-    final completedCount = entry.entries.where((e) => e.completed).length;
-    final prayerCount = entry.entries
-        .where((e) =>
-            e.completed &&
-            e.prayerMode != null &&
-            e.prayerMode != PrayerMode.missed)
+    final isFemale = userGender == 'female';
+    final isExempt = entry.isExemptDay && isFemale;
+    final completed = entry.entries.where((e) => e.completed).length;
+    final jamat = entry.entries
+        .where((e) => e.completed && e.prayerMode == PrayerMode.congregation)
         .length;
+    final solo = entry.entries
+        .where((e) => e.completed && e.prayerMode == PrayerMode.solo)
+        .length;
+    final missed =
+        entry.entries.where((e) => e.prayerMode == PrayerMode.missed).length;
     final hasPoints = entry.totalPoints > 0;
 
-    // Progress bar colour
-    final barColor = completedCount > 15
+    Color barColor = completed > 15
         ? _C.green
-        : completedCount > 8
+        : completed > 8
             ? _C.amber
             : _C.darkGreen;
+    if (isExempt) barColor = _C.purple;
 
-    String getMonthShortName(int monthIndex) {
-      final fullMonthName = AppConstants.bengaliMonths[monthIndex];
-      if (fullMonthName.length >= 3) {
-        return fullMonthName.substring(0, 3);
-      } else {
-        return fullMonthName; // Return full name if shorter than 3 chars
-      }
+    String monthShort(int idx) {
+      final s = AppConstants.bengaliMonths[idx];
+      return s.length >= 3 ? s.substring(0, 3) : s;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color: hasPoints ? _C.greenLight.withOpacity(0.18) : Colors.transparent,
+        color: isExempt
+            ? _C.purplePale.withOpacity(0.4)
+            : hasPoints
+                ? _C.greenLight.withOpacity(0.18)
+                : Colors.transparent,
         border: isLast
             ? null
-            : const Border(
-                bottom: BorderSide(color: _C.border, width: 0.5),
-              ),
+            : const Border(bottom: BorderSide(color: _C.border, width: 0.5)),
         borderRadius: isLast
             ? const BorderRadius.vertical(bottom: Radius.circular(16))
             : null,
       ),
-      child: Row(
-        children: [
-          // Day number box
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              gradient: hasPoints
-                  ? const LinearGradient(
-                      colors: [_C.darkGreen, _C.midGreen],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                  : null,
-              color: hasPoints ? null : _C.pageBg,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '${entry.day}',
-                  style: TextStyle(
-                    color: hasPoints ? Colors.white : _C.textHint,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    height: 1,
-                  ),
-                ),
-                Text(
-                  // ✅ Fixed: Use safe getMonthShortName function
-                  getMonthShortName(entry.month - 1),
-                  style: TextStyle(
-                    color:
-                        hasPoints ? Colors.white.withOpacity(0.6) : _C.textHint,
-                    fontSize: 8.5,
-                  ),
-                ),
-                // Text(
-                //   AppConstants.bengaliMonths[entry.month - 1].substring(0, 3),
-                //   style: TextStyle(
-                //     color:
-                //         hasPoints ? Colors.white.withOpacity(0.6) : _C.textHint,
-                //     fontSize: 8.5,
-                //   ),
-                // ),
-              ],
-            ),
+      child: Row(children: [
+        // Day box
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            gradient: isExempt
+                ? const LinearGradient(
+                    colors: [_C.purple, Color(0xFF9B6BE8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight)
+                : hasPoints
+                    ? const LinearGradient(
+                        colors: [_C.darkGreen, _C.midGreen],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight)
+                    : null,
+            color: isExempt || hasPoints ? null : _C.pageBg,
+            borderRadius: BorderRadius.circular(12),
           ),
-
-          const SizedBox(width: 12),
-
-          // Info block
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      '$completedCount টি আমল',
-                      style: TextStyle(
-                        color: hasPoints ? _C.textPrimary : _C.textSecondary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                      ),
-                    ),
-                    if (prayerCount > 0) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: _C.greenLight,
-                          borderRadius: BorderRadius.circular(99),
-                        ),
-                        child: Text(
-                          '🕌 $prayerCount নামাজ',
-                          style: const TextStyle(
-                            color: _C.green,
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 5),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(99),
-                  child: LinearProgressIndicator(
-                    value: (completedCount / 20).clamp(0.0, 1.0),
-                    minHeight: 4,
-                    backgroundColor: _C.pageBg,
-                    valueColor: AlwaysStoppedAnimation(
-                        hasPoints ? barColor : _C.border),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(width: 12),
-
-          // Points
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${entry.totalPoints}',
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Text('${entry.day}',
                 style: TextStyle(
-                  color: hasPoints ? _C.darkGreen : _C.textHint,
+                    color: isExempt || hasPoints ? Colors.white : _C.textHint,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    height: 1)),
+            Text(monthShort(entry.month - 1),
+                style: TextStyle(
+                    color: isExempt || hasPoints
+                        ? Colors.white.withOpacity(0.6)
+                        : _C.textHint,
+                    fontSize: 8.5)),
+          ]),
+        ),
+        const SizedBox(width: 12),
+
+        // Info
+        Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Flexible(
+                child: Text(isExempt ? 'মাফের দিন' : '$completed টি আমল',
+                    style: TextStyle(
+                        color: isExempt
+                            ? _C.purple
+                            : hasPoints
+                                ? _C.textPrimary
+                                : _C.textSecondary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12),
+                    overflow: TextOverflow.ellipsis)),
+            if (jamat > 0) ...[
+              const SizedBox(width: 5),
+              _Pill(text: '🕌 $jamat জামাত', bg: _C.purpleLight, fg: _C.purple),
+            ] else if (solo > 0) ...[
+              const SizedBox(width: 5),
+              _Pill(text: '🤲 $solo একাকী', bg: _C.greenLight, fg: _C.green),
+            ],
+          ]),
+          if (missed > 0) ...[
+            const SizedBox(height: 3),
+            _Pill(text: '⚠️ $missed মিস', bg: _C.redLight, fg: _C.red),
+          ],
+          const SizedBox(height: 5),
+          ClipRRect(
+              borderRadius: BorderRadius.circular(99),
+              child: LinearProgressIndicator(
+                  value: (completed / 20).clamp(0.0, 1.0),
+                  minHeight: 4,
+                  backgroundColor: _C.pageBg,
+                  valueColor: AlwaysStoppedAnimation(
+                      hasPoints ? barColor : _C.border))),
+        ])),
+        const SizedBox(width: 10),
+
+        // Points
+        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Text('${entry.totalPoints}',
+              style: TextStyle(
+                  color: isExempt
+                      ? _C.purple
+                      : hasPoints
+                          ? _C.darkGreen
+                          : _C.textHint,
                   fontWeight: FontWeight.w900,
                   fontSize: 18,
-                  height: 1,
-                ),
-              ),
-              Text(
-                'pts',
-                style: TextStyle(
-                  color: hasPoints ? _C.textSecondary : _C.textHint,
+                  height: 1)),
+          const Text('pts',
+              style: TextStyle(
+                  color: _C.textSecondary,
                   fontSize: 9.5,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+                  fontWeight: FontWeight.w500)),
+        ]),
+      ]),
     )
         .animate(delay: Duration(milliseconds: delay))
         .fadeIn(duration: 240.ms)
@@ -1867,19 +4231,57 @@ class _DayRow extends StatelessWidget {
   }
 }
 
+class _Pill extends StatelessWidget {
+  final String text;
+  final Color bg, fg;
+  const _Pill({required this.text, required this.bg, required this.fg});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration:
+          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(99)),
+      child: Text(text,
+          style:
+              TextStyle(color: fg, fontSize: 9, fontWeight: FontWeight.w700)),
+    );
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// PERIOD PICKER SHEET  (same handle + card style as home ProfileSheet)
+// SHARED SECTION HEADER
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SectionHeader extends StatelessWidget {
+  final String title, emoji;
+  const _SectionHeader({required this.title, required this.emoji});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(children: [
+      Text(emoji, style: const TextStyle(fontSize: 14)),
+      const SizedBox(width: 7),
+      Flexible(
+          child: Text(title,
+              style: const TextStyle(
+                  color: _C.textPrimary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  letterSpacing: -0.2))),
+    ]);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PERIOD PICKER SHEET
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _PeriodPickerSheet extends StatefulWidget {
   final int year, month;
   final void Function(int, int) onPicked;
-
-  const _PeriodPickerSheet({
-    required this.year,
-    required this.month,
-    required this.onPicked,
-  });
+  const _PeriodPickerSheet(
+      {required this.year, required this.month, required this.onPicked});
 
   @override
   State<_PeriodPickerSheet> createState() => _PeriodPickerSheetState();
@@ -1898,137 +4300,99 @@ class _PeriodPickerSheetState extends State<_PeriodPickerSheet> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-
     return Container(
       decoration: const BoxDecoration(
-        color: _C.cardBg,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
+          color: _C.cardBg,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle
-          Container(
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Container(
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: _C.border,
-              borderRadius: BorderRadius.circular(99),
-            ),
-          ),
-
-          const SizedBox(height: 22),
-
-          const Text(
-            'মাস বেছে নিন',
+                color: _C.border, borderRadius: BorderRadius.circular(99))),
+        const SizedBox(height: 22),
+        const Text('মাস বেছে নিন',
             style: TextStyle(
-              color: _C.textPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-
-          const SizedBox(height: 18),
-
-          // Year selector
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _YearArrow(
-                icon: Icons.chevron_left_rounded,
-                onTap: () => setState(() => _y--),
-                enabled: true,
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                decoration: BoxDecoration(
+                color: _C.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700)),
+        const SizedBox(height: 18),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          _YearArrow(
+              icon: Icons.chevron_left_rounded,
+              onTap: () => setState(() => _y--),
+              enabled: true),
+          Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              decoration: BoxDecoration(
                   color: _C.greenLight,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '$_y',
+                  borderRadius: BorderRadius.circular(12)),
+              child: Text('$_y',
                   style: const TextStyle(
-                    color: _C.darkGreen,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
-                  ),
-                ),
-              ),
-              _YearArrow(
-                icon: Icons.chevron_right_rounded,
-                onTap: _y < now.year ? () => setState(() => _y++) : null,
-                enabled: _y < now.year,
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Month grid
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      color: _C.darkGreen,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18))),
+          _YearArrow(
+              icon: Icons.chevron_right_rounded,
+              onTap: _y < now.year ? () => setState(() => _y++) : null,
+              enabled: _y < now.year),
+        ]),
+        const SizedBox(height: 16),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 4,
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
-              childAspectRatio: 1.75,
-            ),
-            itemCount: 12,
-            itemBuilder: (_, i) {
-              final isSelected = i + 1 == _m;
-              final isFuture = _y == now.year && i + 1 > now.month;
-
-              return GestureDetector(
-                onTap: isFuture
-                    ? null
-                    : () {
-                        widget.onPicked(_y, i + 1);
-                        Navigator.pop(context);
-                      },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? _C.darkGreen
-                        : isFuture
-                            ? _C.pageBg
-                            : _C.pageBg,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
+              childAspectRatio: 1.75),
+          itemCount: 12,
+          itemBuilder: (_, i) {
+            final isSelected = i + 1 == _m;
+            final isFuture = _y == now.year && i + 1 > now.month;
+            return GestureDetector(
+              onTap: isFuture
+                  ? null
+                  : () {
+                      widget.onPicked(_y, i + 1);
+                      Navigator.pop(context);
+                    },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                decoration: BoxDecoration(
+                  color: isSelected ? _C.darkGreen : _C.pageBg,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
                       color: isSelected
                           ? _C.darkGreen
                           : isFuture
                               ? _C.border.withOpacity(0.4)
                               : _C.border,
-                      width: 0.5,
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      AppConstants.bengaliMonths[i],
-                      style: TextStyle(
-                        color: isSelected
-                            ? Colors.white
-                            : isFuture
-                                ? _C.textHint
-                                : _C.textSecondary,
-                        fontSize: 12,
-                        fontWeight:
-                            isSelected ? FontWeight.w700 : FontWeight.w500,
-                      ),
-                    ),
-                  ),
+                      width: 0.5),
                 ),
-              );
-            },
-          ),
-
-          const SizedBox(height: 4),
-        ],
-      ),
+                child: Center(
+                    child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(AppConstants.bengaliMonths[i],
+                                style: TextStyle(
+                                    color: isSelected
+                                        ? Colors.white
+                                        : isFuture
+                                            ? _C.textHint
+                                            : _C.textSecondary,
+                                    fontSize: 12,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w700
+                                        : FontWeight.w500))))),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 4),
+      ]),
     );
   }
 }
@@ -2037,12 +4401,8 @@ class _YearArrow extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
   final bool enabled;
-
-  const _YearArrow({
-    required this.icon,
-    required this.onTap,
-    required this.enabled,
-  });
+  const _YearArrow(
+      {required this.icon, required this.onTap, required this.enabled});
 
   @override
   Widget build(BuildContext context) {
@@ -2055,105 +4415,172 @@ class _YearArrow extends StatelessWidget {
         decoration: BoxDecoration(
           color: enabled ? _C.greenLight : _C.pageBg,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: enabled ? _C.borderMid : _C.border,
-            width: 0.5,
-          ),
+          border:
+              Border.all(color: enabled ? _C.borderMid : _C.border, width: 0.5),
         ),
-        child: Icon(
-          icon,
-          color: enabled ? _C.darkGreen : _C.textHint,
-          size: 20,
-        ),
+        child:
+            Icon(icon, color: enabled ? _C.darkGreen : _C.textHint, size: 20),
       ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SKELETONS  (same shimmer pattern as home_screen.dart)
+// SKELETONS
 // ─────────────────────────────────────────────────────────────────────────────
+
+class _HeroBandSkeleton extends StatelessWidget {
+  const _HeroBandSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: _C.darkGreen,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Container(
+              width: 130,
+              height: 11,
+              decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4))),
+          const SizedBox(height: 12),
+          Container(
+            height: 92,
+            decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(14)),
+          )
+              .animate(onPlay: (c) => c.repeat())
+              .shimmer(duration: 1200.ms, colors: [
+            Colors.white.withOpacity(0.02),
+            Colors.white.withOpacity(0.08),
+            Colors.white.withOpacity(0.02)
+          ]),
+        ]),
+      ),
+    );
+  }
+}
+
+class _StatStripSkeleton extends StatelessWidget {
+  const _StatStripSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      _row(top: 12),
+      _row(top: 8),
+    ]);
+  }
+
+  static Widget _row({required double top}) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, top, 16, 0),
+      child: Row(
+          children: List.generate(
+              3,
+              (i) => Expanded(
+                    child: Container(
+                      margin: EdgeInsets.only(left: i == 0 ? 0 : 8),
+                      height: 86,
+                      decoration: BoxDecoration(
+                          color: _C.cardBg,
+                          borderRadius: BorderRadius.circular(13)),
+                    ).animate(onPlay: (c) => c.repeat()).shimmer(
+                        duration: 1200.ms,
+                        delay: Duration(milliseconds: i * 60),
+                        colors: [
+                          _C.cardBg,
+                          const Color(0xFFE8ECE8),
+                          _C.cardBg
+                        ]),
+                  ))),
+    );
+  }
+}
+
+class _SectionSkeleton extends StatelessWidget {
+  final double height;
+  const _SectionSkeleton({required this.height});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Container(
+        height: height,
+        decoration: BoxDecoration(
+            color: _C.cardBg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _C.border, width: 0.5)),
+      ).animate(onPlay: (c) => c.repeat()).shimmer(
+          duration: 1200.ms,
+          colors: [_C.cardBg, const Color(0xFFE8ECE8), _C.cardBg]),
+    );
+  }
+}
 
 class _EntriesSkeleton extends StatelessWidget {
   const _EntriesSkeleton();
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 22),
-        // Section label
-        _shimmerBar(width: 130, height: 14),
-        const SizedBox(height: 12),
-        // Calendar
-        _shimmerBox(height: 240),
-        const SizedBox(height: 22),
-        // Section label
-        _shimmerBar(width: 150, height: 14),
-        const SizedBox(height: 12),
-        // List
-        Container(
-          decoration: BoxDecoration(
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const SizedBox(height: 22),
+      _shimBar(width: 130, height: 14),
+      const SizedBox(height: 12),
+      _shimBox(height: 240),
+      const SizedBox(height: 22),
+      _shimBar(width: 150, height: 14),
+      const SizedBox(height: 12),
+      Container(
+        decoration: BoxDecoration(
             color: _C.cardBg,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _C.border, width: 0.5),
-          ),
-          child: Column(
-            children: List.generate(5, (i) {
-              final isLast = i == 4;
-              return Container(
-                height: 64,
-                margin: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-                decoration: BoxDecoration(
-                  color: _C.pageBg,
-                  borderRadius: BorderRadius.circular(10),
-                  border: isLast
-                      ? null
-                      : const Border(
-                          bottom: BorderSide(color: _C.border, width: 0.5),
-                        ),
-                ),
-              ).animate(onPlay: (c) => c.repeat()).shimmer(
-                duration: 1200.ms,
-                delay: Duration(milliseconds: i * 70),
-                colors: [_C.pageBg, const Color(0xFFE8ECE8), _C.pageBg],
-              );
-            }),
-          ),
-        ),
-      ],
-    );
+            border: Border.all(color: _C.border, width: 0.5)),
+        child: Column(
+            children: List.generate(
+                5,
+                (i) => Container(
+                      height: 64,
+                      margin: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+                      decoration: BoxDecoration(
+                          color: _C.pageBg,
+                          borderRadius: BorderRadius.circular(10)),
+                    ).animate(onPlay: (c) => c.repeat()).shimmer(
+                        duration: 1200.ms,
+                        delay: Duration(milliseconds: i * 70),
+                        colors: [
+                          _C.pageBg,
+                          const Color(0xFFE8ECE8),
+                          _C.pageBg
+                        ]))),
+      ),
+    ]);
   }
 
-  Widget _shimmerBar({required double width, required double height}) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: _C.cardBg,
-        borderRadius: BorderRadius.circular(8),
-      ),
-    ).animate(onPlay: (c) => c.repeat()).shimmer(
-      duration: 1200.ms,
-      colors: [_C.cardBg, const Color(0xFFE8ECE8), _C.cardBg],
-    );
-  }
+  static Widget _shimBar({required double width, required double height}) =>
+      Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+            color: _C.cardBg, borderRadius: BorderRadius.circular(8)),
+      ).animate(onPlay: (c) => c.repeat()).shimmer(
+          duration: 1200.ms,
+          colors: [_C.cardBg, const Color(0xFFE8ECE8), _C.cardBg]);
 
-  Widget _shimmerBox({required double height}) {
-    return Container(
-      width: double.infinity,
-      height: height,
-      decoration: BoxDecoration(
-        color: _C.cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _C.border, width: 0.5),
-      ),
-    ).animate(onPlay: (c) => c.repeat()).shimmer(
-      duration: 1200.ms,
-      colors: [_C.cardBg, const Color(0xFFE8ECE8), _C.cardBg],
-    );
-  }
+  static Widget _shimBox({required double height}) => Container(
+        width: double.infinity,
+        height: height,
+        decoration: BoxDecoration(
+            color: _C.cardBg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _C.border, width: 0.5)),
+      ).animate(onPlay: (c) => c.repeat()).shimmer(
+          duration: 1200.ms,
+          colors: [_C.cardBg, const Color(0xFFE8ECE8), _C.cardBg]);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2170,47 +4597,32 @@ class _ErrorCard extends StatelessWidget {
       margin: const EdgeInsets.only(top: 24),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: _C.cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _C.border, width: 0.5),
-      ),
-      child: Column(
-        children: [
-          const Icon(
-            Icons.error_outline_rounded,
-            color: Color(0xFFEF4444),
-            size: 30,
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'ডেটা লোড ব্যর্থ হয়েছে',
+          color: _C.cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _C.border, width: 0.5)),
+      child: Column(children: [
+        const Icon(Icons.error_outline_rounded, color: _C.red, size: 30),
+        const SizedBox(height: 8),
+        const Text('ডেটা লোড ব্যর্থ হয়েছে',
             style: TextStyle(
-              color: _C.textPrimary,
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 12),
-          GestureDetector(
+                color: _C.textPrimary,
+                fontWeight: FontWeight.w700,
+                fontSize: 14)),
+        const SizedBox(height: 12),
+        GestureDetector(
             onTap: onRetry,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
-              decoration: BoxDecoration(
-                color: _C.greenLight,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Text(
-                'পুনরায় চেষ্টা করুন',
-                style: TextStyle(
-                  color: _C.darkGreen,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
+                decoration: BoxDecoration(
+                    color: _C.greenLight,
+                    borderRadius: BorderRadius.circular(10)),
+                child: const Text('পুনরায় চেষ্টা করুন',
+                    style: TextStyle(
+                        color: _C.darkGreen,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12)))),
+      ]),
     );
   }
 }
@@ -2224,28 +4636,18 @@ class _EmptyCard extends StatelessWidget {
     return Container(
       height: 110,
       decoration: BoxDecoration(
-        color: _C.cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _C.border, width: 0.5),
-      ),
+          color: _C.cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _C.border, width: 0.5)),
       child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('📭', style: TextStyle(fontSize: 22)),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: _C.textHint,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        const Text('📭', style: TextStyle(fontSize: 22)),
+        const SizedBox(height: 6),
+        Text(label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                color: _C.textHint, fontSize: 12, fontWeight: FontWeight.w500)),
+      ])),
     );
   }
 }
