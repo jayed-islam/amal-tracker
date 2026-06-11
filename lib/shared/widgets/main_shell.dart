@@ -410,6 +410,10 @@ class _BottomNav extends StatelessWidget {
     _NavItem(icon: Icons.list_alt_rounded, label: 'ট্র্যাকার'),
     _NavItem(icon: Icons.bar_chart_rounded, label: 'রিপোর্ট'),
     _NavItem(icon: Icons.emoji_events_rounded, label: 'র‍্যাংকিং'),
+    _NavItem(
+      icon: Icons.groups_rounded,
+      label: 'গ্রুপ',
+    ),
   ];
 
   @override
