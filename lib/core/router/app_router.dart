@@ -501,10 +501,7 @@
 import 'package:amal_tracker/features/auth/providers/auth_provider.dart';
 import 'package:amal_tracker/features/auth/screens/login_screen.dart';
 import 'package:amal_tracker/features/auth/screens/register_screen.dart';
-import 'package:amal_tracker/features/group/screen/create_join_group_screen.dart';
-import 'package:amal_tracker/features/group/screen/group_detail_screen.dart';
-import 'package:amal_tracker/features/group/screen/group_home_screen.dart';
-import 'package:amal_tracker/features/group/screen/group_leaderboard_screen.dart';
+
 import 'package:amal_tracker/features/home/screens/home_screen.dart';
 import 'package:amal_tracker/features/jannah_garden/screen/jannah_garden_screen.dart';
 import 'package:amal_tracker/features/leaderboard/screens/leaderboard_screen.dart';
@@ -545,17 +542,6 @@ class AppRoutes {
   static const legal = '/legal';
   static const jannahGarden = '/jannah-garden';
   static const sadaqah = '/sadaqah';
-
-  static const group = '/group';
-  static const groupCreateJoin = '/group/new';
-  static const groupDetail = '/group/:groupId';
-  static const groupLeaderboard = '/group/:groupId/lb';
-  static const pricing = '/pricing';
-  static const paymentFlow = '/pricing/pay';
-
-// helper methods
-  static String groupDetailPath(String id) => '/group/$id';
-  static String groupLeaderboardPath(String id) => '/group/$id/lb';
 }
 
 // ── Navigator keys ─────────────────────────────────────────────────────────
@@ -693,42 +679,14 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: AppRoutes.group,
-                builder: (_, __) => const GroupHomeScreen(),
-              ),
-            ],
-          ),
-        ],
-      ),
-      // ── Full-screen Group Sub-routes ─────────────────────────────────
-      // (গ্রুপের বাকি পেজগুলো বটম ন্যাভ ছাড়া ফুল স্ক্রিনে ওপেন হবে)
-      GoRoute(
-        path: '/group/new', // AppRoutes.groupCreateJoin
-        parentNavigatorKey: _rootNavigatorKey,
-        name: 'groupCreateJoin',
-        builder: (_, __) => const CreateJoinGroupScreen(),
-      ),
-      GoRoute(
-        path: '/group/:groupId', // AppRoutes.groupDetail
-        parentNavigatorKey: _rootNavigatorKey,
-        name: 'groupDetail',
-        builder: (_, state) {
-          final groupId = state.pathParameters['groupId']!;
-          return GroupDetailScreen(groupId: groupId);
-        },
-        routes: [
-          GoRoute(
-            path: 'lb', // এটি মূলত /group/:groupId/lb হবে
-            parentNavigatorKey: _rootNavigatorKey,
-            name: 'groupLeaderboard',
-            builder: (_, state) {
-              final groupId = state.pathParameters['groupId']!;
-              return GroupLeaderboardScreen(groupId: groupId);
-            },
-          ),
+          // StatefulShellBranch(
+          //   routes: [
+          //     GoRoute(
+          //       path: AppRoutes.group,
+          //       builder: (_, __) => const GroupHomeScreen(),
+          //     ),
+          //   ],
+          // ),
         ],
       ),
 

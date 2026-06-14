@@ -3190,19 +3190,14 @@
 //     ]);
 //   }
 // }
-import 'dart:convert';
-import 'dart:math';
-
-import 'package:amal_tracker/features/home/widgets/daily_ayah_card.dart';
+import 'package:amal_tracker/features/home/widgets/daily_cards_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
 import 'package:in_app_review/in_app_review.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../auth/providers/auth_provider.dart';
@@ -3213,6 +3208,7 @@ import '../../../core/router/app_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../notification/widgets/notification_widgets.dart';
 import '../../home/widgets/profile_sheet.dart';
+// import '../widgets/new.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -3229,11 +3225,7 @@ class _C {
   static const green = Color(0xFF16A34A);
   static const greenLight = Color(0xFFE8F5EE);
   static const amber = Color(0xFFF59E0B);
-  static const amberLight = Color(0xFFFFF7ED);
-  static const purple = Color(0xFF7C3AED);
-  static const purplePale = Color(0xFFF3F0FF);
   static const red = Color(0xFFEF4444);
-  static const redLight = Color(0xFFFEE2E2);
   static const textPri = Color(0xFF0A1A0F);
   static const textSec = Color(0xFF6B7C6E);
   static const textHint = Color(0xFFABBAAE);
@@ -3244,148 +3236,6 @@ class _C {
 }
 
 String _fmt(int n) => n >= 1000 ? '${(n / 1000).toStringAsFixed(1)}K' : '$n';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// AYAH PROVIDER
-// Fetches one random ayah per day from alquran.cloud.
-// Curated list: verses about amal, taqwa, sabr, sadaqah — thematically
-// relevant to a good-deeds tracker app.
-// Cached in SharedPreferences keyed by YYYY-MM-DD so it only hits the
-// network once per calendar day. Falls back to a hardcoded ayah on error.
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _AyahData {
-  final String arabic;
-  final String bengali;
-  final String surahName; // Bengali surah name
-  final int surahNumber;
-  final int ayahNumber;
-
-  const _AyahData({
-    required this.arabic,
-    required this.bengali,
-    required this.surahName,
-    required this.surahNumber,
-    required this.ayahNumber,
-  });
-}
-
-// Curated ayah numbers (global index 1-6236) — theme: amal, taqwa, sabr, sadaqah
-const _curatedAyahs = [
-  255, // 2:255 Ayatul Kursi (tawakkul)
-  177, // 2:177 true righteousness
-  261, // 2:261 sadaqah parable
-  286, // 2:286 Allah burdens not a soul
-  102, // 3:102 taqwa
-  200, // 3:200 sabr
-  1, // 1:1   Bismillah (Fatiha)
-  56, // 2:56  gratitude
-  153, // 2:153 sabr & salah
-  183, // 2:183 fasting & taqwa
-  284, // 2:284 to Allah belongs all
-  45, // 2:45  seek help with sabr & salah
-  274, // 2:274 sadaqah by night & day
-  3996, // 31:17 establish prayer
-  4674, // 39:10 reward of sabr
-  5765, // 94:5  ease after difficulty
-  5766, // 94:6  ease after difficulty (repeated for emphasis)
-  4847, // 49:13 taqwa is honour
-  4618, // 45:15 whoever does righteous deeds
-  2788, // 22:37 taqwa reaches Allah
-];
-
-// Bengali surah names (1-indexed, only the ones we reference — extend as needed)
-const _bnSurahNames = <int, String>{
-  1: 'আল-ফাতিহা',
-  2: 'আল-বাকারা',
-  3: 'আলে-ইমরান',
-  22: 'আল-হাজ্জ',
-  23: 'আল-হাজ্জ',
-  31: 'লোকমান',
-  39: 'আয-যুমার',
-  45: 'আল-জাছিয়া',
-  49: 'আল-হুজুরাত',
-  94: 'আশ-শারহ',
-};
-
-final _ayahProvider = FutureProvider<_AyahData>((ref) => _fetchDailyAyah());
-
-Future<_AyahData> _fetchDailyAyah() async {
-  final today = DateTime.now();
-  final key = 'daily_ayah_${today.year}_${today.month}_${today.day}';
-
-  // Try cache first
-  try {
-    final prefs = await SharedPreferences.getInstance();
-    final cached = prefs.getString(key);
-    if (cached != null) {
-      final map = jsonDecode(cached) as Map<String, dynamic>;
-      return _AyahData(
-        arabic: map['arabic'] as String,
-        bengali: map['bengali'] as String,
-        surahName: map['surahName'] as String,
-        surahNumber: map['surahNumber'] as int,
-        ayahNumber: map['ayahNumber'] as int,
-      );
-    }
-  } catch (_) {}
-
-  // Pick a random ayah from curated list, seeded by date so same all day
-  final rng = Random(today.year * 10000 + today.month * 100 + today.day);
-  final ayahNum = _curatedAyahs[rng.nextInt(_curatedAyahs.length)];
-
-  try {
-    final uri = Uri.parse(
-      'https://api.alquran.cloud/v1/ayah/$ayahNum/editions/quran-uthmani,bn.bengali',
-    );
-    final resp = await http.get(uri).timeout(const Duration(seconds: 8));
-    if (resp.statusCode == 200) {
-      final body = jsonDecode(resp.body) as Map<String, dynamic>;
-      final data = body['data'] as List<dynamic>;
-      final arEntry = data[0] as Map<String, dynamic>;
-      final bnEntry = data[1] as Map<String, dynamic>;
-
-      final arabic = arEntry['text'] as String;
-      final bengali = bnEntry['text'] as String;
-      final surahNum = (arEntry['surah']['number'] as int?) ?? 0;
-      final ayahInSurah = (arEntry['numberInSurah'] as int?) ?? 0;
-      final surahName = _bnSurahNames[surahNum] ?? 'সূরা #$surahNum';
-
-      final result = _AyahData(
-        arabic: arabic,
-        bengali: bengali,
-        surahName: surahName,
-        surahNumber: surahNum,
-        ayahNumber: ayahInSurah,
-      );
-
-      // Cache it
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(
-            key,
-            jsonEncode({
-              'arabic': arabic,
-              'bengali': bengali,
-              'surahName': surahName,
-              'surahNumber': surahNum,
-              'ayahNumber': ayahInSurah,
-            }));
-      } catch (_) {}
-
-      return result;
-    }
-  } catch (_) {}
-
-  // Hardcoded fallback — never shows empty
-  return const _AyahData(
-    arabic: 'إِنَّ اللَّهَ مَعَ الصَّابِرِينَ',
-    bengali: 'নিশ্চয়ই আল্লাহ ধৈর্যশীলদের সাথে আছেন।',
-    surahName: 'আল-বাকারা',
-    surahNumber: 2,
-    ayahNumber: 153,
-  );
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HOME SCREEN
@@ -3424,10 +3274,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _refresh() async {
     final now = DateTime.now();
+    final user = ref.read(currentUserProvider); // ← ইউজার ডেটা রিড করুন
+
     ref.invalidate(progressSummaryProvider((year: now.year, month: now.month)));
-    ref.invalidate(_ayahProvider);
+
     await ref.read(leaderboardPreviewProvider.notifier).load(
-          LeaderboardFilter(year: now.year, month: now.month, limit: 3),
+          LeaderboardFilter(
+            year: now.year,
+            month: now.month,
+            limit: 3,
+            gender: user?.gender, // ← এখানেও জেন্ডার ফিল্টারটি যুক্ত করে দিন
+          ),
           refresh: true,
         );
   }
@@ -3466,7 +3323,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final progress =
         ref.watch(progressSummaryProvider((year: now.year, month: now.month)));
     final board = ref.watch(leaderboardPreviewProvider);
-    final ayah = ref.watch(_ayahProvider);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark,
@@ -3481,108 +3337,120 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(14, 12, 14, 90),
+                padding: const EdgeInsets.fromLTRB(0, 12, 0, 90),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     // ── 1. Greeting ──────────────────────────────────────
-                    _Greeting(user: user, progress: progress)
-                        .animate()
-                        .fadeIn(duration: 280.ms),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                      child: _Greeting(user: user, progress: progress)
+                          .animate()
+                          .fadeIn(duration: 280.ms),
+                    ),
                     const SizedBox(height: 12),
 
                     // ── 2. Hero Card ─────────────────────────────────────
-                    progress
-                        .when(
-                          loading: () => const _HeroSkeleton(),
-                          error: (_, __) => _HeroCard(
-                              summary: null,
-                              onTap: () => context.go(AppRoutes.tracker)),
-                          data: (s) => _HeroCard(
-                              summary: s,
-                              onTap: () => context.go(AppRoutes.tracker)),
-                        )
-                        .animate()
-                        .fadeIn(delay: 50.ms, duration: 300.ms),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                      child: progress
+                          .when(
+                            loading: () => const _HeroSkeleton(),
+                            error: (_, __) => _HeroCard(
+                                summary: null,
+                                onTap: () => context.go(AppRoutes.tracker)),
+                            data: (s) => _HeroCard(
+                                summary: s,
+                                onTap: () => context.go(AppRoutes.tracker)),
+                          )
+                          .animate()
+                          .fadeIn(delay: 50.ms, duration: 300.ms),
+                    ),
                     const SizedBox(height: 10),
 
                     // ── 3. Weekly Chart ───────────────────────────────────
-                    progress
-                        .when(
-                          loading: () => const _WeekSkeleton(),
-                          error: (_, __) => const _WeekStrip(summary: null),
-                          data: (s) => _WeekStrip(summary: s),
-                        )
-                        .animate()
-                        .fadeIn(delay: 90.ms, duration: 280.ms),
-
-                    const SizedBox(height: 20),
-
-                    // ── 4. Daily Ayah ─────────────────────────────────────────
-                    //  ↑ NEW — replaces old _DailyAyahCard
-                    const DailyAyahSection()
-                        .animate()
-                        .fadeIn(delay: 110.ms, duration: 300.ms),
-                    const SizedBox(height: 20),
-
-                    // ── 5. Monthly History ────────────────────────────────
-                    // Current month is already in hero card.
-                    // This section shows ONLY previous months.
-                    progress.when(
-                      loading: () => const SizedBox.shrink(),
-                      error: (_, __) => const SizedBox.shrink(),
-                      data: (s) {
-                        // skip current month (index 0) — already in hero card
-                        final older = s.recentMonths.skip(1).toList();
-                        if (older.isEmpty) return const SizedBox.shrink();
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _SecHead(
-                              title: 'আগের মাস',
-                              emoji: '📅',
-                              onSeeAll: () => context.go(AppRoutes.monthlyView),
-                            ).animate().fadeIn(delay: 135.ms),
-                            const SizedBox(height: 10),
-                            _MonthHistoryList(trackers: older)
-                                .animate()
-                                .fadeIn(delay: 148.ms),
-                            const SizedBox(height: 20),
-                          ],
-                        );
-                      },
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                      child: progress
+                          .when(
+                            loading: () => const _WeekSkeleton(),
+                            error: (_, __) => const _WeekStrip(summary: null),
+                            data: (s) => _WeekStrip(summary: s),
+                          )
+                          .animate()
+                          .fadeIn(delay: 90.ms, duration: 280.ms),
                     ),
 
-                    // ── 6. Leaderboard teaser ─────────────────────────────
-                    _SecHead(
-                      title: 'শীর্ষ তালিকা',
-                      emoji: '🏆',
-                      onSeeAll: () => context.go(AppRoutes.leaderboard),
-                    ).animate().fadeIn(delay: 165.ms),
-                    const SizedBox(height: 10),
-                    (board.isLoading
-                            ? const _ListSkeleton()
-                            : board.entries.isEmpty
-                                ? const _EmptyCard(label: 'ডেটা নেই')
-                                : _LeaderList(
-                                    entries: board.entries.take(3).toList(),
-                                    currentUserId:
-                                        ref.read(currentUserProvider)?.id,
-                                  ))
-                        .animate()
-                        .fadeIn(delay: 178.ms),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 11),
+                    const DailyCardsSection(),
 
-                    // ── 7. Community: Rate + Share ────────────────────────
-                    _CommunityRow(
-                            onRate: _handleRateApp, onShare: _handleShareApp)
-                        .animate()
-                        .fadeIn(delay: 192.ms),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 11),
+                    // const SizedBox(height: 20),
 
-                    // ── 8. How it works ───────────────────────────────────
-                    _HowItWorks(onTap: () => context.push(AppRoutes.howItWorks))
-                        .animate()
-                        .fadeIn(delay: 200.ms),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                      child: Column(children: [
+                        progress.when(
+                          loading: () => const SizedBox.shrink(),
+                          error: (_, __) => const SizedBox.shrink(),
+                          data: (s) {
+                            // skip current month (index 0) — already in hero card
+                            final recentMonths = s.recentMonths;
+                            if (recentMonths.isEmpty)
+                              return const SizedBox.shrink();
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _SecHead(
+                                  title: 'মাসিক অগ্রগতি',
+                                  emoji: '📅',
+                                  onSeeAll: () =>
+                                      context.go(AppRoutes.monthlyView),
+                                ).animate().fadeIn(delay: 135.ms),
+                                const SizedBox(height: 10),
+                                _MonthHistoryList(trackers: recentMonths)
+                                    .animate()
+                                    .fadeIn(delay: 148.ms),
+                                const SizedBox(height: 20),
+                              ],
+                            );
+                          },
+                        ),
+
+                        // ── 6. Leaderboard teaser ─────────────────────────────
+                        _SecHead(
+                          title: 'শীর্ষ তালিকা',
+                          emoji: '🏆',
+                          onSeeAll: () => context.go(AppRoutes.leaderboard),
+                        ).animate().fadeIn(delay: 165.ms),
+                        const SizedBox(height: 10),
+                        (board.isLoading
+                                ? const _ListSkeleton()
+                                : board.entries.isEmpty
+                                    ? const _EmptyCard(label: 'ডেটা নেই')
+                                    : _LeaderList(
+                                        entries: board.entries.take(3).toList(),
+                                        currentUserId:
+                                            ref.read(currentUserProvider)?.id,
+                                      ))
+                            .animate()
+                            .fadeIn(delay: 178.ms),
+                        const SizedBox(height: 20),
+
+                        // ── 7. Community: Rate + Share ────────────────────────
+                        _CommunityRow(
+                                onRate: _handleRateApp,
+                                onShare: _handleShareApp)
+                            .animate()
+                            .fadeIn(delay: 192.ms),
+                        const SizedBox(height: 20),
+
+                        // ── 8. How it works ───────────────────────────────────
+                        _HowItWorks(
+                                onTap: () => context.push(AppRoutes.howItWorks))
+                            .animate()
+                            .fadeIn(delay: 200.ms),
+                      ]),
+                    )
                   ]),
                 ),
               ),
@@ -4277,139 +4145,6 @@ class _WeekSkeleton extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DAILY AYAH CARD
-// Bengali text is the primary — large, prominent.
-// Arabic below it, smaller, right-aligned.
-// Source reference as a pill badge.
-// Three states: loading skeleton / error fallback / data.
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _DailyAyahCard extends StatelessWidget {
-  final AsyncValue<_AyahData> ayah;
-  const _DailyAyahCard({required this.ayah});
-
-  @override
-  Widget build(BuildContext context) {
-    return ayah.when(
-      loading: () => _AyahSkeleton(),
-      error: (_, __) => _AyahContent(
-        ayah: const _AyahData(
-          arabic: 'إِنَّ اللَّهَ مَعَ الصَّابِرِينَ',
-          bengali: 'নিশ্চয়ই আল্লাহ ধৈর্যশীলদের সাথে আছেন।',
-          surahName: 'আল-বাকারা',
-          surahNumber: 2,
-          ayahNumber: 153,
-        ),
-      ),
-      data: (d) => _AyahContent(ayah: d),
-    );
-  }
-}
-
-class _AyahContent extends StatelessWidget {
-  final _AyahData ayah;
-  const _AyahContent({required this.ayah});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0A2E17), Color(0xFF163D25)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // ── Header row ────────────────────────────────────────────────
-        Row(children: [
-          // Label badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: _C.gold.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: _C.gold.withOpacity(0.3), width: 0.5),
-            ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Text('📖', style: TextStyle(fontSize: 9)),
-              const SizedBox(width: 4),
-              const Text('আজকের আয়াত',
-                  style: TextStyle(
-                      color: _C.gold,
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w700)),
-            ]),
-          ),
-          const Spacer(),
-          // Source reference
-          Text(
-            '${ayah.surahName} ${ayah.surahNumber}:${ayah.ayahNumber}',
-            style:
-                TextStyle(color: Colors.white.withOpacity(0.35), fontSize: 8.5),
-          ),
-        ]),
-
-        const SizedBox(height: 14),
-
-        // ── Bengali translation — PRIMARY, large ──────────────────────
-        Text(
-          ayah.bengali,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14.5,
-            fontWeight: FontWeight.w600,
-            height: 1.65,
-            letterSpacing: 0.1,
-          ),
-        ),
-
-        const SizedBox(height: 12),
-
-        // ── Divider ───────────────────────────────────────────────────
-        Container(height: 0.5, color: Colors.white.withOpacity(0.1)),
-        const SizedBox(height: 12),
-
-        // ── Arabic — secondary, right-aligned ─────────────────────────
-        Align(
-          alignment: Alignment.centerRight,
-          child: Text(
-            ayah.arabic,
-            textDirection: TextDirection.rtl,
-            textAlign: TextAlign.right,
-            style: TextStyle(
-              color: _C.gold.withOpacity(0.8),
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              height: 1.8,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-      ]),
-    );
-  }
-}
-
-class _AyahSkeleton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => Container(
-        height: 148,
-        decoration: BoxDecoration(
-          color: const Color(0xFF0A2E17),
-          borderRadius: BorderRadius.circular(16),
-        ),
-      ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 1400.ms, colors: [
-        Colors.white.withOpacity(0.02),
-        Colors.white.withOpacity(0.07),
-        Colors.white.withOpacity(0.02)
-      ]);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // SECTION HEADER
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -4588,8 +4323,7 @@ class _LeaderList extends StatelessWidget {
           children: List.generate(entries.length, (i) {
         final e = entries[i];
         final isLast = i == entries.length - 1;
-        final isMe =
-            currentUserId != null && e.userId?.toString() == currentUserId;
+        final isMe = currentUserId != null && e.id?.toString() == currentUserId;
 
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
