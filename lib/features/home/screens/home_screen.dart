@@ -3257,13 +3257,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _loadLeaderboard() {
-    final now = DateTime.now();
-    final user = ref.read(currentUserProvider);
-    ref.read(leaderboardPreviewProvider.notifier).load(
-          LeaderboardFilter(
-              year: now.year, month: now.month, limit: 3, gender: user?.gender),
-          refresh: true,
-        );
+    // জাস্ট ডেটা ফ্রেশ রাখার জন্য ইনভ্যালিডেট করে দাও, কোনো এপিআই কল এখানে পুশ হবে না
+    ref.invalidate(leaderboardProvider);
   }
 
   @override
@@ -3274,19 +3269,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _refresh() async {
     final now = DateTime.now();
-    final user = ref.read(currentUserProvider); // ← ইউজার ডেটা রিড করুন
 
     ref.invalidate(progressSummaryProvider((year: now.year, month: now.month)));
+    ref.invalidate(leaderboardProvider);
 
-    await ref.read(leaderboardPreviewProvider.notifier).load(
-          LeaderboardFilter(
-            year: now.year,
-            month: now.month,
-            limit: 3,
-            gender: user?.gender, // ← এখানেও জেন্ডার ফিল্টারটি যুক্ত করে দিন
-          ),
-          refresh: true,
-        );
+    await Future.delayed(const Duration(milliseconds: 500));
   }
 
   void _showProfile() => showModalBottomSheet(

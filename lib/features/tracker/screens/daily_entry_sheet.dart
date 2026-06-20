@@ -2196,32 +2196,17 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
         .saveEntryFromUpdates(updates, isExemptDay: _isExemptDay);
 
     // debugPrint('Save result: $ok');
+    if (ok && mounted) {
+      final parts = widget.dateStr.split('-');
 
-    // if (ok && mounted) {
-    //   final parts = widget.dateStr.split('-');
-    //   debugPrint('Calling refreshAfterEntryUpdate for ${parts[0]}-${parts[1]}');
-    //   refreshAfterEntryUpdate(
-    //     ref,
-    //     year: int.parse(parts[0]),
-    //     month: int.parse(parts[1]),
-    //     specificDateStr: widget.dateStr,
-    //   );
-    //   debugPrint('Refresh done');
-    // }
-
-    // final ok = await ref
-    //     .read(dailyEntryProvider(widget.dateStr).notifier)
-    //     .saveEntryFromUpdates(updates, isExemptDay: _isExemptDay);
-
-    // if (ok && mounted) {
-    //   final parts = widget.dateStr.split('-');
-    //   refreshAfterEntryUpdate(
-    //     ref,
-    //     year: int.parse(parts[0]),
-    //     month: int.parse(parts[1]),
-    //     specificDateStr: widget.dateStr,
-    //   );
-    // }
+      // আমাদের সেই বুলেটপ্রুফ অন-ডিমান্ড ক্যাশ রিসেট মেথড
+      refreshAfterEntryUpdate(
+        ref,
+        year: int.parse(parts[0]),
+        month: int.parse(parts[1]),
+        specificDateStr: widget.dateStr,
+      );
+    }
 
     setState(() => _saving = false);
     if (!mounted) return;
