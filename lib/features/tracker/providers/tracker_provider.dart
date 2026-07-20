@@ -1,13 +1,9 @@
+
 // import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import '../models/tracker_model.dart';
 // import '../../../core/services/api_service.dart';
 
 // // ─── Categories ───────────────────────────────────────────────────────────────
-// //
-// // autoDispose: when the shell (and therefore all tab screens) is removed from
-// // the widget tree during logout/login navigation, these providers have no
-// // listeners and dispose automatically. When the shell is recreated after login
-// // they rebuild fresh with the new user's token.
 
 // final categoriesProvider =
 //     FutureProvider.autoDispose<List<AmalCategory>>((ref) async {
@@ -24,6 +20,9 @@
 //   for (final cat in cats) {
 //     map.putIfAbsent(cat.section, () => []).add(cat);
 //   }
+//   for (final key in map.keys) {
+//     map[key]!.sort((a, b) => a.order.compareTo(b.order));
+//   }
 //   return map;
 // });
 
@@ -31,7 +30,6 @@
 
 // class DailyEntryState {
 //   final DailyEntry? entry;
-//   final Map<String, DailyEntryItem> localEdits;
 //   final bool isLoading;
 //   final bool isSaving;
 //   final bool isDeleting;
@@ -40,7 +38,6 @@
 
 //   const DailyEntryState({
 //     this.entry,
-//     this.localEdits = const {},
 //     this.isLoading = false,
 //     this.isSaving = false,
 //     this.isDeleting = false,
@@ -50,7 +47,6 @@
 
 //   DailyEntryState copyWith({
 //     DailyEntry? entry,
-//     Map<String, DailyEntryItem>? localEdits,
 //     bool? isLoading,
 //     bool? isSaving,
 //     bool? isDeleting,
@@ -60,7 +56,6 @@
 //   }) =>
 //       DailyEntryState(
 //         entry: clearEntry ? null : (entry ?? this.entry),
-//         localEdits: localEdits ?? this.localEdits,
 //         isLoading: isLoading ?? this.isLoading,
 //         isSaving: isSaving ?? this.isSaving,
 //         isDeleting: isDeleting ?? this.isDeleting,
@@ -68,17 +63,14 @@
 //         saved: saved ?? this.saved,
 //       );
 
+//   // Server entry থেকে effective map — sheet এ pre-fill করার জন্য
 //   Map<String, DailyEntryItem> get effectiveEntries {
 //     final map = <String, DailyEntryItem>{};
 //     for (final item in entry?.entries ?? []) {
 //       map[item.categoryId] = item;
 //     }
-//     map.addAll(localEdits);
 //     return map;
 //   }
-
-//   int get localTotalPoints =>
-//       effectiveEntries.values.fold(0, (s, e) => s + e.points);
 // }
 
 // // ─── Daily Entry Notifier ─────────────────────────────────────────────────────
@@ -92,6 +84,8 @@
 //     loadEntry();
 //   }
 
+//   // ── Load ──────────────────────────────────────────────────────────────────
+
 //   Future<void> loadEntry() async {
 //     state = state.copyWith(isLoading: true, error: null);
 //     try {
@@ -101,7 +95,6 @@
 //       state = state.copyWith(
 //         isLoading: false,
 //         entry: data != null ? DailyEntry.fromJson(data) : null,
-//         localEdits: {},
 //         saved: false,
 //       );
 //     } on ApiException catch (e) {
@@ -109,24 +102,24 @@
 //     }
 //   }
 
+//   // ── Save ──────────────────────────────────────────────────────────────────
+
 //   Future<bool> saveEntryFromUpdates(
 //     List<EntryUpdate> updates, {
-//     bool isExemptDay = false, // ← new param
+//     bool isExemptDay = false,
 //   }) async {
 //     state = state.copyWith(isSaving: true, error: null);
 //     try {
-//       final payload = updates.map((u) => u.toJson()).toList();
 //       final res =
 //           await _api.post<Map<String, dynamic>>('/tracker/entry', data: {
 //         'date': _dateStr,
-//         'entries': payload,
+//         'entries': updates.map((u) => u.toJson()).toList(),
 //         'isExemptDay': isExemptDay,
 //       });
 //       final data = res['data'];
 //       state = state.copyWith(
 //         isSaving: false,
 //         entry: data != null ? DailyEntry.fromJson(data) : state.entry,
-//         localEdits: {},
 //         saved: true,
 //         error: null,
 //       );
@@ -137,36 +130,7 @@
 //     }
 //   }
 
-//   Future<bool> saveEntry(List<AmalCategory> allCategories) async {
-//     if (state.localEdits.isEmpty) return true;
-//     state = state.copyWith(isSaving: true, error: null);
-//     try {
-//       final effectiveMap =
-//           Map<String, DailyEntryItem>.from(state.effectiveEntries);
-//       for (final cat in allCategories) {
-//         if (!effectiveMap.containsKey(cat.id)) {
-//           effectiveMap[cat.id] =
-//               DailyEntryItem(categoryId: cat.id, completed: false, points: 0);
-//         }
-//       }
-//       final res =
-//           await _api.post<Map<String, dynamic>>('/tracker/entry', data: {
-//         'date': _dateStr,
-//         'entries': effectiveMap.values.map((e) => e.toJson()).toList(),
-//       });
-//       final data = res['data'];
-//       state = state.copyWith(
-//         isSaving: false,
-//         entry: data != null ? DailyEntry.fromJson(data) : state.entry,
-//         localEdits: {},
-//         saved: true,
-//       );
-//       return true;
-//     } on ApiException catch (e) {
-//       state = state.copyWith(isSaving: false, error: e.message);
-//       return false;
-//     }
-//   }
+//   // ── Delete ────────────────────────────────────────────────────────────────
 
 //   Future<bool> deleteEntry() async {
 //     state = state.copyWith(isDeleting: true, error: null);
@@ -175,7 +139,6 @@
 //       state = state.copyWith(
 //         isDeleting: false,
 //         saved: false,
-//         localEdits: {},
 //         clearEntry: true,
 //       );
 //       return true;
@@ -185,47 +148,10 @@
 //     }
 //   }
 
-//   void toggleAmal(String categoryId, bool completed, {int basePoints = 1}) {
-//     final edits = Map<String, DailyEntryItem>.from(state.localEdits);
-//     edits[categoryId] = DailyEntryItem(
-//       categoryId: categoryId,
-//       completed: completed,
-//       points: completed ? basePoints : 0,
-//     );
-//     state = state.copyWith(localEdits: edits, saved: false);
-//   }
-
-//   void setPrayerMode(String categoryId, PrayerMode mode,
-//       {int basePoints = 1, int congregationPoints = 2}) {
-//     final edits = Map<String, DailyEntryItem>.from(state.localEdits);
-//     edits[categoryId] = DailyEntryItem(
-//       categoryId: categoryId,
-//       completed: mode != PrayerMode.missed,
-//       prayerMode: mode,
-//       points: mode == PrayerMode.congregation
-//           ? congregationPoints
-//           : mode == PrayerMode.solo
-//               ? basePoints
-//               : 0,
-//     );
-//     state = state.copyWith(localEdits: edits, saved: false);
-//   }
-
-//   void setCount(String categoryId, int count, {int pointsPerUnit = 3}) {
-//     final edits = Map<String, DailyEntryItem>.from(state.localEdits);
-//     edits[categoryId] = DailyEntryItem(
-//       categoryId: categoryId,
-//       completed: count > 0,
-//       count: count,
-//       points: count * pointsPerUnit,
-//     );
-//     state = state.copyWith(localEdits: edits, saved: false);
-//   }
-
 //   void clearError() => state = state.copyWith(error: null);
 // }
 
-// // ─── EntryUpdate ──────────────────────────────────────────────────────────────
+// // ─── Entry Update ─────────────────────────────────────────────────────────────
 
 // class EntryUpdate {
 //   final String categoryId;
@@ -248,22 +174,19 @@
 //       };
 // }
 
-// // ─── Providers ────────────────────────────────────────────────────────────────
+// // ─── Selected Date ────────────────────────────────────────────────────────────
 
-// // NOT autoDispose: selectedDateProvider is UI navigation state, not user data.
-// // It should survive tab switches. It is explicitly reset by invalidateUserProviders().
 // final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now());
 
-// // autoDispose.family: each date string gets its own notifier instance.
-// // All instances are discarded when the shell leaves the tree.
+// // ─── Daily Entry Provider ─────────────────────────────────────────────────────
+
 // final dailyEntryProvider = StateNotifierProvider.autoDispose
 //     .family<DailyEntryNotifier, DailyEntryState, String>(
 //   (ref, dateStr) => DailyEntryNotifier(ref.read(apiServiceProvider), dateStr),
 // );
 
-// // ─── Monthly / Progress providers ────────────────────────────────────────────
+// // ─── Monthly Entries ──────────────────────────────────────────────────────────
 
-// // autoDispose.family: invalidating the family kills all cached year/month combos.
 // final monthlyEntriesProvider = FutureProvider.autoDispose
 //     .family<List<DailyEntry>, ({int year, int month})>(
 //   (ref, p) async {
@@ -274,6 +197,8 @@
 //     return data.map((e) => DailyEntry.fromJson(e)).toList();
 //   },
 // );
+
+// // ─── Monthly Tracker ──────────────────────────────────────────────────────────
 
 // final monthlyTrackerProvider =
 //     FutureProvider.autoDispose.family<MonthlyTracker?, ({int year, int month})>(
@@ -286,16 +211,58 @@
 //   },
 // );
 
-// final progressSummaryProvider =
-//     FutureProvider.autoDispose<ProgressSummary>((ref) async {
-//   // Guard: if the auth token is absent, bail early so this provider doesn't
-//   // fire a 401 request while the user is on the login screen.
-//   // (Extra safety net — with autoDispose it normally won't even run here,
-//   // but family providers can be triggered by cached widget builds.)
+// // ─── Progress Summary ─────────────────────────────────────────────────────────
+// // Home screen summary — current month + today entry + weekly progress
+
+// final progressSummaryProvider = FutureProvider.autoDispose
+//     .family<ProgressSummary, ({int year, int month})>((ref, params) async {
 //   final api = ref.read(apiServiceProvider);
-//   final res = await api.get<Map<String, dynamic>>('/tracker/progress');
+//   final res = await api.get<Map<String, dynamic>>(
+//     '/tracker/progress?year=${params.year}&month=${params.month}',
+//   );
 //   return ProgressSummary.fromJson(res['data'] ?? {});
 // });
+
+// // ─── Monthly Comparison ───────────────────────────────────────────────────────
+// // GET /tracker/compare?months=2025-06,2025-05
+
+// final monthlyComparisonProvider = FutureProvider.autoDispose
+//     .family<List<dynamic>, List<String>>((ref, monthKeys) async {
+//   final api = ref.read(apiServiceProvider);
+//   final query = monthKeys.join(',');
+//   final res =
+//       await api.get<Map<String, dynamic>>('/tracker/compare?months=$query');
+//   return res['data'] ?? [];
+// });
+
+// // ─── Section Progress ─────────────────────────────────────────────────────────
+// // GET /tracker/section?year=&month=&section=
+
+// final sectionProgressProvider = FutureProvider.autoDispose
+//     .family<Map<String, dynamic>, ({int year, int month, String? section})>(
+//   (ref, p) async {
+//     final api = ref.read(apiServiceProvider);
+//     final sectionQuery = p.section != null ? '&section=${p.section}' : '';
+//     final res = await api.get<Map<String, dynamic>>(
+//       '/tracker/section?year=${p.year}&month=${p.month}$sectionQuery',
+//     );
+//     return res['data'] ?? {};
+//   },
+// );
+
+// // ─── Category Progress ────────────────────────────────────────────────────────
+// // GET /tracker/category/:categoryId/progress?months=3
+
+// final categoryProgressProvider = FutureProvider.autoDispose
+//     .family<Map<String, dynamic>, ({String categoryId, int months})>(
+//   (ref, p) async {
+//     final api = ref.read(apiServiceProvider);
+//     final res = await api.get<Map<String, dynamic>>(
+//       '/tracker/category/${p.categoryId}/progress?months=${p.months}',
+//     );
+//     return res['data'] ?? {};
+//   },
+// );
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/tracker_model.dart';
 import '../../../core/services/api_service.dart';
@@ -317,7 +284,6 @@ final categoriesBySection =
   for (final cat in cats) {
     map.putIfAbsent(cat.section, () => []).add(cat);
   }
-  // section order AppConstants.sections অনুযায়ী sort করো
   for (final key in map.keys) {
     map[key]!.sort((a, b) => a.order.compareTo(b.order));
   }
@@ -328,7 +294,6 @@ final categoriesBySection =
 
 class DailyEntryState {
   final DailyEntry? entry;
-  final Map<String, DailyEntryItem> localEdits;
   final bool isLoading;
   final bool isSaving;
   final bool isDeleting;
@@ -337,7 +302,6 @@ class DailyEntryState {
 
   const DailyEntryState({
     this.entry,
-    this.localEdits = const {},
     this.isLoading = false,
     this.isSaving = false,
     this.isDeleting = false,
@@ -347,7 +311,6 @@ class DailyEntryState {
 
   DailyEntryState copyWith({
     DailyEntry? entry,
-    Map<String, DailyEntryItem>? localEdits,
     bool? isLoading,
     bool? isSaving,
     bool? isDeleting,
@@ -357,7 +320,6 @@ class DailyEntryState {
   }) =>
       DailyEntryState(
         entry: clearEntry ? null : (entry ?? this.entry),
-        localEdits: localEdits ?? this.localEdits,
         isLoading: isLoading ?? this.isLoading,
         isSaving: isSaving ?? this.isSaving,
         isDeleting: isDeleting ?? this.isDeleting,
@@ -365,18 +327,14 @@ class DailyEntryState {
         saved: saved ?? this.saved,
       );
 
-  // server entry + local edits merge করে effective map দেয়
+  // Server entry থেকে effective map — sheet এ pre-fill করার জন্য
   Map<String, DailyEntryItem> get effectiveEntries {
     final map = <String, DailyEntryItem>{};
     for (final item in entry?.entries ?? []) {
       map[item.categoryId] = item;
     }
-    map.addAll(localEdits);
     return map;
   }
-
-  int get localTotalPoints =>
-      effectiveEntries.values.fold(0, (s, e) => s + e.points);
 }
 
 // ─── Daily Entry Notifier ─────────────────────────────────────────────────────
@@ -401,7 +359,6 @@ class DailyEntryNotifier extends StateNotifier<DailyEntryState> {
       state = state.copyWith(
         isLoading: false,
         entry: data != null ? DailyEntry.fromJson(data) : null,
-        localEdits: {},
         saved: false,
       );
     } on ApiException catch (e) {
@@ -409,9 +366,7 @@ class DailyEntryNotifier extends StateNotifier<DailyEntryState> {
     }
   }
 
-  // ── Save — sheet এর একমাত্র save path ────────────────────────────────────
-  // _LocalItem.points getter সব calculation করে
-  // এখানে শুধু API call করি
+  // ── Save ──────────────────────────────────────────────────────────────────
 
   Future<bool> saveEntryFromUpdates(
     List<EntryUpdate> updates, {
@@ -429,7 +384,6 @@ class DailyEntryNotifier extends StateNotifier<DailyEntryState> {
       state = state.copyWith(
         isSaving: false,
         entry: data != null ? DailyEntry.fromJson(data) : state.entry,
-        localEdits: {},
         saved: true,
         error: null,
       );
@@ -449,7 +403,6 @@ class DailyEntryNotifier extends StateNotifier<DailyEntryState> {
       state = state.copyWith(
         isDeleting: false,
         saved: false,
-        localEdits: {},
         clearEntry: true,
       );
       return true;
@@ -462,7 +415,7 @@ class DailyEntryNotifier extends StateNotifier<DailyEntryState> {
   void clearError() => state = state.copyWith(error: null);
 }
 
-// ─── EntryUpdate ──────────────────────────────────────────────────────────────
+// ─── Entry Update ─────────────────────────────────────────────────────────────
 
 class EntryUpdate {
   final String categoryId;
@@ -485,14 +438,18 @@ class EntryUpdate {
       };
 }
 
-// ─── Providers ────────────────────────────────────────────────────────────────
+// ─── Selected Date ────────────────────────────────────────────────────────────
 
 final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now());
+
+// ─── Daily Entry Provider ─────────────────────────────────────────────────────
 
 final dailyEntryProvider = StateNotifierProvider.autoDispose
     .family<DailyEntryNotifier, DailyEntryState, String>(
   (ref, dateStr) => DailyEntryNotifier(ref.read(apiServiceProvider), dateStr),
 );
+
+// ─── Monthly Entries ──────────────────────────────────────────────────────────
 
 final monthlyEntriesProvider = FutureProvider.autoDispose
     .family<List<DailyEntry>, ({int year, int month})>(
@@ -505,6 +462,9 @@ final monthlyEntriesProvider = FutureProvider.autoDispose
   },
 );
 
+// ─── Monthly Tracker (raw document, rarely needed directly — prefer
+//     progressSummaryProvider which already includes currentMonth) ───────────
+
 final monthlyTrackerProvider =
     FutureProvider.autoDispose.family<MonthlyTracker?, ({int year, int month})>(
   (ref, p) async {
@@ -516,20 +476,69 @@ final monthlyTrackerProvider =
   },
 );
 
-// (year, month) রেকর্ড প্যারামিটার সহ মডিফাইড ফ্যামিলি প্রোভাইডার
+// ─── Home Summary ─────────────────────────────────────────────────────────────
+// GET /tracker/home-summary — home screen প্রথম লোডের জন্য, lightweight।
+// কোনো category catalog লাগে না, কোনো year/month param লাগে না (সবসময়
+// আজকের + বর্তমান মাসের সংক্ষিপ্ত glance)।
+
+final homeSummaryProvider =
+    FutureProvider.autoDispose<HomeSummary>((ref) async {
+  final api = ref.read(apiServiceProvider);
+  final res = await api.get<Map<String, dynamic>>('/tracker/home-summary');
+  return HomeSummary.fromJson(res['data'] ?? {});
+});
+
+// ─── Monthly Progress ─────────────────────────────────────────────────────────
+// GET /tracker/monthly-progress?year=&month= — মাসিক স্ক্রিনের জন্য।
+// আগে endpoint ছিল /tracker/progress, রিনেম হয়েছে যাতে home vs monthly
+// স্পষ্ট আলাদা থাকে (home হালকা, এটা পূর্ণাঙ্গ)।
+
 final progressSummaryProvider = FutureProvider.autoDispose
     .family<ProgressSummary, ({int year, int month})>((ref, params) async {
   final api = ref.read(apiServiceProvider);
   final res = await api.get<Map<String, dynamic>>(
-    '/tracker/progress?year=${params.year}&month=${params.month}',
+    '/tracker/monthly-progress?year=${params.year}&month=${params.month}',
   );
-
   return ProgressSummary.fromJson(res['data'] ?? {});
 });
 
-// final progressSummaryProvider =
-//     FutureProvider.autoDispose<ProgressSummary>((ref) async {
-//   final api = ref.read(apiServiceProvider);
-//   final res = await api.get<Map<String, dynamic>>('/tracker/progress');
-//   return ProgressSummary.fromJson(res['data'] ?? {});
-// });
+// ─── Monthly Comparison ───────────────────────────────────────────────────────
+// GET /tracker/compare?months=2025-06,2025-05
+
+final monthlyComparisonProvider = FutureProvider.autoDispose
+    .family<List<dynamic>, List<String>>((ref, monthKeys) async {
+  final api = ref.read(apiServiceProvider);
+  final query = monthKeys.join(',');
+  final res =
+      await api.get<Map<String, dynamic>>('/tracker/compare?months=$query');
+  return res['data'] ?? [];
+});
+
+// ─── Section Progress ─────────────────────────────────────────────────────────
+// GET /tracker/section?year=&month=&section=
+
+final sectionProgressProvider = FutureProvider.autoDispose
+    .family<Map<String, dynamic>, ({int year, int month, String? section})>(
+  (ref, p) async {
+    final api = ref.read(apiServiceProvider);
+    final sectionQuery = p.section != null ? '&section=${p.section}' : '';
+    final res = await api.get<Map<String, dynamic>>(
+      '/tracker/section?year=${p.year}&month=${p.month}$sectionQuery',
+    );
+    return res['data'] ?? {};
+  },
+);
+
+// ─── Category Progress ────────────────────────────────────────────────────────
+// GET /tracker/category/:categoryId/progress?months=3
+
+final categoryProgressProvider = FutureProvider.autoDispose
+    .family<Map<String, dynamic>, ({String categoryId, int months})>(
+  (ref, p) async {
+    final api = ref.read(apiServiceProvider);
+    final res = await api.get<Map<String, dynamic>>(
+      '/tracker/category/${p.categoryId}/progress?months=${p.months}',
+    );
+    return res['data'] ?? {};
+  },
+);

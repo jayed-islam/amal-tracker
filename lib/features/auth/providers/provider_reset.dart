@@ -16,10 +16,9 @@ void invalidateUserProviders(WidgetRef ref) {
 
   // ── Leaderboard ──────────────────────────────────────────────────────────
   ref.invalidate(leaderboardProvider);
-  ref.invalidate(leaderboardPreviewProvider);
   ref.invalidate(leaderboardFilterProvider);
   ref.invalidate(myRankProvider);
-  ref.invalidate(winnersProvider);
+  // ref.invalidate(winnersProvider);
 }
 
 // /// Refreshes data AFTER submitting/updating/deleting an entry
@@ -102,15 +101,14 @@ void invalidateUserProviders(WidgetRef ref) {
 //   ref.invalidate(dailyEntryProvider);
 //   ref.invalidate(leaderboardPreviewProvider);
 // }
-/// Entry save/update/delete এর পর call করো
-/// শুধু currently visible data refresh করে
+// Entry save/update/delete এর পর call করো
+// শুধু currently visible data refresh করে
 void refreshAfterEntryUpdate(
   WidgetRef ref, {
   required int year,
   required int month,
   String? specificDateStr,
 }) {
-  // ✅ এগুলো সাথে সাথে দরকার (home screen এ visible)
   if (specificDateStr != null) {
     ref.invalidate(dailyEntryProvider(specificDateStr));
   }
@@ -118,8 +116,6 @@ void refreshAfterEntryUpdate(
   ref.invalidate(monthlyTrackerProvider((year: year, month: month)));
   ref.invalidate(progressSummaryProvider);
 
-  // ✅ Leaderboard stale mark করো, কিন্তু force fetch না
-  // user leaderboard screen এ গেলে সে নিজেই initState এ load করে
   _markLeaderboardStale(ref, year: year, month: month);
 }
 
@@ -132,11 +128,10 @@ void _markLeaderboardStale(
   // autoDispose provider গুলো already কোনো listener না থাকলে
   // invalidate করলে তারা re-fetch করে না — শুধু stale হয়
   ref.invalidate(leaderboardProvider);
-  ref.invalidate(leaderboardPreviewProvider);
   ref.invalidate(myRankProvider((year: year, month: month)));
 
-  final now = DateTime.now();
-  if (year == now.year && month == now.month) {
-    ref.invalidate(winnersProvider);
-  }
+  // final now = DateTime.now();
+  // if (year == now.year && month == now.month) {
+  //   ref.invalidate(winnersProvider);
+  // }
 }

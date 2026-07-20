@@ -503,7 +503,6 @@ import 'package:amal_tracker/features/auth/screens/login_screen.dart';
 import 'package:amal_tracker/features/auth/screens/register_screen.dart';
 
 import 'package:amal_tracker/features/home/screens/home_screen.dart';
-import 'package:amal_tracker/features/jannah_garden/screen/jannah_garden_screen.dart';
 import 'package:amal_tracker/features/leaderboard/screens/leaderboard_screen.dart';
 import 'package:amal_tracker/features/notification/screen/notification_screen.dart';
 import 'package:amal_tracker/features/notification/screen/notification_settings_screen.dart';
@@ -691,16 +690,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // ── Full-screen routes ───────────────────────────────────────────
-      GoRoute(
-        path: AppRoutes.jannahGarden,
-        parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (_, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const JannahWorldScreen(),
-          transitionsBuilder: (_, anim, __, child) =>
-              FadeTransition(opacity: anim, child: child),
-        ),
-      ),
+      // GoRoute(
+      //   path: AppRoutes.jannahGarden,
+      //   parentNavigatorKey: _rootNavigatorKey,
+      //   pageBuilder: (_, state) => CustomTransitionPage(
+      //     key: state.pageKey,
+      //     child: const JannahWorldScreen(),
+      //     transitionsBuilder: (_, anim, __, child) =>
+      //         FadeTransition(opacity: anim, child: child),
+      //   ),
+      // ),
       GoRoute(
         path: AppRoutes.profileEdit,
         parentNavigatorKey: _rootNavigatorKey,
