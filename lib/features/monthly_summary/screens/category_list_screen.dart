@@ -479,7 +479,17 @@ class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
     final monthName = AppConstants.bengaliMonths[widget.month - 1];
 
     final q = _query.trim().toLowerCase();
-    final sections = catsBySection.keys.toList();
+    // final sections = catsBySection.keys.toList();
+
+    final sections = AmolSectionMeta.orderedSections
+        .where((s) => catsBySection.containsKey(s))
+        .toList();
+
+    for (final key in catsBySection.keys) {
+      if (!sections.contains(key)) {
+        sections.add(key);
+      }
+    }
 
     return Scaffold(
       backgroundColor: AmolColors.pageBg,

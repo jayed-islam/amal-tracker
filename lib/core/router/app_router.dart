@@ -666,7 +666,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.monthlyView,
-                builder: (_, __) => MonthlyViewScreen(key: UniqueKey()),
+                builder: (_, __) => const MonthlyViewScreen(),
               ),
             ],
           ),
@@ -674,7 +674,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.leaderboard,
-                builder: (_, __) => LeaderboardScreen(key: UniqueKey()),
+                builder: (_, __) => const LeaderboardScreen(),
               ),
             ],
           ),

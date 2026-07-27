@@ -251,6 +251,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/providers/cache_provider.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -260,12 +261,18 @@ class MainShell extends ConsumerStatefulWidget {
   ConsumerState<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends ConsumerState<MainShell> {
+class _MainShellState extends ConsumerState<MainShell> with WidgetsBindingObserver {
   StatefulNavigationShell get _shell => widget.navigationShell;
   DateTime? _lastBackPress;
 
   // GoRouter delegate listen করবো — route বদলালে rebuild হবে
   late final GoRouterDelegate _delegate;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   @override
   void didChangeDependencies() {
@@ -276,8 +283,16 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _delegate.removeListener(_onRouteChanged);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.read(cacheStatusProvider.notifier).checkTtlAndMarkDirty();
+    }
   }
 
   void _onRouteChanged() {
@@ -285,6 +300,7 @@ class _MainShellState extends ConsumerState<MainShell> {
   }
 
   void _onTabTap(int index) {
+    ref.read(activeTabIndexProvider.notifier).state = index;
     _shell.goBranch(
       index,
       initialLocation: index == _shell.currentIndex,
@@ -346,6 +362,16 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    // Sync active index provider with the current shell tab index
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final currentActive = ref.read(activeTabIndexProvider);
+        if (currentActive != _shell.currentIndex) {
+          ref.read(activeTabIndexProvider.notifier).state = _shell.currentIndex;
+        }
+      }
+    });
+
     ref.listen<bool>(isOnlineProvider, (previous, next) {
       if (previous == false && next == true) {
         ScaffoldMessenger.of(context)

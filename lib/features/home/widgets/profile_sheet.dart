@@ -639,149 +639,137 @@ class ProfileSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final size = MediaQuery.of(context).size;
     final isFemale = user?.gender?.toLowerCase() == 'female';
-    final now = DateTime.now();
-
-    final progress = ref.watch(
-      progressSummaryProvider((year: now.year, month: now.month)),
-    );
-
-    // points বাদ — completion % + streak এখন primary metrics
-    final completionPct = progress.whenOrNull(
-            data: (s) => s.currentMonth?.completionPercentage) ??
-        0.0;
-    final streak =
-        progress.whenOrNull(data: (s) => s.currentMonth?.streakDays) ?? 0;
 
     return Container(
-      height: size.height * 0.66,
-      decoration: const BoxDecoration(
-        color: _C.bg,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Drag handle
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: _C.border,
-                  borderRadius: BorderRadius.circular(99),
+        decoration: const BoxDecoration(
+          color: _C.bg,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              Padding(
+                padding: const EdgeInsets.only(top: 12, bottom: 8),
+                child: Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: _C.border,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
 
-          // ── Hero header ───────────────────────────────────────────
-          _ProfileHero(
-            user: user,
-            completionPct: completionPct,
-            streak: streak,
-          ).animate().fadeIn(duration: 260.ms).slideY(begin: 0.04),
+              // ── Hero header ───────────────────────────────────────────
+              _ProfileHero(
+                user: user,
+              ).animate().fadeIn(duration: 260.ms).slideY(begin: 0.04),
 
-          const SizedBox(height: 10),
+              const SizedBox(height: 12),
 
-          // ── Navigation list ───────────────────────────────────────
-          Flexible(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Column(
-                children: [
-                  // Group 1 — Account
-                  _NavGroup(
-                    label: 'অ্যাকাউন্ট',
-                    items: [
-                      _NavTile(
-                        icon: Icons.person_outline_rounded,
-                        iconBg: _C.greenLight,
-                        iconColor: _C.darkGreen,
-                        title: 'প্রোফাইল সম্পাদনা',
-                        subtitle: 'নাম, ফোন, পরিচয় আপডেট করুন',
-                        onTap: () {
-                          Navigator.pop(context);
-                          if (context.mounted) {
-                            context.push(AppRoutes.profileEdit);
-                          }
+              // ── Navigation list ───────────────────────────────────────
+              Flexible(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Group 1 — Account
+                      _NavGroup(
+                        label: 'অ্যাকাউন্ট',
+                        items: [
+                          _NavTile(
+                            icon: Icons.person_outline_rounded,
+                            iconBg: _C.greenLight,
+                            iconColor: _C.darkGreen,
+                            title: 'প্রোফাইল সম্পাদনা',
+                            subtitle: 'নাম, ফোন, পরিচয় আপডেট করুন',
+                            onTap: () {
+                              Navigator.pop(context);
+                              if (context.mounted) {
+                                context.push(AppRoutes.profileEdit);
+                              }
+                            },
+                          ),
+                          _NavTile(
+                            icon: Icons.lock_outline_rounded,
+                            iconBg: const Color(0xFFEDE9FE),
+                            iconColor: const Color(0xFF7C3AED),
+                            title: 'পাসওয়ার্ড পরিবর্তন',
+                            subtitle: 'নিরাপদ রাখুন অ্যাকাউন্ট',
+                            onTap: () {
+                              Navigator.pop(context);
+                              if (context.mounted) {
+                                context.push(AppRoutes.changePassword);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Group 2 — App
+                      _NavGroup(
+                        label: 'অ্যাপ',
+                        items: [
+                          _NavTile(
+                            icon: Icons.info_outline_rounded,
+                            iconBg: const Color(0xFFE0F2FE),
+                            iconColor: const Color(0xFF0891B2),
+                            title: 'কীভাবে কাজ করে?',
+                            subtitle: 'আমল ট্র্যাকিং ও র‍্যাংকিং পদ্ধতি',
+                            badge: isFemale ? '🌸' : null,
+                            onTap: () {
+                              Navigator.pop(context);
+                              if (context.mounted) {
+                                context.push(AppRoutes.howItWorks);
+                              }
+                            },
+                          ),
+                          _NavTile(
+                            icon: Icons.settings_outlined,
+                            iconBg: _C.bg,
+                            iconColor: _C.textSecondary,
+                            title: 'সেটিংস',
+                            subtitle: 'নোটিফিকেশন ও অন্যান্য',
+                            onTap: () {
+                              Navigator.pop(context);
+                              if (context.mounted) {
+                                context.push(AppRoutes.settings);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      _LogoutButton(
+                        onTap: () async {
+                          HapticFeedback.mediumImpact();
+                          await ref.read(authProvider.notifier).logout();
+                          invalidateUserProviders(ref);
+                          if (context.mounted) Navigator.pop(context);
                         },
                       ),
-                      _NavTile(
-                        icon: Icons.lock_outline_rounded,
-                        iconBg: const Color(0xFFEDE9FE),
-                        iconColor: const Color(0xFF7C3AED),
-                        title: 'পাসওয়ার্ড পরিবর্তন',
-                        subtitle: 'নিরাপদ রাখুন অ্যাকাউন্ট',
-                        onTap: () {
-                          Navigator.pop(context);
-                          if (context.mounted) {
-                            context.push(AppRoutes.changePassword);
-                          }
-                        },
-                      ),
+
+                      SizedBox(
+                          height: MediaQuery.of(context).padding.bottom + 12),
                     ],
                   ),
-
-                  const SizedBox(height: 10),
-
-                  // Group 2 — App
-                  _NavGroup(
-                    label: 'অ্যাপ',
-                    items: [
-                      _NavTile(
-                        icon: Icons.info_outline_rounded,
-                        iconBg: const Color(0xFFE0F2FE),
-                        iconColor: const Color(0xFF0891B2),
-                        title: 'কীভাবে কাজ করে?',
-                        subtitle: 'আমল ট্র্যাকিং ও র‍্যাংকিং পদ্ধতি',
-                        badge: isFemale ? '🌸' : null,
-                        onTap: () {
-                          Navigator.pop(context);
-                          if (context.mounted) {
-                            context.push(AppRoutes.howItWorks);
-                          }
-                        },
-                      ),
-                      _NavTile(
-                        icon: Icons.settings_outlined,
-                        iconBg: _C.bg,
-                        iconColor: _C.textSecondary,
-                        title: 'সেটিংস',
-                        subtitle: 'নোটিফিকেশন ও অন্যান্য',
-                        onTap: () {
-                          Navigator.pop(context);
-                          if (context.mounted) {
-                            context.push(AppRoutes.settings);
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  _LogoutButton(
-                    onTap: () async {
-                      HapticFeedback.mediumImpact();
-                      await ref.read(authProvider.notifier).logout();
-                      invalidateUserProviders(ref);
-                      if (context.mounted) Navigator.pop(context);
-                    },
-                  ),
-
-                  SizedBox(height: MediaQuery.of(context).padding.bottom + 12),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-    );
+        ));
   }
 }
 
@@ -791,210 +779,85 @@ class ProfileSheet extends ConsumerWidget {
 
 class _ProfileHero extends StatelessWidget {
   final dynamic user;
-  final double completionPct;
-  final int streak;
 
   const _ProfileHero({
     required this.user,
-    required this.completionPct,
-    required this.streak,
   });
 
   @override
   Widget build(BuildContext context) {
     final name = user?.name ?? 'ব্যবহারকারী';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
-    final email = user?.email ?? '';
     final id = user?.id;
-    final district = user?.district;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [_C.darkGreen, _C.midGreen],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Stack(
+      child: Row(
         children: [
-          Positioned(
-            top: -20,
-            right: -20,
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.06),
+          // Avatar
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+              border:
+                  Border.all(color: Colors.white.withOpacity(0.25), width: 1.5),
+            ),
+            child: Center(
+              child: Text(
+                initial,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
           ),
-          Positioned(
-            bottom: -30,
-            left: 40,
-            child: Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.04),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(18),
+          const SizedBox(width: 14),
+
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  children: [
-                    // Avatar
-                    Container(
-                      width: 58,
-                      height: 58,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                            color: Colors.white.withOpacity(0.25), width: 1.5),
-                      ),
-                      child: Center(
-                        child: Text(
-                          initial,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            name,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.3,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (email.isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              email,
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.5),
-                                fontSize: 11,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                          if (id != null || district != null) ...[
-                            const SizedBox(height: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 9, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                    color: Colors.white.withOpacity(0.15),
-                                    width: 0.5),
-                              ),
-                              child: Text(
-                                [
-                                  if (id != null) 'ID: $id',
-                                  if (district != null) district,
-                                ].join(' • '),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
+                Text(
+                  name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-
-                const SizedBox(height: 16),
-
-                // Stats row — points বাদ, completion % + streak
-                Row(
-                  children: [
-                    Expanded(
-                      child: _HeroStat(
-                        label: 'ফরজ সম্পন্ন',
-                        value: '${completionPct.toInt()}%',
-                        icon: '✅',
-                      ),
+                if (id != null) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    'ID: $id',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
                     ),
-                    Container(
-                      width: 0.5,
-                      height: 32,
-                      color: Colors.white.withOpacity(0.15),
-                    ),
-                    Expanded(
-                      child: _HeroStat(
-                        label: 'ধারাবাহিক',
-                        value: '$streak দিন',
-                        icon: '🔥',
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ],
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _HeroStat extends StatelessWidget {
-  final String label, value, icon;
-  const _HeroStat(
-      {required this.label, required this.value, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(icon, style: const TextStyle(fontSize: 16)),
-        const SizedBox(height: 3),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.3,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.5),
-            fontSize: 10,
-          ),
-        ),
-      ],
     );
   }
 }

@@ -2296,6 +2296,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/leaderboard_provider.dart';
 import '../../tracker/models/tracker_model.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/providers/cache_provider.dart';
+import '../../../shared/widgets/delayed_progress_indicator.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -2350,12 +2352,6 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
   void initState() {
     super.initState();
     _sc.addListener(_onScroll);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
-  }
-
-  void _load() {
-    final f = ref.read(leaderboardFilterProvider);
-    ref.read(leaderboardProvider.notifier).load(f, refresh: true);
   }
 
   void _onScroll() {
@@ -2378,8 +2374,11 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
 
   Future<void> _refresh() async {
     final f = ref.read(leaderboardFilterProvider);
-    await ref.read(leaderboardProvider.notifier).load(f, refresh: true);
-    ref.invalidate(myRankProvider((year: f.year, month: f.month)));
+    ref.read(cacheStatusProvider.notifier).updateLastFetched(CacheTab.leaderboard);
+    await Future.wait([
+      ref.read(leaderboardProvider.notifier).load(f, refresh: true),
+      ref.refresh(myRankProvider((year: f.year, month: f.month)).future),
+    ]);
   }
 
   void _pickMonth() {
@@ -2402,8 +2401,23 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(leaderboardProvider);
+    ref.watch(cacheStatusProvider); // Watch to rebuild on lifecycle/app resume
     final filter = ref.watch(leaderboardFilterProvider);
+
+    // Lazy check-and-refresh for Leaderboard Tab data
+    final activeIndex = ref.watch(activeTabIndexProvider);
+    if (activeIndex == 3) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          checkAndRefreshTab(ref, CacheTab.leaderboard, () {
+            ref.read(leaderboardProvider.notifier).load(filter, refresh: true);
+            ref.refresh(myRankProvider((year: filter.year, month: filter.month)));
+          }, ttl: const Duration(minutes: 5));
+        }
+      });
+    }
+
+    final state = ref.watch(leaderboardProvider);
     final myRank = ref.watch(
       myRankProvider((year: filter.year, month: filter.month)),
     );
@@ -2412,17 +2426,21 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
     final currentUser = ref.watch(currentUserProvider);
     final isMaleUser = currentUser?.gender?.toLowerCase() == 'male';
 
+    final isBackgroundRefreshing = state.isRefreshing || (myRank.isLoading && myRank.hasValue);
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
         backgroundColor: _C.pageBg,
-        body: RefreshIndicator(
-          color: _C.darkGreen,
-          onRefresh: _refresh,
-          child: CustomScrollView(
-            controller: _sc,
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
+        body: Stack(
+          children: [
+            RefreshIndicator(
+              color: _C.darkGreen,
+              onRefresh: _refresh,
+              child: CustomScrollView(
+                controller: _sc,
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
               // ── App Bar ─────────────────────────────────────────────
               SliverAppBar(
                 pinned: true,
@@ -2545,6 +2563,22 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
             ],
           ),
         ),
+            if (isBackgroundRefreshing)
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 54,
+                left: 0,
+                right: 0,
+                child: const SizedBox(
+                  height: 2,
+                  child: DelayedLinearProgressIndicator(
+                    color: Colors.white,
+                    backgroundColor: Colors.transparent,
+                    delay: Duration(milliseconds: 400),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -2560,7 +2594,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
 
     if (state.error != null) {
       return SliverToBoxAdapter(
-          child: _ErrorCard(message: state.error!, onRetry: _load)
+          child: _ErrorCard(message: state.error!, onRetry: _refresh)
               .animate()
               .fadeIn(duration: 260.ms));
     }

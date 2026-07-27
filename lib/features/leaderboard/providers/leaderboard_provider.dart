@@ -949,6 +949,7 @@ class LeaderboardState {
   final List<LeaderboardEntry> entries;
   final bool isLoading;
   final bool isLoadingMore;
+  final bool isRefreshing;
   final bool hasMore;
   final String? error;
   final int currentPage;
@@ -958,6 +959,7 @@ class LeaderboardState {
     this.entries = const [],
     this.isLoading = false,
     this.isLoadingMore = false,
+    this.isRefreshing = false,
     this.hasMore = true,
     this.error,
     this.currentPage = 1,
@@ -968,6 +970,7 @@ class LeaderboardState {
     List<LeaderboardEntry>? entries,
     bool? isLoading,
     bool? isLoadingMore,
+    bool? isRefreshing,
     bool? hasMore,
     String? error,
     int? currentPage,
@@ -978,6 +981,7 @@ class LeaderboardState {
         entries: entries ?? this.entries,
         isLoading: isLoading ?? this.isLoading,
         isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+        isRefreshing: isRefreshing ?? this.isRefreshing,
         hasMore: hasMore ?? this.hasMore,
         error: clearError ? null : (error ?? this.error),
         currentPage: currentPage ?? this.currentPage,
@@ -996,7 +1000,11 @@ class LeaderboardNotifier extends StateNotifier<LeaderboardState> {
 
   Future<void> load(LeaderboardFilter filter, {bool refresh = false}) async {
     if (refresh) {
-      state = state.copyWith(isLoading: true, clearError: true);
+      if (state.entries.isEmpty) {
+        state = state.copyWith(isLoading: true, clearError: true);
+      } else {
+        state = state.copyWith(isRefreshing: true, clearError: true);
+      }
     } else {
       if (state.isLoadingMore || !state.hasMore) return;
       state = state.copyWith(isLoadingMore: true, clearError: true);
@@ -1025,6 +1033,7 @@ class LeaderboardNotifier extends StateNotifier<LeaderboardState> {
         state = state.copyWith(
           entries: newEntries,
           isLoading: false,
+          isRefreshing: false,
           hasMore: hasMore,
           currentPage: page,
           total: total,
@@ -1033,6 +1042,7 @@ class LeaderboardNotifier extends StateNotifier<LeaderboardState> {
         state = state.copyWith(
           entries: [...state.entries, ...newEntries],
           isLoadingMore: false,
+          isRefreshing: false,
           hasMore: hasMore,
           currentPage: page,
           total: total,
@@ -1042,6 +1052,7 @@ class LeaderboardNotifier extends StateNotifier<LeaderboardState> {
       state = state.copyWith(
         isLoading: false,
         isLoadingMore: false,
+        isRefreshing: false,
         error: e.message,
       );
     }

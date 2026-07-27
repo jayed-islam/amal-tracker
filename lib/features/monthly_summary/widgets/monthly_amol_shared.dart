@@ -61,6 +61,17 @@ class AmolColors {
 class AmolSectionMeta {
   AmolSectionMeta._();
 
+  static const List<String> orderedSections = [
+    'salat',
+    'sunnah_nafl',
+    'quran_dhikr',
+    'akhlaq',
+    'muamalat',
+    'weekly_special',
+    'fasting_nafl',
+    'special_season',
+  ];
+
   static const Map<String, String> _labels = {
     'salat': 'নামাজ',
     'sunnah_nafl': 'সুন্নাত ও নফল',
@@ -77,10 +88,10 @@ class AmolSectionMeta {
     'sunnah_nafl': AmolColors.green,
     'quran_dhikr': AmolColors.amber,
     'akhlaq': AmolColors.indigo,
-    'muamalat': AmolColors.darkGreen, // লেনদেনের জন্য একটু ডার্ক/সিরিয়াস টোন
+    'muamalat': AmolColors.darkGreen,
     'weekly_special': AmolColors.purple,
     'fasting_nafl': AmolColors.gold,
-    'special_season': AmolColors.red, // বিশেষ মরশুমকে হাইলাইট করার জন্য
+    'special_season': AmolColors.red,
   };
 
   static String label(String key) => _labels[key] ?? key;
