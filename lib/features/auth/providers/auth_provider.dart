@@ -10,57 +10,6 @@ enum AuthStatus {
   unauthenticated, // লগইন নেই
 }
 
-// // In AuthState class, add:
-// class AuthState {
-//   final UserModel? user;
-//   final bool isLoading;
-//   final String? error;
-//   final AuthStatus status;
-//   final PendingDeletionInfo? pendingDeletion; // ← ADD
-
-//   const AuthState({
-//     this.user,
-//     this.isLoading = false,
-//     this.error,
-//     this.status = AuthStatus.unknown,
-//     this.pendingDeletion, // ← ADD
-//   });
-
-//   AuthState copyWith({
-//     UserModel? user,
-//     bool? isLoading,
-//     String? error,
-//     AuthStatus? status,
-//     PendingDeletionInfo? pendingDeletion, // ← ADD
-//     bool clearDeletion = false, // ← needed to explicitly null it
-//   }) =>
-//       AuthState(
-//         user: user ?? this.user,
-//         isLoading: isLoading ?? this.isLoading,
-//         error: error,
-//         status: status ?? this.status,
-//         pendingDeletion:
-//             clearDeletion ? null : (pendingDeletion ?? this.pendingDeletion),
-//       );
-// }
-
-// // Add this model alongside AuthState:
-// class PendingDeletionInfo {
-//   final int daysLeft;
-//   final DateTime scheduledAt;
-
-//   const PendingDeletionInfo({
-//     required this.daysLeft,
-//     required this.scheduledAt,
-//   });
-
-//   factory PendingDeletionInfo.fromJson(Map<String, dynamic> json) {
-//     return PendingDeletionInfo(
-//       daysLeft: json['daysLeft'] ?? 30,
-//       scheduledAt: DateTime.parse(json['scheduledAt']),
-//     );
-//   }
-// }
 class AuthState {
   final UserModel? user;
   final bool isLoading;
