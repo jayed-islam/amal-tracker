@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_constants.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CATEGORY PROGRESS SHEET — bottom sheet (not a full page — a category detail
@@ -44,8 +45,8 @@ class _CategoryProgressSheet extends ConsumerWidget {
       maxChildSize: 0.95,
       expand: false,
       builder: (context, scrollController) => Container(
-        decoration: const BoxDecoration(
-          color: AmolColors.cardBg,
+        decoration: BoxDecoration(
+          color: context.colors.cardBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: Column(children: [
@@ -54,7 +55,7 @@ class _CategoryProgressSheet extends ConsumerWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                  color: AmolColors.border,
+                  color: context.colors.border,
                   borderRadius: BorderRadius.circular(99))),
           const SizedBox(height: 14),
           Padding(
@@ -69,13 +70,13 @@ class _CategoryProgressSheet extends ConsumerWidget {
                   children: [
                     Text(category.nameBn,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            color: AmolColors.textPrimary,
+                        style: TextStyle(
+                            color: context.colors.textPrimary,
                             fontWeight: FontWeight.w800,
                             fontSize: 15)),
                     Text(AmolSectionMeta.label(category.section),
-                        style: const TextStyle(
-                            color: AmolColors.textHint,
+                        style: TextStyle(
+                            color: context.colors.textHint,
                             fontSize: 10.5,
                             fontWeight: FontWeight.w500)),
                   ],
@@ -86,9 +87,9 @@ class _CategoryProgressSheet extends ConsumerWidget {
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                      color: AmolColors.pageBg, shape: BoxShape.circle),
-                  child: const Icon(Icons.close_rounded,
-                      size: 16, color: AmolColors.textSecondary),
+                      color: context.colors.pageBg, shape: BoxShape.circle),
+                  child: Icon(Icons.close_rounded,
+                      size: 16, color: context.colors.textSecondary),
                 ),
               ),
             ]),
@@ -159,7 +160,7 @@ class _CategoryProgressContent extends StatelessWidget {
               icon: Icons.local_fire_department_rounded,
               value: '$streak',
               label: 'বর্তমান স্ট্রিক',
-              color: AmolColors.amber,
+              color: context.colors.amber2,
             ),
           ),
           const SizedBox(width: 8),
@@ -168,7 +169,7 @@ class _CategoryProgressContent extends StatelessWidget {
               icon: Icons.calendar_month_rounded,
               value: '$daysActive',
               label: 'মোট সক্রিয় দিন',
-              color: AmolColors.green,
+              color: context.colors.green,
             ),
           ),
           const SizedBox(width: 8),
@@ -189,7 +190,7 @@ class _CategoryProgressContent extends StatelessWidget {
                   : isCounter
                       ? 'মোট ${unitBn.isNotEmpty ? unitBn : "সংখ্যা"}'
                       : 'সম্পন্ন দিন',
-              color: AmolColors.purple,
+              color: context.colors.purple,
             ),
           ),
         ]),
@@ -199,20 +200,20 @@ class _CategoryProgressContent extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AmolColors.pageBg,
+              color: context.colors.pageBg,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(children: [
               _MiniBreakdown(
                   label: 'জামাত',
                   value: congregation,
-                  color: AmolColors.purple),
+                  color: context.colors.purple),
               const SizedBox(width: 8),
               _MiniBreakdown(
-                  label: 'একাকী', value: solo, color: AmolColors.green),
+                  label: 'একাকী', value: solo, color: context.colors.green),
               const SizedBox(width: 8),
               _MiniBreakdown(
-                  label: 'মিস', value: missed, color: AmolColors.red),
+                  label: 'মিস', value: missed, color: context.colors.red),
             ]),
           ),
         ],
@@ -221,16 +222,16 @@ class _CategoryProgressContent extends StatelessWidget {
 
         // ── Monthly trend ────────────────────────────────────────────────
         if (monthly.isNotEmpty) ...[
-          const Text('গত কয়েক মাসের ট্রেন্ড',
+          Text('গত কয়েক মাসের ট্রেন্ড',
               style: TextStyle(
-                  color: AmolColors.textPrimary,
+                  color: context.colors.textPrimary,
                   fontWeight: FontWeight.w800,
                   fontSize: 13.5)),
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AmolColors.pageBg,
+              color: context.colors.pageBg,
               borderRadius: BorderRadius.circular(16),
             ),
             child: SizedBox(
@@ -262,8 +263,8 @@ class _CategoryProgressContent extends StatelessWidget {
                               style: TextStyle(
                                   fontSize: 9,
                                   color: isCurrent
-                                      ? AmolColors.darkGreen
-                                      : AmolColors.textHint,
+                                      ? context.colors.darkGreen
+                                      : context.colors.textHint,
                                   fontWeight: isCurrent
                                       ? FontWeight.w800
                                       : FontWeight.w500)),
@@ -274,8 +275,8 @@ class _CategoryProgressContent extends StatelessWidget {
                             width: double.infinity,
                             decoration: BoxDecoration(
                               color: isCurrent
-                                  ? AmolColors.darkGreen
-                                  : AmolColors.midGreen.withOpacity(0.5),
+                                  ? context.colors.darkGreen
+                                  : context.colors.midGreen.withOpacity(0.5),
                               borderRadius: const BorderRadius.vertical(
                                   top: Radius.circular(6)),
                             ),
@@ -285,8 +286,8 @@ class _CategoryProgressContent extends StatelessWidget {
                               style: TextStyle(
                                   fontSize: 9.5,
                                   color: isCurrent
-                                      ? AmolColors.darkGreen
-                                      : AmolColors.textSecondary,
+                                      ? context.colors.darkGreen
+                                      : context.colors.textSecondary,
                                   fontWeight: isCurrent
                                       ? FontWeight.w800
                                       : FontWeight.w500)),
@@ -303,16 +304,16 @@ class _CategoryProgressContent extends StatelessWidget {
 
         // ── Weekly comparison ────────────────────────────────────────────
         if (curWeek.isNotEmpty) ...[
-          const Text('এই সপ্তাহ বনাম গত সপ্তাহ',
+          Text('এই সপ্তাহ বনাম গত সপ্তাহ',
               style: TextStyle(
-                  color: AmolColors.textPrimary,
+                  color: context.colors.textPrimary,
                   fontWeight: FontWeight.w800,
                   fontSize: 13.5)),
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
             decoration: BoxDecoration(
-              color: AmolColors.pageBg,
+              color: context.colors.pageBg,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -330,10 +331,10 @@ class _CategoryProgressContent extends StatelessWidget {
                 const dayLbls = ['র', 'সো', 'ম', 'বু', 'বৃ', 'শু', 'শ'];
 
                 Color dotColor(int v, String? mode) {
-                  if (mode == 'congregation') return AmolColors.purple;
-                  if (mode == 'solo') return AmolColors.amber;
-                  if (mode == 'missed') return AmolColors.border;
-                  return v > 0 ? AmolColors.green : AmolColors.border;
+                  if (mode == 'congregation') return context.colors.purple;
+                  if (mode == 'solo') return context.colors.amber2;
+                  if (mode == 'missed') return context.colors.border;
+                  return v > 0 ? context.colors.green : context.colors.border;
                 }
 
                 return Expanded(
@@ -369,8 +370,8 @@ class _CategoryProgressContent extends StatelessWidget {
                     ),
                     const SizedBox(height: 5),
                     Text(d != null ? dayLbls[d.weekday % 7] : '-',
-                        style: const TextStyle(
-                            color: AmolColors.textHint,
+                        style: TextStyle(
+                            color: context.colors.textHint,
                             fontSize: 9,
                             fontWeight: FontWeight.w500)),
                   ]),
@@ -380,28 +381,28 @@ class _CategoryProgressContent extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Row(children: [
-            AmolLegendDot(color: AmolColors.green, label: 'এই সপ্তাহ'),
+            AmolLegendDot(color: context.colors.green, label: 'এই সপ্তাহ'),
             const SizedBox(width: 12),
             Row(mainAxisSize: MainAxisSize.min, children: [
               Container(
                   width: 9,
                   height: 9,
                   decoration: BoxDecoration(
-                      color: AmolColors.green.withOpacity(0.4),
+                      color: context.colors.green.withOpacity(0.4),
                       shape: BoxShape.circle)),
               const SizedBox(width: 4),
-              const Text('গত সপ্তাহ',
-                  style: TextStyle(color: AmolColors.textHint, fontSize: 9.5)),
+              Text('গত সপ্তাহ',
+                  style: TextStyle(color: context.colors.textHint, fontSize: 9.5)),
             ]),
           ]),
         ],
 
         if (monthly.isEmpty && curWeek.isEmpty)
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(top: 30),
             child: Center(
               child: Text('এই আমলের জন্য এখনো কোনো ডেটা নেই',
-                  style: TextStyle(color: AmolColors.textHint, fontSize: 12.5)),
+                  style: TextStyle(color: context.colors.textHint, fontSize: 12.5)),
             ),
           ),
       ],
@@ -424,7 +425,7 @@ class _DetailStatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
-        color: AmolColors.pageBg,
+        color: context.colors.pageBg,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(children: [
@@ -438,7 +439,7 @@ class _DetailStatCard extends StatelessWidget {
         const SizedBox(height: 2),
         Text(label,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AmolColors.textHint, fontSize: 8.5)),
+            style: TextStyle(color: context.colors.textHint, fontSize: 8.5)),
       ]),
     );
   }
@@ -460,7 +461,7 @@ class _MiniBreakdown extends StatelessWidget {
                 color: color, fontWeight: FontWeight.w800, fontSize: 16)),
         const SizedBox(height: 2),
         Text(label,
-            style: const TextStyle(color: AmolColors.textHint, fontSize: 9.5)),
+            style: TextStyle(color: context.colors.textHint, fontSize: 9.5)),
       ]),
     );
   }

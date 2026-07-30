@@ -1,19 +1,10 @@
 import 'package:amal_tracker/features/settings/constants/legal_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:amal_tracker/core/theme/app_colors.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ── Design Tokens ────────────────────────────────────────────────────────────
-class _C {
-  static const bg = Color(0xFFF4F6F1);
-  static const darkGreen = Color(0xFF0E3D22);
-  static const green = Color(0xFF16A34A);
-  static const textPrimary = Color(0xFF0A1A0F);
-  static const textBody = Color(0xFF2D3F31);
-  static const textMuted = Color(0xFF6B7C6E);
-  static const textHint = Color(0xFFABBAAE);
-  static const divider = Color(0xFFE8EEE8);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // UNIFIED LEGAL SCREEN (Privacy Policy & Terms of Use on One Page)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -43,9 +34,9 @@ class _LegalScreenState extends State<LegalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _C.bg,
+      backgroundColor: context.colors.bg,
       appBar: AppBar(
-        backgroundColor: _C.darkGreen,
+        backgroundColor: context.colors.darkGreen,
         surfaceTintColor: Colors.transparent,
         systemOverlayStyle: SystemUiOverlayStyle.light,
         elevation: 0,
@@ -104,8 +95,8 @@ class _LegalScreenState extends State<LegalScreen> {
           // ── Metadata Header ────────────────────────────────────────────────
           Text(
             kLegalLastUpdated[_lang]!,
-            style: const TextStyle(
-              color: _C.textHint,
+            style: TextStyle(
+              color: context.colors.textHint,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -115,8 +106,8 @@ class _LegalScreenState extends State<LegalScreen> {
           // ── Segment 1: Privacy Policy ──────────────────────────────────────
           Text(
             _privacyTitle,
-            style: const TextStyle(
-              color: _C.darkGreen,
+            style: TextStyle(
+              color: context.colors.darkGreen,
               fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
@@ -124,8 +115,8 @@ class _LegalScreenState extends State<LegalScreen> {
           const SizedBox(height: 12),
           Text(
             kPrivacyIntro[_lang]!,
-            style: const TextStyle(
-              color: _C.textBody,
+            style: TextStyle(
+              color: context.colors.textBody,
               fontSize: 14,
               height: 1.7,
             ),
@@ -137,14 +128,14 @@ class _LegalScreenState extends State<LegalScreen> {
               )),
 
           const SizedBox(height: 16),
-          const Divider(color: _C.divider, thickness: 1.5, height: 1),
+          Divider(color: context.colors.divider, thickness: 1.5, height: 1),
           const SizedBox(height: 32),
 
           // ── Segment 2: Terms of Use ────────────────────────────────────────
           Text(
             _termsTitle,
-            style: const TextStyle(
-              color: _C.darkGreen,
+            style: TextStyle(
+              color: context.colors.darkGreen,
               fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
@@ -152,8 +143,8 @@ class _LegalScreenState extends State<LegalScreen> {
           const SizedBox(height: 12),
           Text(
             kTermsIntro[_lang]!,
-            style: const TextStyle(
-              color: _C.textBody,
+            style: TextStyle(
+              color: context.colors.textBody,
               fontSize: 14,
               height: 1.7,
             ),
@@ -166,22 +157,22 @@ class _LegalScreenState extends State<LegalScreen> {
 
           // ── Footer ─────────────────────────────────────────────────────────
           const SizedBox(height: 16),
-          const Divider(color: _C.divider, height: 1),
+          Divider(color: context.colors.divider, height: 1),
           const SizedBox(height: 24),
           Text(
             _isBn
                 ? 'প্রশ্ন বা মতামতের জন্য যোগাযোগ করুন:'
                 : 'For questions or feedback, contact us:',
-            style: const TextStyle(
-              color: _C.textMuted,
+            style: TextStyle(
+              color: context.colors.textMuted,
               fontSize: 13,
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'support@amaltracker.app',
             style: TextStyle(
-              color: _C.darkGreen,
+              color: context.colors.darkGreen,
               fontSize: 14,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.2,
@@ -215,8 +206,8 @@ class _SectionBlock extends StatelessWidget {
         children: [
           Text(
             section.title[lang]!,
-            style: const TextStyle(
-              color: _C.textPrimary,
+            style: TextStyle(
+              color: context.colors.textPrimary,
               fontSize: 15,
               fontWeight: FontWeight.w700,
               height: 1.4,
@@ -250,8 +241,8 @@ class _PointRow extends StatelessWidget {
             child: Container(
               width: 5,
               height: 5,
-              decoration: const BoxDecoration(
-                color: _C.green,
+              decoration: BoxDecoration(
+                color: context.colors.green,
                 shape: BoxShape.circle,
               ),
             ),
@@ -260,8 +251,8 @@ class _PointRow extends StatelessWidget {
           Expanded(
             child: RichText(
               text: TextSpan(
-                style: const TextStyle(
-                  color: _C.textBody,
+                style: TextStyle(
+                  color: context.colors.textBody,
                   fontSize: 13.5,
                   height: 1.65,
                 ),
@@ -269,9 +260,9 @@ class _PointRow extends StatelessWidget {
                   if (point.heading != null) ...[
                     TextSpan(
                       text: '${point.heading} ',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: _C.textPrimary,
+                        color: context.colors.textPrimary,
                       ),
                     ),
                   ],
@@ -307,7 +298,7 @@ class _LangPill extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          color: active ? _C.darkGreen : Colors.white.withOpacity(0.65),
+          color: active ? context.colors.darkGreen : Colors.white.withOpacity(0.65),
           fontSize: 12,
           fontWeight: FontWeight.w700,
         ),

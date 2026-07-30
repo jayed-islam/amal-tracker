@@ -6,30 +6,12 @@ import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/provider_reset.dart';
 import '../../../core/router/app_router.dart';
+import 'package:amal_tracker/core/theme/app_colors.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
-
-class _C {
-  static const bg = Color(0xFFF4F6F1);
-  static const card = Color(0xFFFFFFFF);
-  static const darkGreen = Color(0xFF0E3D22);
-  static const midGreen = Color(0xFF1B7045);
-  static const green = Color(0xFF16A34A);
-  static const greenLight = Color(0xFFE8F5EE);
-  static const gold = Color(0xFFD4A843);
-  static const goldLight = Color(0xFFFFF8E7);
-  static const amber = Color(0xFFF59E0B);
-  static const amberLight = Color(0xFFFFF3E0);
-  static const red = Color(0xFFDC2626);
-  static const redLight = Color(0xFFFEF2F2);
-  static const border = Color(0xFFE4EAE4);
-  static const textPrimary = Color(0xFF0A1A0F);
-  static const textSecondary = Color(0xFF6B7C6E);
-  static const textHint = Color(0xFFABBAAE);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // PROFILE SHEET — exported widget used in home_screen.dart
 // ─────────────────────────────────────────────────────────────────────────────
@@ -44,8 +26,8 @@ class ProfileSheet extends ConsumerWidget {
     final isFemale = user?.gender?.toLowerCase() == 'female';
 
     return Container(
-        decoration: const BoxDecoration(
-          color: _C.bg,
+        decoration: BoxDecoration(
+          color: context.colors.bg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: SafeArea(
@@ -61,7 +43,7 @@ class ProfileSheet extends ConsumerWidget {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: _C.border,
+                      color: context.colors.border,
                       borderRadius: BorderRadius.circular(99),
                     ),
                   ),
@@ -89,8 +71,8 @@ class ProfileSheet extends ConsumerWidget {
                         items: [
                           _NavTile(
                             icon: Icons.person_outline_rounded,
-                            iconBg: _C.greenLight,
-                            iconColor: _C.darkGreen,
+                            iconBg: context.colors.greenLight,
+                            iconColor: context.colors.darkGreen,
                             title: 'প্রোফাইল সম্পাদনা',
                             subtitle: 'নাম, ফোন, পরিচয় আপডেট করুন',
                             onTap: () {
@@ -102,8 +84,8 @@ class ProfileSheet extends ConsumerWidget {
                           ),
                           _NavTile(
                             icon: Icons.lock_outline_rounded,
-                            iconBg: const Color(0xFFEDE9FE),
-                            iconColor: const Color(0xFF7C3AED),
+                            iconBg: context.colors.purpleLight,
+                            iconColor: context.colors.avatar3,
                             title: 'পাসওয়ার্ড পরিবর্তন',
                             subtitle: 'নিরাপদ রাখুন অ্যাকাউন্ট',
                             onTap: () {
@@ -124,8 +106,8 @@ class ProfileSheet extends ConsumerWidget {
                         items: [
                           _NavTile(
                             icon: Icons.info_outline_rounded,
-                            iconBg: const Color(0xFFE0F2FE),
-                            iconColor: const Color(0xFF0891B2),
+                            iconBg: context.colors.blueLight,
+                            iconColor: context.colors.avatar4,
                             title: 'কীভাবে কাজ করে?',
                             subtitle: 'আমল ট্র্যাকিং ও র‍্যাংকিং পদ্ধতি',
                             badge: isFemale ? '🌸' : null,
@@ -138,8 +120,8 @@ class ProfileSheet extends ConsumerWidget {
                           ),
                           _NavTile(
                             icon: Icons.settings_outlined,
-                            iconBg: _C.bg,
-                            iconColor: _C.textSecondary,
+                            iconBg: context.colors.bg,
+                            iconColor: context.colors.textSecondary,
                             title: 'সেটিংস',
                             subtitle: 'নোটিফিকেশন ও অন্যান্য',
                             onTap: () {
@@ -196,8 +178,8 @@ class _ProfileHero extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 14, 16, 6),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [_C.darkGreen, _C.midGreen],
+        gradient: LinearGradient(
+          colors: [context.colors.darkGreen, context.colors.midGreen],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -283,8 +265,8 @@ class _NavGroup extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4, bottom: 6),
           child: Text(
             label.toUpperCase(),
-            style: const TextStyle(
-              color: _C.textHint,
+            style: TextStyle(
+              color: context.colors.textHint,
               fontSize: 10,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.8,
@@ -293,9 +275,9 @@ class _NavGroup extends StatelessWidget {
         ),
         Container(
           decoration: BoxDecoration(
-            color: _C.card,
+            color: context.colors.card,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _C.border, width: 0.5),
+            border: Border.all(color: context.colors.border, width: 0.5),
           ),
           child: Column(
             children: List.generate(items.length, (i) {
@@ -303,10 +285,10 @@ class _NavGroup extends StatelessWidget {
                 children: [
                   items[i],
                   if (i < items.length - 1)
-                    const Divider(
+                    Divider(
                         height: 0.5,
                         thickness: 0.5,
-                        color: _C.border,
+                        color: context.colors.border,
                         indent: 54),
                 ],
               );
@@ -369,8 +351,8 @@ class _NavTile extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
-                          color: _C.textPrimary,
+                        style: TextStyle(
+                          color: context.colors.textPrimary,
                           fontSize: 13.5,
                           fontWeight: FontWeight.w700,
                         ),
@@ -384,16 +366,16 @@ class _NavTile extends StatelessWidget {
                   const SizedBox(height: 1),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      color: _C.textSecondary,
+                    style: TextStyle(
+                      color: context.colors.textSecondary,
                       fontSize: 11,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded,
-                color: _C.textHint, size: 18),
+            Icon(Icons.chevron_right_rounded,
+                color: context.colors.textHint, size: 18),
           ],
         ),
       ),
@@ -417,19 +399,19 @@ class _LogoutButton extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 15),
         decoration: BoxDecoration(
-          color: _C.redLight,
+          color: context.colors.redLight,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _C.red.withOpacity(0.15), width: 0.5),
+          border: Border.all(color: context.colors.red2.withOpacity(0.15), width: 0.5),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(Icons.logout_rounded, color: _C.red, size: 18),
+          children: [
+            Icon(Icons.logout_rounded, color: context.colors.red2, size: 18),
             SizedBox(width: 8),
             Text(
               'লগআউট',
               style: TextStyle(
-                color: _C.red,
+                color: context.colors.red2,
                 fontWeight: FontWeight.w700,
                 fontSize: 14,
               ),

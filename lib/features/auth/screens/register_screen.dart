@@ -8,31 +8,12 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../../../core/router/app_router.dart';
+import 'package:amal_tracker/core/theme/app_colors.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
-
-class _C {
-  static const pageBg = Color(0xFFF4F6F1);
-  static const cardBg = Color(0xFFFFFFFF);
-  static const darkGreen = Color(0xFF0E3D22);
-  static const midGreen = Color(0xFF1B7045);
-  static const gold = Color(0xFFD4A843);
-  static const green = Color(0xFF16A34A);
-  static const greenLight = Color(0xFFE8F5EE);
-  static const amber = Color(0xFFF59E0B);
-  static const amberLight = Color(0xFFFFF3E0);
-  static const red = Color(0xFFEF4444);
-  static const redLight = Color(0xFFFEF2F2);
-  static const textPrimary = Color(0xFF0A1A0F);
-  static const textSecondary = Color(0xFF6B7C6E);
-  static const textHint = Color(0xFFABBAAE);
-  static const border = Color(0xFFE4EAE4);
-  static const borderMid = Color(0xFFD0DAD2);
-  static const surfaceAlt = Color(0xFFF8FAF8);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // DISTRICT MAPPING
 // ─────────────────────────────────────────────────────────────────────────────
@@ -289,7 +270,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
-      backgroundColor: err ? _C.red : _C.amber,
+      backgroundColor: err ? context.colors.red : context.colors.amber,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       duration: const Duration(seconds: 3),
@@ -389,7 +370,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
         child: Container(
           decoration: BoxDecoration(
-              color: _C.cardBg, borderRadius: BorderRadius.circular(20)),
+              color: context.colors.cardBg, borderRadius: BorderRadius.circular(20)),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -400,39 +381,39 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       width: 34,
                       height: 34,
                       decoration: BoxDecoration(
-                          color: _C.amberLight,
+                          color: context.colors.amberLight,
                           borderRadius: BorderRadius.circular(9)),
-                      child: const Icon(Icons.info_outline_rounded,
-                          color: _C.amber, size: 18)),
+                      child: Icon(Icons.info_outline_rounded,
+                          color: context.colors.amber, size: 18)),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                       child: Text('নিবন্ধনের আগে জানুন',
                           style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
-                              color: _C.textPrimary))),
+                              color: context.colors.textPrimary))),
                 ]),
               ),
-              const Divider(height: 1, color: _C.border),
+              Divider(height: 1, color: context.colors.border),
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 14, 18, 6),
-                child: Column(children: const [
+                child: Column(children: [
                   _DRow(
                       icon: Icons.lock_reset_rounded,
-                      iconColor: _C.amber,
-                      bg: _C.amberLight,
+                      iconColor: context.colors.amber,
+                      bg: context.colors.amberLight,
                       text: 'পাসওয়ার্ড রিসেট এখনো নেই — লিখে রাখুন'),
                   SizedBox(height: 8),
                   _DRow(
                       icon: Icons.shield_outlined,
-                      iconColor: _C.green,
-                      bg: _C.greenLight,
+                      iconColor: context.colors.green,
+                      bg: context.colors.greenLight,
                       text: 'পাসওয়ার্ড শুধু আপনার — কাউকে জানাবেন না'),
                   SizedBox(height: 8),
                   _DRow(
                       icon: Icons.alternate_email_rounded,
-                      iconColor: _C.red,
-                      bg: _C.redLight,
+                      iconColor: context.colors.red,
+                      bg: context.colors.redLight,
                       text: 'সঠিক ইমেইল দিন — লগইনে দরকার হবে'),
                 ]),
               ),
@@ -443,8 +424,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       child: OutlinedButton(
                     onPressed: () => Navigator.of(ctx).pop(false),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _C.textSecondary,
-                      side: const BorderSide(color: _C.border),
+                      foregroundColor: context.colors.textSecondary,
+                      side: BorderSide(color: context.colors.border),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
@@ -458,7 +439,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       child: ElevatedButton(
                     onPressed: () => Navigator.of(ctx).pop(true),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _C.darkGreen,
+                      backgroundColor: context.colors.darkGreen,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -510,7 +491,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: const Text('নিবন্ধন সফল হয়েছে!'),
-        backgroundColor: _C.green,
+        backgroundColor: context.colors.green,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ));
@@ -531,7 +512,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
-        backgroundColor: _C.pageBg,
+        backgroundColor: context.colors.pageBg,
         body: Stack(
           children: [
             // Header gradient
@@ -541,11 +522,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               right: 0,
               child: Container(
                 height: size.height * 0.35,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [_C.darkGreen, _C.midGreen],
+                    colors: [context.colors.darkGreen, context.colors.midGreen],
                   ),
                   borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(32),
@@ -570,7 +551,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           height: 100,
                           decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: _C.gold.withOpacity(0.08)))),
+                              color: context.colors.gold.withOpacity(0.08)))),
                 ]),
               ),
             ),
@@ -628,7 +609,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ignoring: isLoading,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: _C.cardBg,
+                          color: context.colors.cardBg,
                           borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
@@ -777,15 +758,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       child: Opacity(
                         opacity: isLoading ? 0.4 : 1.0,
                         child: RichText(
-                            text: const TextSpan(
+                            text: TextSpan(
                           text: 'ইতিমধ্যে অ্যাকাউন্ট আছে?  ',
                           style:
-                              TextStyle(color: _C.textSecondary, fontSize: 14),
+                              TextStyle(color: context.colors.textSecondary, fontSize: 14),
                           children: [
                             TextSpan(
                                 text: 'লগইন করুন',
                                 style: TextStyle(
-                                    color: _C.darkGreen,
+                                    color: context.colors.darkGreen,
                                     fontWeight: FontWeight.w700))
                           ],
                         )),
@@ -835,14 +816,14 @@ class _GpsDistrictField extends StatelessWidget {
         Row(children: [
           Text('লোকেশন',
               style: TextStyle(
-                color: hasErr ? _C.red : _C.textPrimary,
+                color: hasErr ? context.colors.red : context.colors.textPrimary,
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
               )),
           const SizedBox(width: 3),
-          const Text('*',
+          Text('*',
               style: TextStyle(
-                  color: _C.red, fontSize: 13, fontWeight: FontWeight.w800)),
+                  color: context.colors.red, fontSize: 13, fontWeight: FontWeight.w800)),
         ]),
         const SizedBox(height: 8),
 
@@ -855,23 +836,23 @@ class _GpsDistrictField extends StatelessWidget {
             height: 54,
             decoration: BoxDecoration(
               color: hasErr
-                  ? _C.red.withOpacity(0.04)
+                  ? context.colors.red.withOpacity(0.04)
                   : hasDist
-                      ? _C.greenLight
-                      : _C.surfaceAlt,
+                      ? context.colors.greenLight
+                      : context.colors.surfaceAlt,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: hasErr
-                    ? _C.red.withOpacity(0.6)
+                    ? context.colors.red.withOpacity(0.6)
                     : hasDist
-                        ? _C.darkGreen
-                        : _C.border,
+                        ? context.colors.darkGreen
+                        : context.colors.border,
                 width: hasDist ? 1.5 : 1.0,
               ),
               boxShadow: hasDist && !hasErr
                   ? [
                       BoxShadow(
-                          color: _C.darkGreen.withOpacity(0.10),
+                          color: context.colors.darkGreen.withOpacity(0.10),
                           blurRadius: 10,
                           offset: const Offset(0, 3))
                     ]
@@ -886,12 +867,12 @@ class _GpsDistrictField extends StatelessWidget {
                 // alignment: Alignment.centerLeft,
 
                 child: isLocating
-                    ? const SizedBox(
+                    ? SizedBox(
                         key: ValueKey('spin'),
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2.2, color: _C.darkGreen))
+                            strokeWidth: 2.2, color: context.colors.darkGreen))
                     : Icon(
                         key: ValueKey(hasDist),
                         hasDist
@@ -899,10 +880,10 @@ class _GpsDistrictField extends StatelessWidget {
                             : Icons.my_location_rounded,
                         size: 20,
                         color: hasErr
-                            ? _C.red
+                            ? context.colors.red
                             : hasDist
-                                ? _C.darkGreen
-                                : _C.textSecondary),
+                                ? context.colors.darkGreen
+                                : context.colors.textSecondary),
               ),
 
               const SizedBox(width: 12),
@@ -919,7 +900,7 @@ class _GpsDistrictField extends StatelessWidget {
                           child: Text('লোকেশন খোঁজা হচ্ছে...',
                               textAlign: TextAlign.left,
                               style: TextStyle(
-                                  color: _C.darkGreen.withOpacity(0.7),
+                                  color: context.colors.darkGreen.withOpacity(0.7),
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500)))
                       : hasDist
@@ -928,8 +909,8 @@ class _GpsDistrictField extends StatelessWidget {
                               width: double.infinity,
                               child: Text(district!,
                                   textAlign: TextAlign.left,
-                                  style: const TextStyle(
-                                      color: _C.darkGreen,
+                                  style: TextStyle(
+                                      color: context.colors.darkGreen,
                                       fontSize: 15,
                                       fontWeight: FontWeight.w500)))
                           : SizedBox(
@@ -939,8 +920,8 @@ class _GpsDistrictField extends StatelessWidget {
                                   textAlign: TextAlign.left,
                                   style: TextStyle(
                                       color: hasErr
-                                          ? _C.red.withOpacity(0.8)
-                                          : _C.textHint,
+                                          ? context.colors.red.withOpacity(0.8)
+                                          : context.colors.textHint,
                                       fontSize: 14))),
                 ),
               ),
@@ -958,20 +939,20 @@ class _GpsDistrictField extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color: _C.darkGreen.withOpacity(0.10),
+                              color: context.colors.darkGreen.withOpacity(0.10),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child:
                                 Row(mainAxisSize: MainAxisSize.min, children: [
                               Icon(Icons.refresh_rounded,
                                   size: 12,
-                                  color: _C.darkGreen.withOpacity(0.75)),
+                                  color: context.colors.darkGreen.withOpacity(0.75)),
                               const SizedBox(width: 4),
                               Text('পরিবর্তন',
                                   style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
-                                      color: _C.darkGreen.withOpacity(0.85))),
+                                      color: context.colors.darkGreen.withOpacity(0.85))),
                             ]),
                           ),
                         ),
@@ -983,7 +964,7 @@ class _GpsDistrictField extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: hasErr ? _C.red : _C.darkGreen,
+                            color: hasErr ? context.colors.red : context.colors.darkGreen,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Text('GPS',
@@ -1008,12 +989,12 @@ class _GpsDistrictField extends StatelessWidget {
               ? Padding(
                   padding: const EdgeInsets.only(top: 6, left: 4),
                   child: Row(children: [
-                    const Icon(Icons.error_rounded, size: 13, color: _C.red),
+                    Icon(Icons.error_rounded, size: 13, color: context.colors.red),
                     const SizedBox(width: 6),
                     Expanded(
                         child: Text(error!,
-                            style: const TextStyle(
-                                color: _C.red,
+                            style: TextStyle(
+                                color: context.colors.red,
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w500))),
                   ]),
@@ -1022,12 +1003,12 @@ class _GpsDistrictField extends StatelessWidget {
                   ? Padding(
                       padding: const EdgeInsets.only(top: 6, left: 4),
                       child: Row(children: [
-                        const Icon(Icons.gps_fixed_rounded,
-                            size: 11, color: _C.green),
+                        Icon(Icons.gps_fixed_rounded,
+                            size: 11, color: context.colors.green),
                         const SizedBox(width: 5),
-                        const Text('GPS থেকে নির্ধারিত — পরিবর্তন করতে ↺ চাপুন',
+                        Text('GPS থেকে নির্ধারিত — পরিবর্তন করতে ↺ চাপুন',
                             style: TextStyle(
-                                color: _C.green,
+                                color: context.colors.green,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500)),
                       ]),
@@ -1058,7 +1039,7 @@ class _GenderSelector extends StatelessWidget {
       children: [
         Text('লিঙ্গ',
             style: TextStyle(
-                color: hasErr ? _C.red : _C.textPrimary,
+                color: hasErr ? context.colors.red : context.colors.textPrimary,
                 fontWeight: FontWeight.w600,
                 fontSize: 13)),
         const SizedBox(height: 8),
@@ -1076,23 +1057,23 @@ class _GenderSelector extends StatelessWidget {
                   height: 54,
                   decoration: BoxDecoration(
                     color: sel
-                        ? _C.greenLight
+                        ? context.colors.greenLight
                         : hasErr
-                            ? _C.red.withOpacity(0.04)
-                            : _C.surfaceAlt,
+                            ? context.colors.red.withOpacity(0.04)
+                            : context.colors.surfaceAlt,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: sel
-                          ? _C.darkGreen
+                          ? context.colors.darkGreen
                           : hasErr
-                              ? _C.red.withOpacity(0.5)
-                              : _C.border,
+                              ? context.colors.red.withOpacity(0.5)
+                              : context.colors.border,
                       width: sel ? 1.5 : 1.0,
                     ),
                     boxShadow: sel
                         ? [
                             BoxShadow(
-                                color: _C.darkGreen.withOpacity(0.08),
+                                color: context.colors.darkGreen.withOpacity(0.08),
                                 blurRadius: 8,
                                 offset: const Offset(0, 3))
                           ]
@@ -1104,10 +1085,10 @@ class _GenderSelector extends StatelessWidget {
                         Icon(opt.icon,
                             size: 20,
                             color: sel
-                                ? _C.darkGreen
+                                ? context.colors.darkGreen
                                 : hasErr
-                                    ? _C.red
-                                    : _C.textSecondary),
+                                    ? context.colors.red
+                                    : context.colors.textSecondary),
                         const SizedBox(height: 3),
                         Text(opt.label,
                             style: TextStyle(
@@ -1115,10 +1096,10 @@ class _GenderSelector extends StatelessWidget {
                                 fontWeight:
                                     sel ? FontWeight.w700 : FontWeight.w500,
                                 color: sel
-                                    ? _C.darkGreen
+                                    ? context.colors.darkGreen
                                     : hasErr
-                                        ? _C.red
-                                        : _C.textSecondary)),
+                                        ? context.colors.red
+                                        : context.colors.textSecondary)),
                       ]),
                 ),
               ),
@@ -1131,11 +1112,11 @@ class _GenderSelector extends StatelessWidget {
               ? Padding(
                   padding: const EdgeInsets.only(top: 6, left: 4),
                   child: Row(children: [
-                    const Icon(Icons.error_rounded, size: 13, color: _C.red),
+                    Icon(Icons.error_rounded, size: 13, color: context.colors.red),
                     const SizedBox(width: 6),
                     Text(error!,
-                        style: const TextStyle(
-                            color: _C.red,
+                        style: TextStyle(
+                            color: context.colors.red,
                             fontSize: 11.5,
                             fontWeight: FontWeight.w500)),
                   ]))
@@ -1169,10 +1150,10 @@ class _DRow extends StatelessWidget {
           const SizedBox(width: 9),
           Expanded(
               child: Text(text,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
-                      color: _C.textPrimary,
+                      color: context.colors.textPrimary,
                       height: 1.35))),
         ]),
       );
@@ -1232,18 +1213,18 @@ class _FieldState extends State<_Field> {
   Widget build(BuildContext context) {
     final hasErr = widget.error != null && widget.error!.isNotEmpty;
     final ic = hasErr
-        ? _C.red
+        ? context.colors.red
         : _focused
-            ? _C.darkGreen
-            : _C.textSecondary;
+            ? context.colors.darkGreen
+            : context.colors.textSecondary;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(widget.label,
           style: TextStyle(
               color: hasErr
-                  ? _C.red
+                  ? context.colors.red
                   : _focused
-                      ? _C.darkGreen
-                      : _C.textPrimary,
+                      ? context.colors.darkGreen
+                      : context.colors.textPrimary,
               fontWeight: FontWeight.w600,
               fontSize: 13)),
       const SizedBox(height: 8),
@@ -1254,7 +1235,7 @@ class _FieldState extends State<_Field> {
           boxShadow: _focused && !hasErr
               ? [
                   BoxShadow(
-                      color: _C.darkGreen.withOpacity(0.08),
+                      color: context.colors.darkGreen.withOpacity(0.08),
                       blurRadius: 12,
                       offset: const Offset(0, 4))
                 ]
@@ -1268,32 +1249,32 @@ class _FieldState extends State<_Field> {
           onChanged: widget.onChanged,
           onEditingComplete: widget.onSubmit,
           onSubmitted: (_) => widget.onSubmit(),
-          style: const TextStyle(
-              color: _C.textPrimary, fontWeight: FontWeight.w500, fontSize: 15),
+          style: TextStyle(
+              color: context.colors.textPrimary, fontWeight: FontWeight.w500, fontSize: 15),
           decoration: InputDecoration(
             hintText: widget.hint,
-            hintStyle: const TextStyle(color: _C.textHint, fontSize: 14),
+            hintStyle: TextStyle(color: context.colors.textHint, fontSize: 14),
             prefixIcon: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Icon(widget.icon, size: 20, color: ic)),
             prefixIconConstraints: const BoxConstraints(minWidth: 54),
             filled: true,
             fillColor: hasErr
-                ? _C.red.withOpacity(0.04)
+                ? context.colors.red.withOpacity(0.04)
                 : _focused
-                    ? _C.cardBg
-                    : _C.surfaceAlt,
+                    ? context.colors.cardBg
+                    : context.colors.surfaceAlt,
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: _C.border)),
+                borderSide: BorderSide(color: context.colors.border)),
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide(
-                    color: hasErr ? _C.red.withOpacity(0.5) : _C.border)),
+                    color: hasErr ? context.colors.red.withOpacity(0.5) : context.colors.border)),
             focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide(
-                    color: hasErr ? _C.red : _C.darkGreen, width: 1.5)),
+                    color: hasErr ? context.colors.red : context.colors.darkGreen, width: 1.5)),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           ),
@@ -1305,11 +1286,11 @@ class _FieldState extends State<_Field> {
             ? Padding(
                 padding: const EdgeInsets.only(top: 6, left: 4),
                 child: Row(children: [
-                  const Icon(Icons.error_rounded, size: 13, color: _C.red),
+                  Icon(Icons.error_rounded, size: 13, color: context.colors.red),
                   const SizedBox(width: 6),
                   Text(widget.error!,
-                      style: const TextStyle(
-                          color: _C.red,
+                      style: TextStyle(
+                          color: context.colors.red,
                           fontSize: 11.5,
                           fontWeight: FontWeight.w500)),
                 ]))
@@ -1371,18 +1352,18 @@ class _PasswordFieldState extends State<_PasswordField> {
   Widget build(BuildContext context) {
     final hasErr = widget.error != null && widget.error!.isNotEmpty;
     final ic = hasErr
-        ? _C.red
+        ? context.colors.red
         : _focused
-            ? _C.darkGreen
-            : _C.textSecondary;
+            ? context.colors.darkGreen
+            : context.colors.textSecondary;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(widget.label,
           style: TextStyle(
               color: hasErr
-                  ? _C.red
+                  ? context.colors.red
                   : _focused
-                      ? _C.darkGreen
-                      : _C.textPrimary,
+                      ? context.colors.darkGreen
+                      : context.colors.textPrimary,
               fontWeight: FontWeight.w600,
               fontSize: 13)),
       const SizedBox(height: 8),
@@ -1393,7 +1374,7 @@ class _PasswordFieldState extends State<_PasswordField> {
           boxShadow: _focused && !hasErr
               ? [
                   BoxShadow(
-                      color: _C.darkGreen.withOpacity(0.08),
+                      color: context.colors.darkGreen.withOpacity(0.08),
                       blurRadius: 12,
                       offset: const Offset(0, 4))
                 ]
@@ -1407,11 +1388,11 @@ class _PasswordFieldState extends State<_PasswordField> {
           onChanged: widget.onChanged,
           onEditingComplete: widget.onSubmit,
           onSubmitted: (_) => widget.onSubmit(),
-          style: const TextStyle(
-              color: _C.textPrimary, fontWeight: FontWeight.w500, fontSize: 15),
+          style: TextStyle(
+              color: context.colors.textPrimary, fontWeight: FontWeight.w500, fontSize: 15),
           decoration: InputDecoration(
             hintText: widget.hint,
-            hintStyle: const TextStyle(color: _C.textHint, fontSize: 14),
+            hintStyle: TextStyle(color: context.colors.textHint, fontSize: 14),
             prefixIcon: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Icon(Icons.lock_outline_rounded, size: 20, color: ic)),
@@ -1425,26 +1406,26 @@ class _PasswordFieldState extends State<_PasswordField> {
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
                       size: 20,
-                      color: _focused ? _C.darkGreen : _C.textSecondary)),
+                      color: _focused ? context.colors.darkGreen : context.colors.textSecondary)),
             ),
             suffixIconConstraints: const BoxConstraints(minWidth: 50),
             filled: true,
             fillColor: hasErr
-                ? _C.red.withOpacity(0.04)
+                ? context.colors.red.withOpacity(0.04)
                 : _focused
-                    ? _C.cardBg
-                    : _C.surfaceAlt,
+                    ? context.colors.cardBg
+                    : context.colors.surfaceAlt,
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: _C.border)),
+                borderSide: BorderSide(color: context.colors.border)),
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide(
-                    color: hasErr ? _C.red.withOpacity(0.5) : _C.border)),
+                    color: hasErr ? context.colors.red.withOpacity(0.5) : context.colors.border)),
             focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide(
-                    color: hasErr ? _C.red : _C.darkGreen, width: 1.5)),
+                    color: hasErr ? context.colors.red : context.colors.darkGreen, width: 1.5)),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           ),
@@ -1456,11 +1437,11 @@ class _PasswordFieldState extends State<_PasswordField> {
             ? Padding(
                 padding: const EdgeInsets.only(top: 6, left: 4),
                 child: Row(children: [
-                  const Icon(Icons.error_rounded, size: 13, color: _C.red),
+                  Icon(Icons.error_rounded, size: 13, color: context.colors.red),
                   const SizedBox(width: 6),
                   Text(widget.error!,
-                      style: const TextStyle(
-                          color: _C.red,
+                      style: TextStyle(
+                          color: context.colors.red,
                           fontSize: 11.5,
                           fontWeight: FontWeight.w500)),
                 ]))
@@ -1495,10 +1476,10 @@ class _StrengthBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = _score;
     final color = s <= 1
-        ? _C.red
+        ? context.colors.red
         : s <= 3
-            ? _C.amber
-            : _C.green;
+            ? context.colors.amber
+            : context.colors.green;
     final label = s <= 1
         ? 'দুর্বল'
         : s <= 3
@@ -1511,7 +1492,7 @@ class _StrengthBar extends StatelessWidget {
               child: LinearProgressIndicator(
                   value: s / 5,
                   minHeight: 4,
-                  backgroundColor: _C.border,
+                  backgroundColor: context.colors.border,
                   valueColor: AlwaysStoppedAnimation(color)))),
       const SizedBox(width: 12),
       Text(label,
@@ -1532,16 +1513,16 @@ class _ErrorBanner extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-            color: _C.redLight,
+            color: context.colors.redLight,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _C.red.withOpacity(0.25))),
+            border: Border.all(color: context.colors.red.withOpacity(0.25))),
         child: Row(children: [
-          const Icon(Icons.error_outline_rounded, color: _C.red, size: 18),
+          Icon(Icons.error_outline_rounded, color: context.colors.red, size: 18),
           const SizedBox(width: 10),
           Expanded(
               child: Text(message,
-                  style: const TextStyle(
-                      color: _C.red,
+                  style: TextStyle(
+                      color: context.colors.red,
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500))),
         ]),
@@ -1568,12 +1549,12 @@ class _PrimaryButton extends StatelessWidget {
       height: 54,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: enabled ? _C.darkGreen : _C.borderMid,
+        color: enabled ? context.colors.darkGreen : context.colors.borderMid,
         borderRadius: BorderRadius.circular(16),
         boxShadow: enabled
             ? [
                 BoxShadow(
-                    color: _C.darkGreen.withOpacity(0.3),
+                    color: context.colors.darkGreen.withOpacity(0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 6))
               ]

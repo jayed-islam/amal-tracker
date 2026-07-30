@@ -10,42 +10,12 @@ import '../../tracker/models/tracker_model.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/providers/cache_provider.dart';
 import '../../../shared/widgets/delayed_progress_indicator.dart';
+import 'package:amal_tracker/core/theme/app_colors.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
-
-class _C {
-  static const pageBg = Color(0xFFF4F6F1);
-  static const cardBg = Color(0xFFFFFFFF);
-  static const darkGreen = Color(0xFF0E3D22);
-  static const midGreen = Color(0xFF1B7045);
-  static const gold = Color(0xFFD4A843);
-  static const goldLight = Color(0xFFFFF3E0);
-  static const goldPale = Color(0xFFFFFBF0);
-  static const green = Color(0xFF16A34A);
-  static const greenLight = Color(0xFFE8F5EE);
-  static const amber = Color(0xFFFF6B35);
-  static const red = Color(0xFFEF4444);
-  static const textPrimary = Color(0xFF0A1A0F);
-  static const textSecondary = Color(0xFF6B7C6E);
-  static const textHint = Color(0xFFABBAAE);
-  static const border = Color(0xFFE4EAE4);
-  static const borderMid = Color(0xFFC8D4C8);
-  static const rankGold = Color(0xFFD4A843);
-  static const rankSilver = Color(0xFF94A3B8);
-  static const rankBronze = Color(0xFFCD7F32);
-  static const avatar1 = Color(0xFF0E3D22);
-  static const avatar2 = Color(0xFF374151);
-  static const avatar3 = Color(0xFF7C3AED);
-  static const avatar4 = Color(0xFF0891B2);
-  static const avatar5 = Color(0xFF9D174D);
-  static const districtBg = Color(0xFFEDF2ED);
-  static const districtText = Color(0xFF2D5A3D);
-  static const serialBg = Color(0xFFF0F4F0);
-  static const serialText = Color(0xFF8FA98F);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // LEADERBOARD SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
@@ -120,7 +90,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
 
     // Lazy check-and-refresh for Leaderboard Tab data
     final activeIndex = ref.watch(activeTabIndexProvider);
-    if (activeIndex == 3) {
+    if (activeIndex == 4) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           checkAndRefreshTab(ref, CacheTab.leaderboard, () {
@@ -147,11 +117,11 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
-        backgroundColor: _C.pageBg,
+        backgroundColor: context.colors.pageBg,
         body: Stack(
           children: [
             RefreshIndicator(
-              color: _C.darkGreen,
+              color: context.colors.darkGreen,
               onRefresh: _refresh,
               child: CustomScrollView(
                 controller: _sc,
@@ -162,7 +132,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
                     pinned: true,
                     expandedHeight: 0,
                     toolbarHeight: 56,
-                    backgroundColor: _C.darkGreen,
+                    backgroundColor: context.colors.darkGreen,
                     surfaceTintColor: Colors.transparent,
                     shadowColor: Colors.transparent,
                     automaticallyImplyLeading: false,
@@ -337,7 +307,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
             .animate()
             .fadeIn(delay: 100.ms),
         const SizedBox(height: 12),
-        if (top3.length >= 2)
+        if (top3.isNotEmpty)
           _PodiumCard(
             top3: top3,
             year: filter.year,
@@ -347,14 +317,6 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
               .animate()
               .fadeIn(delay: 120.ms, duration: 320.ms)
               .slideY(begin: 0.08, curve: Curves.easeOut),
-        if (top3.length == 1)
-          _SingleEntryCard(
-                  entry: top3[0],
-                  year: filter.year,
-                  month: filter.month,
-                  isMaleUser: isMaleUser)
-              .animate()
-              .fadeIn(delay: 120.ms, duration: 320.ms),
         const SizedBox(height: 24),
         if (rest.isNotEmpty) ...[
           _SectionHeader(title: 'সম্পূর্ণ তালিকা', emoji: '📋')
@@ -363,9 +325,9 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
           const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(
-              color: _C.cardBg,
+              color: context.colors.cardBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _C.border, width: 0.5),
+              border: Border.all(color: context.colors.border, width: 0.5),
             ),
             child: Column(
               children: List.generate(rest.length, (i) {
@@ -383,12 +345,12 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
         ],
         if (state.isLoadingMore) ...[
           const SizedBox(height: 20),
-          const Center(
+          Center(
               child: SizedBox(
                   width: 22,
                   height: 22,
                   child: CircularProgressIndicator(
-                      color: _C.darkGreen, strokeWidth: 2))),
+                      color: context.colors.darkGreen, strokeWidth: 2))),
           const SizedBox(height: 20),
         ] else
           const SizedBox(height: 8),
@@ -412,7 +374,7 @@ class _HeroBand extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: _C.darkGreen,
+      color: context.colors.darkGreen,
       child: Stack(children: [
         Positioned(
             top: -45,
@@ -490,7 +452,8 @@ class _MyRankCard extends StatelessWidget {
           width: 54,
           height: 54,
           decoration: BoxDecoration(
-              color: _C.gold, borderRadius: BorderRadius.circular(13)),
+              color: context.colors.gold,
+              borderRadius: BorderRadius.circular(13)),
           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
             Text(data.rank != null ? '#${data.rank}' : '—',
                 style: const TextStyle(
@@ -531,7 +494,8 @@ class _MyRankCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
-                    color: _C.gold, borderRadius: BorderRadius.circular(20)),
+                    color: context.colors.gold,
+                    borderRadius: BorderRadius.circular(20)),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   const Text('🏆', style: TextStyle(fontSize: 9)),
                   const SizedBox(width: 3),
@@ -623,7 +587,7 @@ class _MyRankErrorCard extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-              color: _C.red.withOpacity(0.2),
+              color: context.colors.red.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12)),
           child: const Icon(Icons.error_outline_rounded,
               color: Colors.white, size: 24),
@@ -668,8 +632,8 @@ class _SectionHeader extends StatelessWidget {
       Text(emoji, style: const TextStyle(fontSize: 14)),
       const SizedBox(width: 7),
       Text(title,
-          style: const TextStyle(
-              color: _C.textPrimary,
+          style: TextStyle(
+              color: context.colors.textPrimary,
               fontWeight: FontWeight.w800,
               fontSize: 15,
               letterSpacing: -0.2)),
@@ -691,15 +655,19 @@ class _SerialBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
-        color: onDark ? Colors.white.withOpacity(0.12) : _C.serialBg,
+        color:
+            onDark ? Colors.white.withOpacity(0.12) : context.colors.serialBg,
         borderRadius: BorderRadius.circular(5),
         border: Border.all(
-            color: onDark ? Colors.white.withOpacity(0.18) : _C.border,
+            color:
+                onDark ? Colors.white.withOpacity(0.18) : context.colors.border,
             width: 0.5),
       ),
       child: Text(id,
           style: TextStyle(
-              color: onDark ? Colors.white.withOpacity(0.55) : _C.serialText,
+              color: onDark
+                  ? Colors.white.withOpacity(0.55)
+                  : context.colors.serialText,
               fontSize: 8.5,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.2)),
@@ -720,20 +688,26 @@ class _DistrictPill extends StatelessWidget {
       padding: EdgeInsets.symmetric(
           horizontal: compact ? 5 : 6, vertical: compact ? 2 : 2.5),
       decoration: BoxDecoration(
-        color: onDark ? Colors.white.withOpacity(0.12) : _C.districtBg,
+        color:
+            onDark ? Colors.white.withOpacity(0.12) : context.colors.districtBg,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-            color: onDark ? Colors.white.withOpacity(0.18) : _C.border,
+            color:
+                onDark ? Colors.white.withOpacity(0.18) : context.colors.border,
             width: 0.5),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(Icons.location_on_rounded,
             size: compact ? 7.5 : 8.5,
-            color: onDark ? Colors.white.withOpacity(0.55) : _C.districtText),
+            color: onDark
+                ? Colors.white.withOpacity(0.55)
+                : context.colors.districtText),
         const SizedBox(width: 2),
         Text(district,
             style: TextStyle(
-                color: onDark ? Colors.white.withOpacity(0.7) : _C.districtText,
+                color: onDark
+                    ? Colors.white.withOpacity(0.7)
+                    : context.colors.districtText,
                 fontSize: compact ? 8.5 : 9.5,
                 fontWeight: FontWeight.w600)),
       ]),
@@ -772,81 +746,66 @@ class _PodiumCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final first = top3[0];
-    final second = top3[1];
+    final second = top3.length > 1 ? top3[1] : null;
     final third = top3.length > 2 ? top3[2] : null;
+
+    final title = top3.length == 1
+        ? 'এই মাসের শীর্ষ আমলকারী'
+        : (top3.length == 2 ? 'এই মাসের শীর্ষ দুইজন' : 'এই মাসের শীর্ষ তিনজন');
 
     return Container(
       decoration: BoxDecoration(
-          color: _C.cardBg,
+          color: context.colors.cardBg,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _C.border, width: 0.5)),
+          border: Border.all(color: context.colors.border, width: 0.5)),
       child: Column(children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             const Text('🌟', style: TextStyle(fontSize: 13)),
             const SizedBox(width: 6),
-            Text(
-                top3.length == 2
-                    ? 'এই মাসের শীর্ষ দুইজন'
-                    : 'এই মাসের শীর্ষ তিনজন',
-                style: const TextStyle(
-                    color: _C.textSecondary,
+            Text(title,
+                style: TextStyle(
+                    color: context.colors.textSecondary,
                     fontSize: 11,
                     fontWeight: FontWeight.w600)),
             const SizedBox(width: 6),
             const Text('🌟', style: TextStyle(fontSize: 13)),
           ]),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
         Padding(
-          padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+          padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
           child: Row(
-            mainAxisAlignment: top3.length == 2
-                ? MainAxisAlignment.center
-                : MainAxisAlignment.spaceEvenly,
+            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
-            children: top3.length == 2
-                ? [
-                    _PodiumPillar(
-                        entry: second,
-                        rank: 2,
-                        year: year,
-                        month: month,
-                        isMaleUser: isMaleUser),
-                    const SizedBox(width: 12),
-                    _PodiumPillar(
-                        entry: first,
-                        rank: 1,
-                        isFirst: true,
-                        year: year,
-                        month: month,
-                        isMaleUser: isMaleUser),
-                  ]
-                : [
-                    _PodiumPillar(
-                        entry: second,
-                        rank: 2,
-                        year: year,
-                        month: month,
-                        isMaleUser: isMaleUser),
-                    _PodiumPillar(
-                        entry: first,
-                        rank: 1,
-                        isFirst: true,
-                        year: year,
-                        month: month,
-                        isMaleUser: isMaleUser),
-                    if (third != null)
-                      _PodiumPillar(
-                          entry: third,
-                          rank: 3,
-                          year: year,
-                          month: month,
-                          isMaleUser: isMaleUser)
-                    else
-                      const SizedBox(width: 88),
-                  ],
+            children: [
+              if (second != null) ...[
+                _PodiumPillar(
+                    entry: second,
+                    rank: 2,
+                    year: year,
+                    month: month,
+                    isMaleUser: isMaleUser),
+                const SizedBox(width: 12),
+              ],
+              _PodiumPillar(
+                  entry: first,
+                  rank: 1,
+                  isFirst: true,
+                  year: year,
+                  month: month,
+                  isMaleUser: isMaleUser),
+              if (third != null) ...[
+                const SizedBox(width: 12),
+                _PodiumPillar(
+                    entry: third,
+                    rank: 3,
+                    year: year,
+                    month: month,
+                    isMaleUser: isMaleUser),
+              ],
+            ],
           ),
         ),
       ]),
@@ -870,11 +829,11 @@ class _PodiumPillar extends StatelessWidget {
     this.isFirst = false,
   });
 
-  Color get _rankColor => rank == 1
-      ? _C.rankGold
+  Color _rankColor(BuildContext context) => rank == 1
+      ? context.colors.rankGold
       : rank == 2
-          ? _C.rankSilver
-          : _C.rankBronze;
+          ? context.colors.rankSilver
+          : context.colors.rankBronze;
 
   String get _rankEmoji => rank == 1
       ? '🥇'
@@ -882,17 +841,18 @@ class _PodiumPillar extends StatelessWidget {
           ? '🥈'
           : '🥉';
   double get _avatarSize => isFirst
-      ? 68.0
+      ? 60.0
       : rank == 2
-          ? 56.0
-          : 50.0;
+          ? 48.0
+          : 44.0;
   double get _pillarWidth => isFirst
-      ? 112.0
+      ? 100.0
       : rank == 2
-          ? 96.0
-          : 88.0;
-  EdgeInsets get _pillarPadding =>
-      EdgeInsets.symmetric(vertical: isFirst ? 16 : 12, horizontal: 6);
+          ? 88.0
+          : 80.0;
+  EdgeInsets get _pillarPadding => EdgeInsets.symmetric(
+      vertical: rank == 1 ? 6.0 : (rank == 2 ? 5.0 : 4.0),
+      horizontal: 4.0);
 
   @override
   Widget build(BuildContext context) {
@@ -900,16 +860,31 @@ class _PodiumPillar extends StatelessWidget {
     final initial = entry.name.isNotEmpty ? entry.name[0].toUpperCase() : 'U';
 
     return GestureDetector(
-      onTap: canView
-          ? () {
-              HapticFeedback.selectionClick();
-              showPublicProfileSheet(context,
-                  entry: entry,
-                  year: year,
-                  month: month,
-                  isMaleUser: isMaleUser);
-            }
-          : null,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        if (canView) {
+          showPublicProfileSheet(context,
+              entry: entry,
+              year: year,
+              month: month,
+              isMaleUser: isMaleUser);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Row(children: [
+              const Icon(Icons.lock_outline_rounded, color: Colors.white, size: 16),
+              const SizedBox(width: 8),
+              Text(entry.isProfilePublic
+                  ? 'নিরাপত্তা জনিত কারণে আপনি এই প্রোফাইলটি দেখতে পারবেন না।'
+                  : 'এই ব্যবহারকারীর প্রোফাইলটি ব্যক্তিগত (Private) করা আছে।'),
+            ]),
+            backgroundColor: context.colors.textPrimary,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            duration: const Duration(seconds: 2),
+          ));
+        }
+      },
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
         width: _pillarWidth,
@@ -921,7 +896,7 @@ class _PodiumPillar extends StatelessWidget {
                   delay: Duration(milliseconds: rank * 80),
                   duration: 380.ms,
                   curve: Curves.elasticOut),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
 
           // Avatar
           Stack(
@@ -935,55 +910,63 @@ class _PodiumPillar extends StatelessWidget {
                     decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: RadialGradient(colors: [
-                          _rankColor.withOpacity(0.20),
-                          _rankColor.withOpacity(0.0),
+                          _rankColor(context).withOpacity(0.20),
+                          _rankColor(context).withOpacity(0.0),
                         ])),
                   ),
                 Container(
                   width: _avatarSize,
                   height: _avatarSize,
                   decoration: BoxDecoration(
-                      color: _rankColor.withOpacity(0.10),
+                      color: _rankColor(context).withOpacity(0.10),
                       shape: BoxShape.circle,
                       border: Border.all(
-                          color: _rankColor, width: isFirst ? 2.5 : 2.0),
+                          color: _rankColor(context),
+                          width: isFirst ? 2.5 : 2.0),
                       boxShadow: [
                         BoxShadow(
-                            color:
-                                _rankColor.withOpacity(isFirst ? 0.30 : 0.15),
+                            color: _rankColor(context)
+                                .withOpacity(isFirst ? 0.30 : 0.15),
                             blurRadius: isFirst ? 14 : 8)
                       ]),
                   child: Center(
                       child: Text(initial,
                           style: TextStyle(
-                              color: _rankColor,
+                              color: _rankColor(context),
                               fontSize: isFirst
-                                  ? 28
+                                  ? 24
                                   : rank == 2
-                                      ? 22
-                                      : 19,
+                                      ? 18
+                                      : 16,
                               fontWeight: FontWeight.w900,
                               height: 1))),
                 ),
                 // Public/Private dot
                 Positioned(
-                  top: isFirst ? 0 : 1,
-                  right: isFirst ? 0 : 1,
+                  top: isFirst ? -2 : -1,
+                  right: isFirst ? -2 : -1,
                   child: Container(
-                    width: 18,
-                    height: 18,
+                    width: 16,
+                    height: 16,
                     decoration: BoxDecoration(
-                        color: canView ? const Color(0xFF0891B2) : _C.textHint,
+                        color: canView
+                            ? context.colors.avatar4
+                            : context.colors.textHint,
                         shape: BoxShape.circle,
-                        border: Border.all(color: _C.cardBg, width: 2)),
+                        border:
+                            Border.all(color: context.colors.cardBg, width: 2)),
                     child: Icon(
                         canView ? Icons.visibility_rounded : Icons.lock_rounded,
-                        size: 9,
-                        color: Colors.white),
+                        size: 8,
+                        color: canView
+                            ? Colors.white
+                            : (Theme.of(context).brightness == Brightness.dark
+                                ? Colors.black87
+                                : Colors.white)),
                   ),
                 ),
               ]),
-          const SizedBox(height: 10),
+          const SizedBox(height: 5),
 
           // Name
           Text(entry.name.split(' ').first,
@@ -991,46 +974,47 @@ class _PodiumPillar extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                  color: _C.textPrimary,
+                  color: context.colors.textPrimary,
                   fontSize: isFirst ? 13.5 : 11.5,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.2)),
-          const SizedBox(height: 3),
+          const SizedBox(height: 1),
 
           // ID
           if (entry.id.isNotEmpty)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
               decoration: BoxDecoration(
-                  color: _C.serialBg,
+                  color: context.colors.serialBg,
                   borderRadius: BorderRadius.circular(5),
-                  border: Border.all(color: _C.border, width: 0.5)),
+                  border: Border.all(color: context.colors.border, width: 0.5)),
               child: Text(entry.id,
-                  style: const TextStyle(
-                      color: _C.serialText,
-                      fontSize: 9,
+                  style: TextStyle(
+                      color: context.colors.serialText,
+                      fontSize: 8.5,
                       fontWeight: FontWeight.w600)),
             ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 1),
 
           // District
           if (entry.district.isNotEmpty)
             Text(entry.district,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                    color: _C.districtText,
-                    fontSize: 9.5,
+                style: TextStyle(
+                    color: context.colors.districtText,
+                    fontSize: 9.0,
                     fontWeight: FontWeight.w600)),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
 
           // Pillar bar — points বাদ, completion + farz + jamaat
           _PillarBar(
             entry: entry,
             rank: rank,
             isFirst: isFirst,
-            rankColor: _rankColor,
+            rankColor: _rankColor(context),
             pillarWidth: _pillarWidth,
             pillarPadding: _pillarPadding,
+            pillarHeight: rank == 1 ? 108.0 : (rank == 2 ? 90.0 : 76.0),
           ),
         ]),
       ),
@@ -1047,6 +1031,7 @@ class _PillarBar extends StatelessWidget {
   final Color rankColor;
   final double pillarWidth;
   final EdgeInsets pillarPadding;
+  final double pillarHeight;
 
   const _PillarBar({
     required this.entry,
@@ -1055,6 +1040,7 @@ class _PillarBar extends StatelessWidget {
     required this.rankColor,
     required this.pillarWidth,
     required this.pillarPadding,
+    required this.pillarHeight,
   });
 
   @override
@@ -1063,87 +1049,149 @@ class _PillarBar extends StatelessWidget {
     final farz = entry.farzCompletedDays;
     final jamaat = entry.congregationDaysTotal;
     final streak = entry.streakDays;
+    final daysActive = entry.daysActive;
 
     return Container(
       width: pillarWidth,
+      height: pillarHeight,
+      clipBehavior: Clip.antiAlias, // Smoothly clips children to this container's rounded corners
       decoration: BoxDecoration(
         gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [rankColor.withOpacity(0.10), rankColor.withOpacity(0.04)]),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-        border: Border(
-          top: BorderSide(color: rankColor, width: 2.5),
-          left: BorderSide(color: rankColor.withOpacity(0.25), width: 0.75),
-          right: BorderSide(color: rankColor.withOpacity(0.25), width: 0.75),
-        ),
-      ),
-      child: Padding(
-        padding: pillarPadding,
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          // Completion % — primary metric
-          Container(
-            width: 28,
-            height: 2,
-            margin: const EdgeInsets.only(bottom: 5),
-            decoration: BoxDecoration(
-                color: rankColor.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(2)),
+            colors: [
+              rankColor.withOpacity(0.9),
+              rankColor.withOpacity(0.55),
+            ]),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+        boxShadow: [
+          BoxShadow(
+            color: rankColor.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
           ),
-          Text('$pct%',
-              style: TextStyle(
-                  color: rankColor,
-                  fontWeight: FontWeight.w900,
-                  fontSize: isFirst
-                      ? 22
-                      : rank == 2
-                          ? 18
-                          : 15,
-                  height: 1,
-                  letterSpacing: -0.5)),
-          const SizedBox(height: 2),
-          Text('ফরজ',
-              style: TextStyle(
-                  color: rankColor.withOpacity(0.65),
-                  fontSize: isFirst ? 9.5 : 8.5,
-                  fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          // Farz days pill
-          _PillarPill(
-              icon: Icons.check_rounded,
-              label: '$farz দিন',
+        ],
+        border: Border.all(color: Colors.white.withOpacity(0.2), width: 0.75),
+      ),
+      child: Stack(
+        children: [
+          // Top highlight line inside the pillar
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 2.5,
               color: rankColor,
-              isFirst: isFirst),
-          const SizedBox(height: 5),
-          // Jamaat pill
-          _PillarPill(
-              icon: Icons.people_rounded,
-              label: '$jamaat জামাত',
-              color: rankColor,
-              isFirst: isFirst),
-          // Streak
-          if (streak > 0) ...[
-            const SizedBox(height: 5),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-              decoration: BoxDecoration(
-                  color: const Color(0xFFFF6B00).withOpacity(0.10),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                      color: const Color(0xFFFF6B00).withOpacity(0.25),
-                      width: 0.75)),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                const Text('🔥', style: TextStyle(fontSize: 9)),
-                const SizedBox(width: 3),
-                Text('$streak দিন',
-                    style: TextStyle(
-                        color: const Color(0xFFFF6B00).withOpacity(0.9),
-                        fontSize: isFirst ? 9.5 : 8.5,
-                        fontWeight: FontWeight.w700)),
-              ]),
             ),
-          ],
-        ]),
+          ),
+          
+          Positioned.fill(
+            child: Padding(
+              padding: pillarPadding,
+              child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center, // Center contents horizontally
+              children: [
+                const SizedBox(height: 2), // Space for Positioned bar
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center, // Center text horizontally
+                  children: [
+                    Text(
+                      '$pct%',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: isFirst ? 16 : 13,
+                        height: 1,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      'সম্পন্ন',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.75),
+                        fontSize: isFirst ? 8.0 : 7.0,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center, // Center stats horizontally
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check_circle_rounded, size: 8, color: Colors.white.withOpacity(0.85)),
+                          const SizedBox(width: 1),
+                          Text(
+                            '$farz',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(Icons.people_rounded, size: 8, color: Colors.white.withOpacity(0.85)),
+                          const SizedBox(width: 1),
+                          Text(
+                            '$jamaat',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          if (streak > 0) ...[
+                            const SizedBox(width: 4),
+                            const Text('🔥', style: TextStyle(fontSize: 8)),
+                            const SizedBox(width: 0.5),
+                            Text(
+                              '$streak',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        '$daysActive দিন সক্রিয়',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 7.0,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                Text(
+                  '#$rank',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontWeight: FontWeight.w900,
+                    fontSize: isFirst ? 16 : 13,
+                    height: 1,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
       ),
     );
   }
@@ -1201,17 +1249,18 @@ class _RankTile extends StatelessWidget {
     required this.isMaleUser,
   });
 
-  static const _avatarColors = [
-    _C.avatar1,
-    _C.avatar2,
-    _C.avatar3,
-    _C.avatar4,
-    _C.avatar5,
-  ];
+  List<Color> _avatarColors(BuildContext context) => [
+        context.colors.avatar1,
+        context.colors.avatar2,
+        context.colors.avatar3,
+        context.colors.avatar4,
+        context.colors.avatar5,
+      ];
 
-  Color get _avatarColor =>
-      _avatarColors[(entry.rank - 4).clamp(0, _avatarColors.length - 1) %
-          _avatarColors.length];
+  Color _avatarColor(BuildContext context) {
+    final colors = _avatarColors(context);
+    return colors[(entry.rank - 4).clamp(0, colors.length - 1) % colors.length];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1223,26 +1272,42 @@ class _RankTile extends StatelessWidget {
     final jamaat = entry.congregationDaysTotal;
 
     return GestureDetector(
-      onTap: canView
-          ? () {
-              HapticFeedback.selectionClick();
-              showPublicProfileSheet(context,
-                  entry: entry,
-                  year: year,
-                  month: month,
-                  isMaleUser: isMaleUser);
-            }
-          : null,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        if (canView) {
+          showPublicProfileSheet(context,
+              entry: entry,
+              year: year,
+              month: month,
+              isMaleUser: isMaleUser);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Row(children: [
+              const Icon(Icons.lock_outline_rounded, color: Colors.white, size: 16),
+              const SizedBox(width: 8),
+              Text(entry.isProfilePublic
+                  ? 'নিরাপত্তা জনিত কারণে আপনি এই প্রোফাইলটি দেখতে পারবেন না।'
+                  : 'এই ব্যবহারকারীর প্রোফাইলটি ব্যক্তিগত (Private) করা আছে।'),
+            ]),
+            backgroundColor: context.colors.textPrimary,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            duration: const Duration(seconds: 2),
+          ));
+        }
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
-          color: isWinner ? _C.goldPale : Colors.transparent,
+          color: isWinner ? context.colors.goldPale : Colors.transparent,
           borderRadius: isLast
               ? const BorderRadius.vertical(bottom: Radius.circular(16))
               : null,
           border: isLast
               ? null
-              : const Border(bottom: BorderSide(color: _C.border, width: 0.5)),
+              : Border(
+                  bottom: BorderSide(color: context.colors.border, width: 0.5)),
         ),
         child: Row(children: [
           // Rank
@@ -1250,7 +1315,9 @@ class _RankTile extends StatelessWidget {
             width: 36,
             child: Text('#${entry.rank}',
                 style: TextStyle(
-                    color: isTop10 ? _C.darkGreen : _C.textHint,
+                    color: isTop10
+                        ? context.colors.darkGreen
+                        : context.colors.textHint,
                     fontWeight: FontWeight.w800,
                     fontSize: isTop10 ? 14 : 12,
                     height: 1)),
@@ -1262,7 +1329,9 @@ class _RankTile extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-                color: isTop10 ? _avatarColor : _C.textHint.withOpacity(0.4),
+                color: isTop10
+                    ? _avatarColor(context)
+                    : context.colors.textHint.withOpacity(0.4),
                 borderRadius: BorderRadius.circular(11)),
             child: Center(
                 child: Text(
@@ -1282,8 +1351,8 @@ class _RankTile extends StatelessWidget {
                 Row(children: [
                   Flexible(
                       child: Text(entry.name,
-                          style: const TextStyle(
-                              color: _C.textPrimary,
+                          style: TextStyle(
+                              color: context.colors.textPrimary,
                               fontWeight: FontWeight.w700,
                               fontSize: 13),
                           overflow: TextOverflow.ellipsis)),
@@ -1302,17 +1371,17 @@ class _RankTile extends StatelessWidget {
             Text('$pct%',
                 style: TextStyle(
                     color: isWinner
-                        ? _C.gold
+                        ? context.colors.gold
                         : isTop10
-                            ? _C.darkGreen
-                            : _C.textPrimary,
+                            ? context.colors.darkGreen
+                            : context.colors.textPrimary,
                     fontWeight: FontWeight.w900,
                     fontSize: 16,
                     height: 1)),
             const SizedBox(height: 2),
-            Text('$farz ফরজ · $jamaat জামাত',
-                style: const TextStyle(
-                    color: _C.textHint,
+            Text('$farz  ফরজ · $jamaat  জামাত · ${entry.daysActive}  দিন সক্রিয়',
+                style: TextStyle(
+                    color: context.colors.textHint,
                     fontSize: 9,
                     fontWeight: FontWeight.w500)),
             const SizedBox(height: 4),
@@ -1340,17 +1409,22 @@ class _MetaRow extends StatelessWidget {
       children: [
         if (entry.id.isNotEmpty)
           Text('ID: ${entry.id}',
-              style: const TextStyle(color: _C.textSecondary, fontSize: 10)),
+              style:
+                  TextStyle(color: context.colors.textSecondary, fontSize: 10)),
         if (entry.id.isNotEmpty && entry.district.isNotEmpty)
-          const Text('·', style: TextStyle(color: _C.textHint, fontSize: 10)),
+          Text('·',
+              style: TextStyle(color: context.colors.textHint, fontSize: 10)),
         if (entry.district.isNotEmpty) _DistrictPill(district: entry.district),
         if ((entry.id.isNotEmpty || entry.district.isNotEmpty) &&
             entry.streakDays > 0)
-          const Text('·', style: TextStyle(color: _C.textHint, fontSize: 10)),
+          Text('·',
+              style: TextStyle(color: context.colors.textHint, fontSize: 10)),
         if (entry.streakDays > 0)
           Text('🔥 ${entry.streakDays}',
-              style: const TextStyle(
-                  color: _C.amber, fontSize: 10, fontWeight: FontWeight.w600)),
+              style: TextStyle(
+                  color: context.colors.amber2,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600)),
       ],
     );
   }
@@ -1366,15 +1440,16 @@ class _ProfileBadge extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
         decoration: BoxDecoration(
-            color: const Color(0xFFF4F6F1),
+            color: context.colors.bg,
             borderRadius: BorderRadius.circular(5),
-            border: Border.all(color: _C.border, width: 0.5)),
-        child: Row(mainAxisSize: MainAxisSize.min, children: const [
-          Icon(Icons.lock_outline_rounded, size: 8, color: _C.textHint),
+            border: Border.all(color: context.colors.border, width: 0.5)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.lock_outline_rounded,
+              size: 8, color: context.colors.textHint),
           SizedBox(width: 2),
           Text('Private',
               style: TextStyle(
-                  color: _C.textHint,
+                  color: context.colors.textHint,
                   fontSize: 8,
                   fontWeight: FontWeight.w500)),
         ]),
@@ -1383,16 +1458,16 @@ class _ProfileBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
-          color: const Color(0xFFE0F2FE),
+          color: context.colors.blueLight,
           borderRadius: BorderRadius.circular(5),
           border: Border.all(
-              color: const Color(0xFF0891B2).withOpacity(0.3), width: 0.5)),
-      child: Row(mainAxisSize: MainAxisSize.min, children: const [
-        Icon(Icons.visibility_outlined, size: 8, color: Color(0xFF0891B2)),
+              color: context.colors.avatar4.withOpacity(0.3), width: 0.5)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.visibility_outlined, size: 8, color: context.colors.avatar4),
         SizedBox(width: 2),
         Text('দেখুন',
             style: TextStyle(
-                color: Color(0xFF0891B2),
+                color: context.colors.avatar4,
                 fontSize: 8,
                 fontWeight: FontWeight.w600)),
       ]),
@@ -1400,147 +1475,7 @@ class _ProfileBadge extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SINGLE ENTRY CARD
-// ─────────────────────────────────────────────────────────────────────────────
 
-class _SingleEntryCard extends StatelessWidget {
-  final LeaderboardEntry entry;
-  final int year, month;
-  final bool isMaleUser;
-
-  const _SingleEntryCard({
-    required this.entry,
-    required this.year,
-    required this.month,
-    required this.isMaleUser,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final canView = _canViewProfile(entry, isMaleUser);
-    final pct = entry.completionPercentage.toInt();
-    final farz = entry.farzCompletedDays;
-    final jamaat = entry.congregationDaysTotal;
-
-    return GestureDetector(
-      onTap: canView
-          ? () {
-              HapticFeedback.selectionClick();
-              showPublicProfileSheet(context,
-                  entry: entry,
-                  year: year,
-                  month: month,
-                  isMaleUser: isMaleUser);
-            }
-          : null,
-      child: Container(
-        decoration: BoxDecoration(
-            color: _C.cardBg,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _C.border, width: 0.5)),
-        padding: const EdgeInsets.all(20),
-        child: Column(children: [
-          const Text('🏆 একমাত্র আমলকারী 🏆',
-              style: TextStyle(
-                  color: _C.gold, fontWeight: FontWeight.w700, fontSize: 16)),
-          const SizedBox(height: 16),
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-                color: _C.rankGold.withOpacity(0.12),
-                shape: BoxShape.circle,
-                border: Border.all(color: _C.rankGold, width: 3)),
-            child: Center(
-                child: Text(
-                    entry.name.isNotEmpty ? entry.name[0].toUpperCase() : 'U',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: _C.rankGold,
-                        fontSize: 32))),
-          ),
-          const SizedBox(height: 12),
-          Text(entry.name,
-              style: const TextStyle(
-                  color: _C.textPrimary,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18)),
-          if (entry.department != null) ...[
-            const SizedBox(height: 4),
-            Text(entry.department!,
-                style: const TextStyle(color: _C.textSecondary, fontSize: 12)),
-          ],
-          if (entry.id.isNotEmpty || entry.district.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Wrap(
-                spacing: 6,
-                runSpacing: 5,
-                alignment: WrapAlignment.center,
-                children: [
-                  if (entry.id.isNotEmpty) _SerialBadge(id: entry.id),
-                  if (entry.district.isNotEmpty)
-                    _DistrictPill(district: entry.district),
-                ]),
-          ],
-          const SizedBox(height: 14),
-          // Stats chips
-          Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              alignment: WrapAlignment.center,
-              children: [
-                _StatChip(
-                    icon: Icons.check_circle_rounded,
-                    label: '$pct% ফরজ সম্পন্ন',
-                    color: _C.green),
-                _StatChip(
-                    icon: Icons.check_rounded,
-                    label: '$farz পূর্ণ ফরজ দিন',
-                    color: _C.darkGreen),
-                _StatChip(
-                    icon: Icons.people_rounded,
-                    label: '$jamaat জামাত',
-                    color: _C.avatar3),
-                if (entry.streakDays > 0)
-                  _StatChip(
-                      icon: Icons.local_fire_department_rounded,
-                      label: '${entry.streakDays} দিন ধারা',
-                      color: _C.amber),
-              ]),
-        ]),
-      ),
-    );
-  }
-}
-
-const _C_purple = Color(0xFF7C3AED);
-
-class _StatChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  const _StatChip(
-      {required this.icon, required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.2), width: 0.5)),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, color: color, size: 13),
-        const SizedBox(width: 5),
-        Text(label,
-            style: TextStyle(
-                color: color, fontSize: 11, fontWeight: FontWeight.w700)),
-      ]),
-    );
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MONTH CHIP DELEGATE (sticky)
@@ -1570,7 +1505,7 @@ class _MonthChipDelegate extends SliverPersistentHeaderDelegate {
     });
 
     return Container(
-      color: _C.cardBg,
+      color: context.colors.cardBg,
       child: Column(children: [
         Expanded(
           child: SingleChildScrollView(
@@ -1589,14 +1524,20 @@ class _MonthChipDelegate extends SliverPersistentHeaderDelegate {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                     decoration: BoxDecoration(
-                        color: isActive ? _C.darkGreen : _C.pageBg,
+                        color: isActive
+                            ? context.colors.darkGreen
+                            : context.colors.pageBg,
                         borderRadius: BorderRadius.circular(99),
                         border: Border.all(
-                            color: isActive ? _C.darkGreen : _C.border,
+                            color: isActive
+                                ? context.colors.darkGreen
+                                : context.colors.border,
                             width: 0.5)),
                     child: Text(m.year == now.year ? label : '$label ${m.year}',
                         style: TextStyle(
-                            color: isActive ? Colors.white : _C.textSecondary,
+                            color: isActive
+                                ? Colors.white
+                                : context.colors.textSecondary,
                             fontSize: 11,
                             fontWeight:
                                 isActive ? FontWeight.w700 : FontWeight.w500)),
@@ -1606,7 +1547,7 @@ class _MonthChipDelegate extends SliverPersistentHeaderDelegate {
             ),
           ),
         ),
-        const Divider(color: _C.border, height: 0.5, thickness: 0.5),
+        Divider(color: context.colors.border, height: 0.5, thickness: 0.5),
       ]),
     );
   }
@@ -1640,8 +1581,8 @@ class _MonthPickerSheetState extends State<_MonthPickerSheet> {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     return Container(
-      decoration: const BoxDecoration(
-          color: _C.cardBg,
+      decoration: BoxDecoration(
+          color: context.colors.cardBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -1649,11 +1590,12 @@ class _MonthPickerSheetState extends State<_MonthPickerSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-                color: _C.border, borderRadius: BorderRadius.circular(99))),
+                color: context.colors.border,
+                borderRadius: BorderRadius.circular(99))),
         const SizedBox(height: 20),
-        const Text('মাস বেছে নিন',
+        Text('মাস বেছে নিন',
             style: TextStyle(
-                color: _C.textPrimary,
+                color: context.colors.textPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.w700)),
         const SizedBox(height: 18),
@@ -1664,11 +1606,11 @@ class _MonthPickerSheetState extends State<_MonthPickerSheet> {
           Container(
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
               decoration: BoxDecoration(
-                  color: _C.greenLight,
+                  color: context.colors.greenLight,
                   borderRadius: BorderRadius.circular(12)),
               child: Text('$_y',
-                  style: const TextStyle(
-                      color: _C.darkGreen,
+                  style: TextStyle(
+                      color: context.colors.darkGreen,
                       fontWeight: FontWeight.w800,
                       fontSize: 18))),
           _YearBtn(
@@ -1698,14 +1640,16 @@ class _MonthPickerSheetState extends State<_MonthPickerSheet> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 decoration: BoxDecoration(
-                    color: isSelected ? _C.darkGreen : _C.pageBg,
+                    color: isSelected
+                        ? context.colors.darkGreen
+                        : context.colors.pageBg,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                         color: isSelected
-                            ? _C.darkGreen
+                            ? context.colors.darkGreen
                             : isFuture
-                                ? _C.border.withOpacity(0.4)
-                                : _C.border,
+                                ? context.colors.border.withOpacity(0.4)
+                                : context.colors.border,
                         width: 0.5)),
                 child: Center(
                     child: Text(AppConstants.bengaliMonths[i],
@@ -1713,8 +1657,8 @@ class _MonthPickerSheetState extends State<_MonthPickerSheet> {
                             color: isSelected
                                 ? Colors.white
                                 : isFuture
-                                    ? _C.textHint
-                                    : _C.textSecondary,
+                                    ? context.colors.textHint
+                                    : context.colors.textSecondary,
                             fontSize: 12,
                             fontWeight: isSelected
                                 ? FontWeight.w700
@@ -1743,12 +1687,20 @@ class _YearBtn extends StatelessWidget {
         height: 38,
         margin: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
-            color: onTap != null ? _C.greenLight : _C.pageBg,
+            color: onTap != null
+                ? context.colors.greenLight
+                : context.colors.pageBg,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-                color: onTap != null ? _C.borderMid : _C.border, width: 0.5)),
+                color: onTap != null
+                    ? context.colors.borderMid2
+                    : context.colors.border,
+                width: 0.5)),
         child: Icon(icon,
-            color: onTap != null ? _C.darkGreen : _C.textHint, size: 20),
+            color: onTap != null
+                ? context.colors.darkGreen
+                : context.colors.textHint,
+            size: 20),
       ),
     );
   }
@@ -1766,31 +1718,96 @@ class _LeaderboardSkeleton extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _shimBox(width: 100, height: 14),
+        _shimBox(width: 100, height: 14, context: context),
         const SizedBox(height: 12),
-        _shimBox(width: double.infinity, height: 290, radius: 16),
+        _shimBox(
+            width: double.infinity, height: 290, radius: 16, context: context),
         const SizedBox(height: 24),
-        _shimBox(width: 100, height: 14),
+        _shimBox(width: 100, height: 14, context: context),
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
-              color: _C.cardBg,
+              color: context.colors.cardBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _C.border, width: 0.5)),
+              border: Border.all(color: context.colors.border, width: 0.5)),
           child: Column(
               children: List.generate(
                   5,
                   (i) => Container(
-                        height: 70,
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 11),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                         decoration: BoxDecoration(
-                            color: _C.pageBg,
-                            borderRadius: BorderRadius.circular(10)),
+                          border: i == 4 ? null : Border(bottom: BorderSide(color: context.colors.border, width: 0.5)),
+                        ),
+                        child: Row(
+                          children: [
+                            // Rank
+                            Container(
+                              width: 24,
+                              height: 14,
+                              decoration: BoxDecoration(
+                                  color: context.colors.pageBg,
+                                  borderRadius: BorderRadius.circular(4)),
+                            ),
+                            const SizedBox(width: 18),
+                            // Avatar
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                  color: context.colors.pageBg,
+                                  borderRadius: BorderRadius.circular(11)),
+                            ),
+                            const SizedBox(width: 12),
+                            // Name & district
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 12,
+                                  decoration: BoxDecoration(
+                                      color: context.colors.pageBg,
+                                      borderRadius: BorderRadius.circular(4)),
+                                ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  width: 50,
+                                  height: 9,
+                                  decoration: BoxDecoration(
+                                      color: context.colors.pageBg.withOpacity(0.6),
+                                      borderRadius: BorderRadius.circular(4)),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            // Stats
+                            Container(
+                              width: 65,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                  color: context.colors.pageBg,
+                                  borderRadius: BorderRadius.circular(4)),
+                            ),
+                            const SizedBox(width: 10),
+                            // Arrow
+                            Container(
+                              width: 18,
+                              height: 18,
+                              decoration: BoxDecoration(
+                                  color: context.colors.pageBg,
+                                  shape: BoxShape.circle),
+                            ),
+                          ],
+                        ),
                       ).animate(onPlay: (c) => c.repeat()).shimmer(
                         duration: 1200.ms,
                         delay: Duration(milliseconds: i * 70),
-                        colors: [_C.pageBg, const Color(0xFFE8ECE8), _C.pageBg],
+                        colors: [
+                          context.colors.cardBg,
+                          context.colors.shimmerHighlight,
+                          context.colors.cardBg
+                        ],
                       ))),
         ),
       ]),
@@ -1798,17 +1815,22 @@ class _LeaderboardSkeleton extends StatelessWidget {
   }
 
   Widget _shimBox(
-      {required double width, required double height, double radius = 10}) {
+      {required double width,
+      required double height,
+      double radius = 10,
+      required BuildContext context}) {
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-          color: _C.cardBg,
+          color: context.colors.cardBg,
           borderRadius: BorderRadius.circular(radius),
-          border: Border.all(color: _C.border, width: 0.5)),
-    ).animate(onPlay: (c) => c.repeat()).shimmer(
-        duration: 1200.ms,
-        colors: [_C.cardBg, const Color(0xFFE8ECE8), _C.cardBg]);
+          border: Border.all(color: context.colors.border, width: 0.5)),
+    ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 1200.ms, colors: [
+      context.colors.cardBg,
+      context.colors.shimmerHighlight,
+      context.colors.cardBg
+    ]);
   }
 }
 
@@ -1828,21 +1850,23 @@ class _ErrorCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-            color: _C.cardBg,
+            color: context.colors.cardBg,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _C.border, width: 0.5)),
+            border: Border.all(color: context.colors.border, width: 0.5)),
         child: Column(children: [
-          const Icon(Icons.error_outline_rounded, color: _C.red, size: 28),
+          Icon(Icons.error_outline_rounded,
+              color: context.colors.red, size: 28),
           const SizedBox(height: 10),
-          const Text('ত্রুটি হয়েছে',
+          Text('ত্রুটি হয়েছে',
               style: TextStyle(
-                  color: _C.textPrimary,
+                  color: context.colors.textPrimary,
                   fontWeight: FontWeight.w700,
                   fontSize: 14)),
           const SizedBox(height: 6),
           Text(message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: _C.textSecondary, fontSize: 12)),
+              style:
+                  TextStyle(color: context.colors.textSecondary, fontSize: 12)),
           const SizedBox(height: 16),
           GestureDetector(
               onTap: onRetry,
@@ -1850,11 +1874,11 @@ class _ErrorCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
                   decoration: BoxDecoration(
-                      color: _C.greenLight,
+                      color: context.colors.greenLight,
                       borderRadius: BorderRadius.circular(10)),
-                  child: const Text('পুনরায় চেষ্টা করুন',
+                  child: Text('পুনরায় চেষ্টা করুন',
                       style: TextStyle(
-                          color: _C.darkGreen,
+                          color: context.colors.darkGreen,
                           fontWeight: FontWeight.w700,
                           fontSize: 12)))),
         ]),
@@ -1874,9 +1898,9 @@ class _EmptyCard extends StatelessWidget {
       child: Container(
         height: 120,
         decoration: BoxDecoration(
-            color: _C.cardBg,
+            color: context.colors.cardBg,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _C.border, width: 0.5)),
+            border: Border.all(color: context.colors.border, width: 0.5)),
         child: Center(
             child:
                 Column(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -1886,8 +1910,8 @@ class _EmptyCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(label,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                    color: _C.textHint,
+                style: TextStyle(
+                    color: context.colors.textHint,
                     fontSize: 12,
                     fontWeight: FontWeight.w500)),
           ),

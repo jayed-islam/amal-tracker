@@ -1,3 +1,5 @@
+import 'package:amal_tracker/features/challenge/provider/challenge_provider.dart';
+import 'package:amal_tracker/features/challenge/widgets/challenge_card.dart';
 import 'package:amal_tracker/features/home/widgets/daily_cards_section.dart';
 import 'package:amal_tracker/features/monthly_summary/screens/category_progress_screen.dart';
 import 'package:flutter/material.dart';
@@ -21,37 +23,11 @@ import '../../../core/providers/cache_provider.dart';
 import '../../../shared/widgets/delayed_progress_indicator.dart';
 
 import 'package:fl_chart/fl_chart.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
-
-class _C {
-  static const pageBg = Color(0xFFF4F6F1);
-  static const card = Color(0xFFFFFFFF);
-  static const darkGreen = Color(0xFF0E3D22);
-  static const midGreen = Color(0xFF1B7045);
-  static const gold = Color(0xFFD4A843);
-  static const goldLight = Color(0xFFFFF3E0);
-  static const goldBorder = Color(0xFFFFCC80);
-  static const green = Color(0xFF16A34A);
-  static const greenLight = Color(0xFFE8F5EE);
-  static const purple = Color(0xFF7C3AED);
-  static const purpleLight = Color(0xFFEDE9FE);
-  static const amber = Color(0xFFF59E0B);
-  static const red = Color(0xFFEF4444);
-  static const textPri = Color(0xFF0A1A0F);
-  static const textSec = Color(0xFF6B7C6E);
-  static const textHint = Color(0xFFABBAAE);
-  static const border = Color(0xFFE4EAE4);
-  static const rankGold = Color(0xFFD4A843);
-  static const rankSilver = Color(0xFF94A3B8);
-  static const rankBronze = Color(0xFFCD7F32);
-  // skeleton placeholder tones
-  static const skelBase = Color(0xFFEDF1EC);
-  static const skelBaseDark = Color(0xFFE2E8E2);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // SKELETON SHIMMER HELPER — একটাই shared shimmer wrapper, সব placeholder
 // widget এই দিয়েই animate হয় যাতে shimmer timing সব জায়গায় sync থাকে।
@@ -77,12 +53,12 @@ class _Bone extends StatelessWidget {
   final double width;
   final double height;
   final double radius;
-  final Color color;
+  final Color? color;
   const _Bone({
     required this.width,
     required this.height,
     this.radius = 6,
-    this.color = _C.skelBase,
+    this.color,
   });
 
   @override
@@ -90,7 +66,8 @@ class _Bone extends StatelessWidget {
         width: width,
         height: height,
         decoration: BoxDecoration(
-            color: color, borderRadius: BorderRadius.circular(radius)),
+            color: color ?? context.colors.skelBase,
+            borderRadius: BorderRadius.circular(radius)),
       );
 }
 
@@ -179,12 +156,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark,
       child: Scaffold(
-        backgroundColor: _C.pageBg,
+        backgroundColor: context.colors.pageBg,
         appBar: _TopBar(user: user, onAvatarTap: _showProfile),
         body: Stack(
           children: [
             RefreshIndicator(
-              color: _C.darkGreen,
+              color: context.colors.darkGreen,
               onRefresh: _refresh,
               child: CustomScrollView(
                 controller: _sc,
@@ -228,8 +205,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           child: summary
                               .when(
                                 loading: () => const _WeekSkeleton(),
-                                error: (_, __) =>
-                                    const _WeeklyHabitsSnapshot(summary: null),
+                                error: (_, __) => _SectionErrorCard(
+                                  label: 'সাপ্তাহিক অভ্যাস লোড করা সম্ভব হয়নি',
+                                  onRetry: () => ref.refresh(homeSummaryProvider),
+                                ),
                                 data: (s) => _WeeklyHabitsSnapshot(summary: s),
                               )
                               .animate()
@@ -244,16 +223,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 14.0),
                           child: Column(children: [
-                            // ── 5. Monthly History — recentMonths (৩ মাসের
-                            //    serial progress) home-summary তে ফিরিয়ে আনা
-                            //    হয়েছে trimmed আকারে (categoryStats ছাড়া),
-                            //    তাই আগের মতো ৩ মাসের তালিকা দেখা যায়, কোনো
-                            //    ভারী monthly-progress কল ছাড়াই।
-                            //    loading অবস্থায় আগে পুরো section hide হয়ে
-                            //    যেত (SizedBox.shrink()) — এখন header +
-                            //    real-shape skeleton row দেখানো হয়, error
-                            //    হলে section hide থাকে (ডেটা না থাকলে দেখানোর
-                            //    কিছু নেই)।
+                            // ── 5. Monthly History ──────────────────────────────
                             summary.when(
                               loading: () => Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,11 +235,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   const SizedBox(height: 20),
                                 ],
                               ),
-                              error: (_, __) => const SizedBox.shrink(),
+                              error: (_, __) => Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _SecHead(
+                                    title: 'মাসিক অগ্রগতি',
+                                    emoji: '📅',
+                                    onSeeAll: () =>
+                                        context.go(AppRoutes.monthlyView),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  _SectionErrorCard(
+                                    label: 'মাসিক অগ্রগতি লোড করা যায়নি',
+                                    onRetry: () => ref.refresh(homeSummaryProvider),
+                                  ),
+                                  const SizedBox(height: 20),
+                                ],
+                              ),
                               data: (s) {
                                 final recentMonths = s.recentMonths;
                                 if (recentMonths.isEmpty) {
-                                  return const SizedBox.shrink();
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _SecHead(
+                                        title: 'মাসিক অগ্রগতি',
+                                        emoji: '📅',
+                                        onSeeAll: () =>
+                                            context.go(AppRoutes.monthlyView),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      const _EmptyCard(label: 'কোনো মাসিক অগ্রগতির তথ্য নেই'),
+                                      const SizedBox(height: 20),
+                                    ],
+                                  );
                                 }
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,11 +289,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               },
                             ),
 
-                            // ── 6. Leaderboard teaser — সম্পূর্ণ আলাদা concept,
-                            //    এখানে কোনো পরিবর্তন হয়নি, নিজের আলাদা provider
-                            //    থেকেই ডেটা আসে। লোডিং স্কেলেটন এখন আসল
-                            //    leaderboard row এর shape এ (rank/avatar/name/
-                            //    badge) — আগের generic ধূসর বক্সের বদলে ─────
+                            // ── 6. Leaderboard teaser ───────────────────────────
                             _SecHead(
                               title: 'শীর্ষ তালিকা',
                               emoji: '🏆',
@@ -303,17 +298,110 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             const SizedBox(height: 10),
                             (board.isLoading
                                     ? const _LeaderboardSkeleton()
-                                    : board.entries.isEmpty
-                                        ? const _EmptyCard(label: 'ডেটা নেই')
-                                        : _LeaderList(
-                                            entries:
-                                                board.entries.take(3).toList(),
-                                            currentUserId: ref
-                                                .read(currentUserProvider)
-                                                ?.id,
-                                          ))
+                                    : board.error != null && board.entries.isEmpty
+                                        ? _SectionErrorCard(
+                                            label: 'শীর্ষ তালিকা লোড করা যায়নি',
+                                            onRetry: () => ref
+                                                .read(leaderboardPreviewProvider.notifier)
+                                                .refresh(),
+                                          )
+                                        : board.entries.isEmpty
+                                            ? const _EmptyCard(label: 'কোনো শীর্ষ তালিকার তথ্য নেই')
+                                            : _LeaderList(
+                                                entries:
+                                                    board.entries.take(3).toList(),
+                                                currentUserId: ref
+                                                    .read(currentUserProvider)
+                                                    ?.id,
+                                              ))
                                 .animate()
                                 .fadeIn(delay: 178.ms),
+                            const SizedBox(height: 20),
+
+                            // ── 6.5 চ্যালেঞ্জ teaser ───────────────────────────
+                            Consumer(
+                              builder: (context, ref, _) {
+                                final challenges =
+                                    ref.watch(activeChallengesProvider);
+                                return challenges.when(
+                                  loading: () => Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _SecHead(
+                                        title: 'চ্যালেঞ্জসমূহ',
+                                        emoji: '⚔️',
+                                        onSeeAll: () =>
+                                            context.go(AppRoutes.challenges),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      const ChallengeHomeTeaserSkeleton(),
+                                    ],
+                                  ),
+                                  error: (_, __) => Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _SecHead(
+                                        title: 'চ্যালেঞ্জসমূহ',
+                                        emoji: '⚔️',
+                                        onSeeAll: () =>
+                                            context.go(AppRoutes.challenges),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      _SectionErrorCard(
+                                        label: 'চ্যালেঞ্জসমূহ লোড করা যায়নি',
+                                        onRetry: () => ref.refresh(activeChallengesProvider),
+                                      ),
+                                    ],
+                                  ),
+                                  data: (list) {
+                                    // Filter out completed challenges
+                                    final activeChallenges = list.where((c) => !c.isCompleted).toList();
+                                    
+                                    if (activeChallenges.isEmpty) {
+                                      return Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          _SecHead(
+                                            title: 'চ্যালেঞ্জসমূহ',
+                                            emoji: '⚔️',
+                                            onSeeAll: () =>
+                                                context.go(AppRoutes.challenges),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          const _EmptyCard(label: 'কোনো চলমান চ্যালেঞ্জ নেই'),
+                                        ],
+                                      );
+                                    }
+                                    
+                                    final sorted = [...activeChallenges]..sort((a, b) {
+                                        if (a.isJoined != b.isJoined) {
+                                          return a.isJoined ? -1 : 1;
+                                        }
+                                        return a.endDate.compareTo(b.endDate);
+                                      });
+                                    final top = sorted.first;
+                                    return Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        _SecHead(
+                                          title: 'চ্যালেঞ্জসমূহ',
+                                          emoji: '⚔️',
+                                          onSeeAll: () =>
+                                              context.go(AppRoutes.challenges),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        ChallengeHomeTeaser(
+                                          challenge: top,
+                                          totalActiveCount: sorted.length,
+                                          onTap: () =>
+                                              context.go(AppRoutes.challenges),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                            ).animate().fadeIn(delay: 185.ms),
                             const SizedBox(height: 20),
 
                             // ── 7. Community ───────────────────────────────────
@@ -339,14 +427,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             if (isBackgroundRefreshing)
-              const Positioned(
+              Positioned(
                 top: 0,
                 left: 0,
                 right: 0,
                 child: SizedBox(
                   height: 2,
                   child: DelayedLinearProgressIndicator(
-                    color: _C.darkGreen,
+                    color: context.colors.darkGreen,
                     backgroundColor: Colors.transparent,
                     delay: Duration(milliseconds: 400),
                   ),
@@ -374,7 +462,7 @@ class _TopBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: _C.card,
+      color: context.colors.card,
       child: SafeArea(
         bottom: false,
         child: SizedBox(
@@ -386,7 +474,7 @@ class _TopBar extends StatelessWidget implements PreferredSizeWidget {
                 width: 30,
                 height: 30,
                 decoration: BoxDecoration(
-                    color: _C.darkGreen,
+                    color: context.colors.darkGreen,
                     borderRadius: BorderRadius.circular(8)),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
@@ -404,16 +492,16 @@ class _TopBar extends StatelessWidget implements PreferredSizeWidget {
               Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text('Sabeq',
                         style: TextStyle(
-                            color: _C.textPri,
+                            color: context.colors.textPri,
                             fontWeight: FontWeight.w800,
                             fontSize: 15,
                             letterSpacing: -0.3)),
                     Text('নেক আমলে এগিয়ে যাও',
                         style: TextStyle(
-                            color: _C.textSec,
+                            color: context.colors.textSec2,
                             fontSize: 9,
                             fontWeight: FontWeight.w500,
                             letterSpacing: 0.2)),
@@ -429,7 +517,7 @@ class _TopBar extends StatelessWidget implements PreferredSizeWidget {
                   width: 35,
                   height: 35,
                   decoration: BoxDecoration(
-                      color: _C.darkGreen,
+                      color: context.colors.darkGreen,
                       borderRadius: BorderRadius.circular(10)),
                   child: Center(
                       child: Text(
@@ -468,15 +556,15 @@ class _Greeting extends StatelessWidget {
       Expanded(
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('আস-সালামু আলাইকুম',
+        Text('আস-সালামু আলাইকুম',
             style: TextStyle(
-                color: _C.textHint,
+                color: context.colors.textHint,
                 fontSize: 10.5,
                 fontWeight: FontWeight.w500)),
         const SizedBox(height: 1),
         Text(user?.name?.split(' ').first ?? 'বন্ধু',
-            style: const TextStyle(
-                color: _C.textPri,
+            style: TextStyle(
+                color: context.colors.textPri,
                 fontWeight: FontWeight.w800,
                 fontSize: 22,
                 height: 1.1,
@@ -486,9 +574,10 @@ class _Greeting extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-              color: _C.goldLight,
+              color: context.colors.goldLight2,
               borderRadius: BorderRadius.circular(99),
-              border: Border.all(color: _C.goldBorder, width: 0.5)),
+              border:
+                  Border.all(color: context.colors.goldBorder2, width: 0.5)),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             const Text('🔥', style: TextStyle(fontSize: 12)),
             const SizedBox(width: 4),
@@ -549,7 +638,8 @@ class _HeroCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-            color: _C.darkGreen, borderRadius: BorderRadius.circular(16)),
+            color: context.colors.darkGreen,
+            borderRadius: BorderRadius.circular(16)),
         child: Stack(children: [
           Positioned(
               top: -30,
@@ -579,16 +669,17 @@ class _HeroCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                            color: _C.gold.withOpacity(0.15),
+                            color: context.colors.gold.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                                color: _C.gold.withOpacity(0.3), width: 0.5)),
+                                color: context.colors.gold.withOpacity(0.3),
+                                width: 0.5)),
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
                           const Text('🏆', style: TextStyle(fontSize: 10)),
                           const SizedBox(width: 5),
                           Text(_winnerLabel(glance?.winnerCategory),
-                              style: const TextStyle(
-                                  color: _C.gold,
+                              style: TextStyle(
+                                  color: context.colors.gold,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700)),
                         ])),
@@ -650,7 +741,7 @@ class _HeroCard extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: hasToday
                                   ? Colors.white.withOpacity(0.1)
-                                  : _C.gold,
+                                  : context.colors.gold,
                               borderRadius: BorderRadius.circular(8),
                               border: hasToday
                                   ? Border.all(
@@ -686,7 +777,7 @@ class _HeroCard extends StatelessWidget {
                         children: [
                           Text('${pct.toInt()}%',
                               style: TextStyle(
-                                  color: _C.gold,
+                                  color: context.colors.gold,
                                   fontSize: pct >= 100 ? 22 : 24,
                                   fontWeight: FontWeight.w800,
                                   height: 1,
@@ -729,8 +820,8 @@ class _HeroCard extends StatelessWidget {
                                         fontSize: 8.5)),
                                 const SizedBox(width: 4),
                                 Text('${pct.toInt()}%',
-                                    style: const TextStyle(
-                                        color: _C.gold,
+                                    style: TextStyle(
+                                        color: context.colors.gold,
                                         fontSize: 9.5,
                                         fontWeight: FontWeight.w700)),
                               ]),
@@ -742,8 +833,8 @@ class _HeroCard extends StatelessWidget {
                                   minHeight: 3.5,
                                   backgroundColor:
                                       Colors.white.withOpacity(0.1),
-                                  valueColor:
-                                      const AlwaysStoppedAnimation(_C.gold))),
+                                  valueColor: AlwaysStoppedAnimation(
+                                      context.colors.gold))),
                         ])),
                   ]),
                 ]),
@@ -782,7 +873,7 @@ class _RightChip extends StatelessWidget {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Text(top,
               style: TextStyle(
-                  color: isRank ? const Color(0xFF4ADE80) : _C.gold,
+                  color: isRank ? const Color(0xFF4ADE80) : context.colors.gold,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   height: 1)),
@@ -821,7 +912,7 @@ class _HeroSkeleton extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         height: 160,
         decoration: BoxDecoration(
-            color: _C.darkGreen.withOpacity(0.7),
+            color: context.colors.darkGreen.withOpacity(0.7),
             borderRadius: BorderRadius.circular(16)),
       ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 1400.ms, colors: [
         Colors.white.withOpacity(0.03),
@@ -847,23 +938,23 @@ class _WeekSkeleton extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(13, 11, 13, 12),
       decoration: BoxDecoration(
-          color: _C.card,
+          color: context.colors.card,
           borderRadius: BorderRadius.circular(13),
-          border: Border.all(color: _C.border, width: 0.5)),
+          border: Border.all(color: context.colors.border, width: 0.5)),
       child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(children: [
-              const Text('সাপ্তাহিক অভ্যাস',
+              Text('সাপ্তাহিক অভ্যাস',
                   style: TextStyle(
-                      color: _C.textPri,
+                      color: context.colors.textPri,
                       fontWeight: FontWeight.w700,
                       fontSize: 11)),
               const Spacer(),
               Text('বিস্তারিত দেখতে ট্যাপ করুন',
                   style: TextStyle(
-                      color: _C.textHint.withOpacity(0.5),
+                      color: context.colors.textHint.withOpacity(0.5),
                       fontSize: 8.5,
                       fontWeight: FontWeight.w500)),
             ]),
@@ -899,9 +990,9 @@ class _WeekTileSkeleton extends StatelessWidget {
         width: width,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: _C.pageBg,
+          color: context.colors.pageBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _C.border, width: 0.6),
+          border: Border.all(color: context.colors.border, width: 0.6),
         ),
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -931,7 +1022,7 @@ class _WeekTileSkeleton extends StatelessWidget {
                                   width: rows == 2 ? 14 : 12,
                                   height: rows == 2 ? 14 : 12,
                                   radius: rows == 2 ? 7 : 3,
-                                  color: _C.skelBaseDark)));
+                                  color: context.colors.skelBaseDark)));
                     }),
                   ),
                 )
@@ -946,7 +1037,7 @@ class _WeekTileSkeleton extends StatelessWidget {
                           width: 11,
                           height: h,
                           radius: 3,
-                          color: _C.skelBaseDark);
+                          color: context.colors.skelBaseDark);
                     }),
                   ),
                 ),
@@ -972,8 +1063,8 @@ class _SecHead extends StatelessWidget {
         Text(emoji, style: const TextStyle(fontSize: 13)),
         const SizedBox(width: 6),
         Text(title,
-            style: const TextStyle(
-                color: _C.textPri,
+            style: TextStyle(
+                color: context.colors.textPri,
                 fontWeight: FontWeight.w800,
                 fontSize: 13,
                 letterSpacing: -0.1)),
@@ -983,11 +1074,11 @@ class _SecHead extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                  color: _C.greenLight,
+                  color: context.colors.greenLight,
                   borderRadius: BorderRadius.circular(99)),
-              child: const Text('সব দেখুন →',
+              child: Text('সব দেখুন →',
                   style: TextStyle(
-                      color: _C.darkGreen,
+                      color: context.colors.darkGreen,
                       fontSize: 10,
                       fontWeight: FontWeight.w700)),
             )),
@@ -1003,8 +1094,8 @@ class _SecHeadSkeleton extends StatelessWidget {
         Text(emoji, style: const TextStyle(fontSize: 13)),
         const SizedBox(width: 6),
         Text(title,
-            style: const TextStyle(
-                color: _C.textPri,
+            style: TextStyle(
+                color: context.colors.textPri,
                 fontWeight: FontWeight.w800,
                 fontSize: 13,
                 letterSpacing: -0.1)),
@@ -1013,8 +1104,10 @@ class _SecHeadSkeleton extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-                color: _C.skelBase, borderRadius: BorderRadius.circular(99)),
-            child: const _Bone(width: 46, height: 10, color: _C.skelBaseDark),
+                color: context.colors.skelBase,
+                borderRadius: BorderRadius.circular(99)),
+            child: _Bone(
+                width: 46, height: 10, color: context.colors.skelBaseDark),
           ),
         ),
       ]);
@@ -1033,19 +1126,19 @@ class _MonthHistoryList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-          color: _C.card,
+          color: context.colors.card,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _C.border, width: 0.5)),
+          border: Border.all(color: context.colors.border, width: 0.5)),
       child: Column(
           children: List.generate(months.length, (i) {
         final t = months[i];
         final monthName = AppConstants.bengaliMonths[t.month - 1];
         final pct = (t.completionPercentage / 100).clamp(0.0, 1.0);
         final color = pct > 0.7
-            ? _C.green
+            ? context.colors.green
             : pct > 0.4
-                ? _C.amber
-                : _C.red;
+                ? context.colors.amber
+                : context.colors.red;
         final isLast = i == months.length - 1;
         final now = DateTime.now();
         final totalD = DateUtils.getDaysInMonth(now.year, t.month);
@@ -1055,8 +1148,9 @@ class _MonthHistoryList extends StatelessWidget {
           decoration: BoxDecoration(
               border: isLast
                   ? null
-                  : const Border(
-                      bottom: BorderSide(color: _C.border, width: 0.5))),
+                  : Border(
+                      bottom: BorderSide(
+                          color: context.colors.border, width: 0.5))),
           child: Row(children: [
             Container(
                 width: 7,
@@ -1069,8 +1163,8 @@ class _MonthHistoryList extends StatelessWidget {
                 child: Row(children: [
                   Flexible(
                       child: Text(monthName,
-                          style: const TextStyle(
-                              color: _C.textPri,
+                          style: TextStyle(
+                              color: context.colors.textPri,
                               fontWeight: FontWeight.w700,
                               fontSize: 12),
                           overflow: TextOverflow.ellipsis)),
@@ -1081,7 +1175,8 @@ class _MonthHistoryList extends StatelessWidget {
                 ])),
             const SizedBox(width: 8),
             Text('${t.daysActive}/$totalD দিন',
-                style: const TextStyle(color: _C.textHint, fontSize: 9.5)),
+                style:
+                    TextStyle(color: context.colors.textHint, fontSize: 9.5)),
             const SizedBox(width: 8),
             Expanded(
                 child: Row(children: [
@@ -1091,7 +1186,7 @@ class _MonthHistoryList extends StatelessWidget {
                       child: LinearProgressIndicator(
                           value: pct,
                           minHeight: 4,
-                          backgroundColor: _C.pageBg,
+                          backgroundColor: context.colors.pageBg,
                           valueColor: AlwaysStoppedAnimation(color)))),
               const SizedBox(width: 6),
               Text('${(pct * 100).toInt()}%',
@@ -1102,14 +1197,14 @@ class _MonthHistoryList extends StatelessWidget {
             ])),
             const SizedBox(width: 10),
             Text('${t.farzCompletedDays}',
-                style: const TextStyle(
-                    color: _C.textPri,
+                style: TextStyle(
+                    color: context.colors.textPri,
                     fontWeight: FontWeight.w800,
                     fontSize: 13)),
             const SizedBox(width: 2),
             Text('ফরজ',
                 style: TextStyle(
-                    color: _C.textHint,
+                    color: context.colors.textHint,
                     fontSize: 9,
                     fontWeight: FontWeight.w600)),
           ]),
@@ -1130,9 +1225,9 @@ class _MonthHistorySkeleton extends StatelessWidget {
     return _Shimmer(
       child: Container(
         decoration: BoxDecoration(
-            color: _C.card,
+            color: context.colors.card,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _C.border, width: 0.5)),
+            border: Border.all(color: context.colors.border, width: 0.5)),
         child: Column(
           children: List.generate(3, (i) {
             final isLast = i == 2;
@@ -1141,11 +1236,15 @@ class _MonthHistorySkeleton extends StatelessWidget {
               decoration: BoxDecoration(
                   border: isLast
                       ? null
-                      : const Border(
-                          bottom: BorderSide(color: _C.border, width: 0.5))),
+                      : Border(
+                          bottom: BorderSide(
+                              color: context.colors.border, width: 0.5))),
               child: Row(children: [
-                const _Bone(
-                    width: 7, height: 7, radius: 99, color: _C.skelBaseDark),
+                _Bone(
+                    width: 7,
+                    height: 7,
+                    radius: 99,
+                    color: context.colors.skelBaseDark),
                 const SizedBox(width: 10),
                 const SizedBox(width: 52, child: _Bone(width: 40, height: 12)),
                 const SizedBox(width: 8),
@@ -1156,10 +1255,10 @@ class _MonthHistorySkeleton extends StatelessWidget {
                   Expanded(
                       child: ClipRRect(
                           borderRadius: BorderRadius.circular(99),
-                          child: const _Bone(
+                          child: _Bone(
                               width: double.infinity,
                               height: 4,
-                              color: _C.skelBaseDark))),
+                              color: context.colors.skelBaseDark))),
                   const SizedBox(width: 6),
                   const _Bone(width: 26, height: 9),
                 ])),
@@ -1186,25 +1285,26 @@ class _LeaderList extends StatelessWidget {
   const _LeaderList({required this.entries, this.currentUserId});
 
   static const _emojis = ['🥇', '🥈', '🥉'];
-  static const _rankColors = [_C.rankGold, _C.rankSilver, _C.rankBronze];
-  static const _rowBg = [
-    Color(0xFFFFFBF0),
-    Color(0xFFF8FAFC),
-    Color(0xFFFFF7ED)
-  ];
-  static const _avatarBg = [
-    Color(0xFF0E3D22),
-    Color(0xFF374151),
-    Color(0xFF7C3AED)
-  ];
+  List<Color> _rankColors(BuildContext context) => [
+        context.colors.rankGold,
+        context.colors.rankSilver,
+        context.colors.rankBronze
+      ];
+  List<Color> _rowBg(BuildContext context) => [
+        context.colors.goldPale,
+        const Color(0xFFF8FAFC),
+        const Color(0xFFFFF7ED)
+      ];
+  List<Color> _avatarBg(BuildContext context) =>
+      [context.colors.avatar1, context.colors.avatar2, context.colors.avatar3];
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-          color: _C.card,
+          color: context.colors.card,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _C.border, width: 0.5)),
+          border: Border.all(color: context.colors.border, width: 0.5)),
       child: Column(
           children: List.generate(entries.length, (i) {
         final e = entries[i];
@@ -1217,15 +1317,16 @@ class _LeaderList extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           decoration: BoxDecoration(
-            color: _rowBg[i],
+            color: _rowBg(context)[i],
             borderRadius: BorderRadius.vertical(
               top: i == 0 ? const Radius.circular(14) : Radius.zero,
               bottom: isLast ? const Radius.circular(14) : Radius.zero,
             ),
             border: isLast
                 ? null
-                : const Border(
-                    bottom: BorderSide(color: _C.border, width: 0.5)),
+                : Border(
+                    bottom:
+                        BorderSide(color: context.colors.border, width: 0.5)),
           ),
           child: Row(children: [
             SizedBox(
@@ -1238,7 +1339,8 @@ class _LeaderList extends StatelessWidget {
               width: 30,
               height: 30,
               decoration: BoxDecoration(
-                  color: _avatarBg[i], borderRadius: BorderRadius.circular(8)),
+                  color: _avatarBg(context)[i],
+                  borderRadius: BorderRadius.circular(8)),
               child: Center(
                   child: Text(
                 (e.name?.isNotEmpty == true) ? e.name[0].toUpperCase() : 'U',
@@ -1256,8 +1358,8 @@ class _LeaderList extends StatelessWidget {
                   Row(children: [
                     Flexible(
                         child: Text(e.name?.split(' ').first ?? '',
-                            style: const TextStyle(
-                                color: _C.textPri,
+                            style: TextStyle(
+                                color: context.colors.textPri,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 12),
                             overflow: TextOverflow.ellipsis)),
@@ -1267,11 +1369,11 @@ class _LeaderList extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 5, vertical: 1),
                         decoration: BoxDecoration(
-                            color: _C.greenLight,
+                            color: context.colors.greenLight,
                             borderRadius: BorderRadius.circular(99)),
-                        child: const Text('আপনি',
+                        child: Text('আপনি',
                             style: TextStyle(
-                                color: _C.darkGreen,
+                                color: context.colors.darkGreen,
                                 fontSize: 8.5,
                                 fontWeight: FontWeight.w700)),
                       ),
@@ -1280,24 +1382,25 @@ class _LeaderList extends StatelessWidget {
                   if ((e.id ?? '').toString().isNotEmpty ||
                       (e.district ?? '').toString().isNotEmpty)
                     Text('ID: ${e.id ?? ''} · ${e.district ?? ''}',
-                        style: const TextStyle(color: _C.textSec, fontSize: 9),
+                        style: TextStyle(
+                            color: context.colors.textSec2, fontSize: 9),
                         overflow: TextOverflow.ellipsis),
                 ])),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                  color: _rankColors[i].withOpacity(0.12),
+                  color: _rankColors(context)[i].withOpacity(0.12),
                   borderRadius: BorderRadius.circular(10)),
               child: Column(children: [
                 Text('$pct%',
                     style: TextStyle(
-                        color: _rankColors[i],
+                        color: _rankColors(context)[i],
                         fontWeight: FontWeight.w900,
                         fontSize: 13,
                         height: 1)),
                 Text('$farz ফরজ',
                     style: TextStyle(
-                        color: _rankColors[i].withOpacity(0.55),
+                        color: _rankColors(context)[i].withOpacity(0.55),
                         fontSize: 7,
                         fontWeight: FontWeight.w600)),
               ]),
@@ -1322,9 +1425,9 @@ class _LeaderboardSkeleton extends StatelessWidget {
     return _Shimmer(
       child: Container(
         decoration: BoxDecoration(
-            color: _C.card,
+            color: context.colors.card,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _C.border, width: 0.5)),
+            border: Border.all(color: context.colors.border, width: 0.5)),
         child: Column(
           children: List.generate(3, (i) {
             final isLast = i == 2;
@@ -1337,8 +1440,9 @@ class _LeaderboardSkeleton extends StatelessWidget {
                 ),
                 border: isLast
                     ? null
-                    : const Border(
-                        bottom: BorderSide(color: _C.border, width: 0.5)),
+                    : Border(
+                        bottom: BorderSide(
+                            color: context.colors.border, width: 0.5)),
               ),
               child: Row(children: [
                 SizedBox(
@@ -1349,8 +1453,11 @@ class _LeaderboardSkeleton extends StatelessWidget {
                             color: Colors.black.withOpacity(0.15)),
                         textAlign: TextAlign.center)),
                 const SizedBox(width: 8),
-                const _Bone(
-                    width: 30, height: 30, radius: 8, color: _C.skelBaseDark),
+                _Bone(
+                    width: 30,
+                    height: 30,
+                    radius: 8,
+                    color: context.colors.skelBaseDark),
                 const SizedBox(width: 8),
                 Expanded(
                     child: Column(
@@ -1362,8 +1469,11 @@ class _LeaderboardSkeleton extends StatelessWidget {
                       const _Bone(width: 90, height: 8),
                     ])),
                 const SizedBox(width: 8),
-                const _Bone(
-                    width: 42, height: 34, radius: 10, color: _C.skelBaseDark),
+                _Bone(
+                    width: 42,
+                    height: 34,
+                    radius: 10,
+                    color: context.colors.skelBaseDark),
               ]),
             );
           }),
@@ -1384,14 +1494,14 @@ class _CommunityRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Padding(
+      Padding(
           padding: EdgeInsets.only(bottom: 10),
           child: Row(children: [
             Text('💬', style: TextStyle(fontSize: 13)),
             SizedBox(width: 6),
             Text('কমিউনিটি',
                 style: TextStyle(
-                    color: _C.textPri,
+                    color: context.colors.textPri,
                     fontWeight: FontWeight.w800,
                     fontSize: 13,
                     letterSpacing: -0.1)),
@@ -1402,7 +1512,7 @@ class _CommunityRow extends StatelessWidget {
                 emoji: '⭐',
                 title: 'রেটিং দিন',
                 subtitle: 'Play Store এ রিভিউ',
-                bg: const Color(0xFFFFFBF0),
+                bg: context.colors.goldPale,
                 border: const Color(0xFFFFE082),
                 accent: const Color(0xFF7A4500),
                 iconBg: const Color(0xFFFFECB3),
@@ -1490,33 +1600,35 @@ class _HowItWorks extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-            color: _C.card,
+            color: context.colors.card,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _C.border, width: 0.5)),
+            border: Border.all(color: context.colors.border, width: 0.5)),
         child: Row(children: [
           Container(
               width: 34,
               height: 34,
               decoration: BoxDecoration(
-                  color: _C.greenLight,
+                  color: context.colors.greenLight,
                   borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.help_outline_rounded,
-                  color: _C.darkGreen, size: 18)),
+              child: Icon(Icons.help_outline_rounded,
+                  color: context.colors.darkGreen, size: 18)),
           const SizedBox(width: 10),
-          const Expanded(
+          Expanded(
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                 Text('এটি কীভাবে কাজ করে?',
                     style: TextStyle(
-                        color: _C.textPri,
+                        color: context.colors.textPri,
                         fontWeight: FontWeight.w700,
                         fontSize: 12)),
                 SizedBox(height: 1),
                 Text('আমল ট্র্যাকিং ও র‍্যাংকিং সম্পর্কে জানুন',
-                    style: TextStyle(color: _C.textSec, fontSize: 10.5)),
+                    style: TextStyle(
+                        color: context.colors.textSec2, fontSize: 10.5)),
               ])),
-          const Icon(Icons.chevron_right_rounded, color: _C.textHint, size: 18),
+          Icon(Icons.chevron_right_rounded,
+              color: context.colors.textHint, size: 18),
         ]),
       ));
 }
@@ -1533,15 +1645,58 @@ class _EmptyCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
       height: 80,
       decoration: BoxDecoration(
-          color: _C.card,
+          color: context.colors.card,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _C.border, width: 0.5)),
+          border: Border.all(color: context.colors.border, width: 0.5)),
       child: Center(
           child: Text(label,
-              style: const TextStyle(
-                  color: _C.textHint,
+              style: TextStyle(
+                  color: context.colors.textHint,
                   fontSize: 13,
                   fontWeight: FontWeight.w500))));
+}
+
+class _SectionErrorCard extends StatelessWidget {
+  final String label;
+  final VoidCallback onRetry;
+  const _SectionErrorCard({required this.label, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        height: 100,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+            color: context.colors.card,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: context.colors.border, width: 0.5)),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label,
+                  style: TextStyle(
+                      color: context.colors.textHint,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: onRetry,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                      color: context.colors.greenLight,
+                      borderRadius: BorderRadius.circular(8)),
+                  child: Text('আবার চেষ্টা করুন',
+                      style: TextStyle(
+                          color: context.colors.darkGreen,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
 }
 
 class SectionHeaderCompact extends StatelessWidget {
@@ -1556,13 +1711,15 @@ class SectionHeaderCompact extends StatelessWidget {
   Widget build(BuildContext context) =>
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Text(title,
-            style: const TextStyle(
-                color: _C.textPri, fontWeight: FontWeight.w700, fontSize: 11)),
+            style: TextStyle(
+                color: context.colors.textPri,
+                fontWeight: FontWeight.w700,
+                fontSize: 11)),
         GestureDetector(
             onTap: onAction,
             child: Text(action,
-                style: const TextStyle(
-                    color: _C.darkGreen,
+                style: TextStyle(
+                    color: context.colors.darkGreen,
                     fontSize: 10,
                     fontWeight: FontWeight.w600))),
       ]);
@@ -1633,23 +1790,23 @@ class _WeeklyHabitsSnapshot extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(13, 11, 13, 12),
       decoration: BoxDecoration(
-          color: _C.card,
+          color: context.colors.card,
           borderRadius: BorderRadius.circular(13),
-          border: Border.all(color: _C.border, width: 0.5)),
+          border: Border.all(color: context.colors.border, width: 0.5)),
       child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(children: [
-              const Text('সাপ্তাহিক অভ্যাস',
+              Text('সাপ্তাহিক অভ্যাস',
                   style: TextStyle(
-                      color: _C.textPri,
+                      color: context.colors.textPri,
                       fontWeight: FontWeight.w700,
                       fontSize: 11)),
               const Spacer(),
               Text('বিস্তারিত দেখতে ট্যাপ করুন',
                   style: TextStyle(
-                      color: _C.textHint,
+                      color: context.colors.textHint,
                       fontSize: 8.5,
                       fontWeight: FontWeight.w500)),
             ]),
@@ -1689,18 +1846,19 @@ class _TileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(children: [
-        Icon(icon, size: 14, color: _C.darkGreen),
+        Icon(icon, size: 14, color: context.colors.darkGreen),
         const SizedBox(width: 5),
         Expanded(
           child: Text(label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                  color: _C.textPri,
+              style: TextStyle(
+                  color: context.colors.textPri,
                   fontSize: 9.5,
                   fontWeight: FontWeight.w700)),
         ),
-        const Icon(Icons.chevron_right_rounded, size: 13, color: _C.textHint),
+        Icon(Icons.chevron_right_rounded,
+            size: 13, color: context.colors.textHint),
       ]);
 }
 
@@ -1735,17 +1893,17 @@ class _FardWeeklyTile extends StatelessWidget {
   const _FardWeeklyTile(
       {required this.habit, required this.icon, required this.onTap});
 
-  Color _cellColor(String status) {
+  Color _cellColor(String status, BuildContext context) {
     switch (status) {
       case 'congregation':
-        return _C.green;
+        return context.colors.green;
       case 'solo':
-        return _C.amber;
+        return context.colors.amber;
       case 'exempt':
-        return _C.purple.withOpacity(0.45);
+        return context.colors.purple.withOpacity(0.45);
       case 'missed':
       default:
-        return _C.red.withOpacity(0.55);
+        return context.colors.red.withOpacity(0.55);
     }
   }
 
@@ -1771,9 +1929,9 @@ class _FardWeeklyTile extends StatelessWidget {
         width: 168,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: _C.pageBg,
+          color: context.colors.pageBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _C.border, width: 0.6),
+          border: Border.all(color: context.colors.border, width: 0.6),
         ),
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1782,8 +1940,8 @@ class _FardWeeklyTile extends StatelessWidget {
               _TileHeader(icon: icon, label: habit.label),
               const SizedBox(height: 3),
               Text('$done/$total ওয়াক্ত এ সপ্তাহে',
-                  style: const TextStyle(
-                      color: _C.green,
+                  style: TextStyle(
+                      color: context.colors.green,
                       fontSize: 11,
                       fontWeight: FontWeight.w800)),
               const SizedBox(height: 6),
@@ -1799,7 +1957,9 @@ class _FardWeeklyTile extends StatelessWidget {
                               fontSize: 7,
                               fontWeight:
                                   today ? FontWeight.w800 : FontWeight.w500,
-                              color: today ? _C.gold : _C.textHint)),
+                              color: today
+                                  ? context.colors.gold
+                                  : context.colors.textHint)),
                     ),
                   );
                 }),
@@ -1813,10 +1973,10 @@ class _FardWeeklyTile extends StatelessWidget {
                     SizedBox(
                         width: 16,
                         child: Text(rowLabels[r],
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 7.5,
                                 fontWeight: FontWeight.w700,
-                                color: _C.textSec))),
+                                color: context.colors.textSec2))),
                     ...List.generate(days.length, (c) {
                       final statuses = days[c].statuses ?? const <String>[];
                       final status =
@@ -1829,10 +1989,11 @@ class _FardWeeklyTile extends StatelessWidget {
                             height: 12,
                             margin: const EdgeInsets.symmetric(horizontal: 1),
                             decoration: BoxDecoration(
-                              color: _cellColor(status),
+                              color: _cellColor(status, context),
                               borderRadius: BorderRadius.circular(3),
                               border: today
-                                  ? Border.all(color: _C.gold, width: 1)
+                                  ? Border.all(
+                                      color: context.colors.gold, width: 1)
                                   : null,
                             ),
                           ),
@@ -1878,9 +2039,9 @@ class _DhikrWeeklyTile extends StatelessWidget {
         width: 168,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: _C.pageBg,
+          color: context.colors.pageBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _C.border, width: 0.6),
+          border: Border.all(color: context.colors.border, width: 0.6),
         ),
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1889,8 +2050,8 @@ class _DhikrWeeklyTile extends StatelessWidget {
               _TileHeader(icon: icon, label: habit.label),
               const SizedBox(height: 3),
               Text('$done/$total বার এ সপ্তাহে',
-                  style: const TextStyle(
-                      color: _C.green,
+                  style: TextStyle(
+                      color: context.colors.green,
                       fontSize: 11,
                       fontWeight: FontWeight.w800)),
               const SizedBox(height: 8),
@@ -1905,7 +2066,9 @@ class _DhikrWeeklyTile extends StatelessWidget {
                               fontSize: 7,
                               fontWeight:
                                   today ? FontWeight.w800 : FontWeight.w500,
-                              color: today ? _C.gold : _C.textHint)),
+                              color: today
+                                  ? context.colors.gold
+                                  : context.colors.textHint)),
                     ),
                   );
                 }),
@@ -1918,10 +2081,10 @@ class _DhikrWeeklyTile extends StatelessWidget {
                     SizedBox(
                         width: 34,
                         child: Text(items[r].label,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 8,
                                 fontWeight: FontWeight.w700,
-                                color: _C.textSec))),
+                                color: context.colors.textSec2))),
                     ...List.generate(days.length, (c) {
                       final statuses = days[c].statuses ?? const <String>[];
                       final isDone =
@@ -1934,10 +2097,13 @@ class _DhikrWeeklyTile extends StatelessWidget {
                             height: 14,
                             margin: const EdgeInsets.symmetric(horizontal: 1),
                             decoration: BoxDecoration(
-                              color: isDone ? _C.green : _C.border,
+                              color: isDone
+                                  ? context.colors.green
+                                  : context.colors.border,
                               shape: BoxShape.circle,
                               border: today
-                                  ? Border.all(color: _C.gold, width: 1)
+                                  ? Border.all(
+                                      color: context.colors.gold, width: 1)
                                   : null,
                             ),
                             child: isDone
@@ -1988,9 +2154,9 @@ class _NumericWeeklyTile extends StatelessWidget {
         width: 140,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: _C.pageBg,
+          color: context.colors.pageBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _C.border, width: 0.6),
+          border: Border.all(color: context.colors.border, width: 0.6),
         ),
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1999,8 +2165,8 @@ class _NumericWeeklyTile extends StatelessWidget {
               _TileHeader(icon: icon, label: habit.label),
               const SizedBox(height: 3),
               Text('${total.toInt()} ${habit.unit ?? ""} এ সপ্তাহে',
-                  style: const TextStyle(
-                      color: _C.green,
+                  style: TextStyle(
+                      color: context.colors.green,
                       fontSize: 11,
                       fontWeight: FontWeight.w800)),
               const SizedBox(height: 6),
@@ -2019,7 +2185,7 @@ class _NumericWeeklyTile extends StatelessWidget {
                             margin: const EdgeInsets.symmetric(horizontal: 1),
                             decoration: BoxDecoration(
                               color: today
-                                  ? _C.gold.withOpacity(0.10)
+                                  ? context.colors.gold.withOpacity(0.10)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -2050,7 +2216,9 @@ class _NumericWeeklyTile extends StatelessWidget {
                                 TextStyle(
                                     fontSize: 8.5,
                                     fontWeight: FontWeight.w800,
-                                    color: today ? _C.darkGreen : _C.green),
+                                    color: today
+                                        ? context.colors.darkGreen
+                                        : context.colors.green),
                               );
                             },
                           ),
@@ -2079,8 +2247,9 @@ class _NumericWeeklyTile extends StatelessWidget {
                                           fontWeight: today
                                               ? FontWeight.w800
                                               : FontWeight.w500,
-                                          color:
-                                              today ? _C.gold : _C.textHint)),
+                                          color: today
+                                              ? context.colors.gold
+                                              : context.colors.textHint)),
                                 );
                               },
                             ),
@@ -2094,10 +2263,11 @@ class _NumericWeeklyTile extends StatelessWidget {
 
                           // ── রঙ শুধুই magnitude — "আজ" এখানে কোনো ভূমিকা রাখছে না
                           final Color barColor = d.isExemptDay
-                              ? _C.purple.withOpacity(0.4)
+                              ? context.colors.purple.withOpacity(0.4)
                               : v > 0
-                                  ? _C.green.withOpacity(0.3 + ratio * 0.7)
-                                  : _C.border;
+                                  ? context.colors.green
+                                      .withOpacity(0.3 + ratio * 0.7)
+                                  : context.colors.border;
 
                           return BarChartGroupData(
                             x: i,

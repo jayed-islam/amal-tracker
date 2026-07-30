@@ -9,6 +9,7 @@ import '../providers/auth_provider.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/primary_button.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LOGIN SCREEN
@@ -426,9 +427,9 @@ class _RecoveryBannerState extends ConsumerState<RecoveryBanner> {
       curve: Curves.easeInOut,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF8E7),
+          color: context.colors.goldLight,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.35)),
+          border: Border.all(color: context.colors.amber.withOpacity(0.35)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,29 +441,29 @@ class _RecoveryBannerState extends ConsumerState<RecoveryBanner> {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B).withOpacity(0.15),
+                    color: context.colors.amber.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(9),
                   ),
-                  child: const Icon(Icons.hourglass_top_rounded,
-                      color: Color(0xFFF59E0B), size: 16),
+                  child: Icon(Icons.hourglass_top_rounded,
+                      color: context.colors.amber, size: 16),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'অ্যাকাউন্ট মুছে ফেলার প্রক্রিয়ায়',
                         style: TextStyle(
-                          color: Color(0xFF92400E),
+                          color: context.colors.ambalText,
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       Text(
                         '${widget.info.daysLeft} দিন বাকি আছে',
-                        style: const TextStyle(
-                          color: Color(0xFFF59E0B),
+                        style: TextStyle(
+                          color: context.colors.amber,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
@@ -484,7 +485,7 @@ class _RecoveryBannerState extends ConsumerState<RecoveryBanner> {
                     icon: const Icon(Icons.restore_rounded, size: 16),
                     label: const Text('অ্যাকাউন্ট ফিরিয়ে আনুন'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF59E0B),
+                      backgroundColor: context.colors.amber,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
@@ -497,12 +498,12 @@ class _RecoveryBannerState extends ConsumerState<RecoveryBanner> {
               ),
             ],
             if (_expanded) ...[
-              const Padding(
+              Padding(
                 padding: EdgeInsets.fromLTRB(14, 10, 14, 0),
                 child: Text(
                   'আপনার ইমেইল ও পাসওয়ার্ড দিয়ে নিশ্চিত করুন',
                   style: TextStyle(
-                    color: Color(0xFF92400E),
+                    color: context.colors.ambalText,
                     fontSize: 12,
                     height: 1.5,
                   ),
@@ -542,9 +543,9 @@ class _RecoveryBannerState extends ConsumerState<RecoveryBanner> {
                             ? null
                             : () => setState(() => _expanded = false),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF92400E),
+                          foregroundColor: context.colors.ambalText,
                           side: BorderSide(
-                              color: const Color(0xFFF59E0B).withOpacity(0.4)),
+                              color: context.colors.amber.withOpacity(0.4)),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(11)),
                         ),
@@ -562,7 +563,7 @@ class _RecoveryBannerState extends ConsumerState<RecoveryBanner> {
                       child: ElevatedButton(
                         onPressed: isLoading ? null : _recover,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF59E0B),
+                          backgroundColor: context.colors.amber,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
@@ -619,14 +620,14 @@ class _RecoveryField extends StatelessWidget {
           controller: controller,
           obscureText: obscure,
           keyboardType: keyboardType,
-          style: const TextStyle(fontSize: 13.5, color: Color(0xFF0A1A0F)),
+          style: TextStyle(fontSize: 13.5, color: context.colors.textPri),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Color(0xFFABBAAE), fontSize: 13),
+            hintStyle: TextStyle(color: context.colors.textHint, fontSize: 13),
             isDense: true,
             filled: true,
-            fillColor: const Color(0xFFFFFBF0),
-            prefixIcon: Icon(icon, size: 17, color: const Color(0xFFF59E0B)),
+            fillColor: context.colors.goldPale,
+            prefixIcon: Icon(icon, size: 17, color: context.colors.amber),
             suffixIcon: onToggleObscure != null
                 ? IconButton(
                     onPressed: onToggleObscure,
@@ -635,24 +636,24 @@ class _RecoveryField extends StatelessWidget {
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
                       size: 17,
-                      color: const Color(0xFFF59E0B),
+                      color: context.colors.amber,
                     ),
                   )
                 : null,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide:
-                  BorderSide(color: const Color(0xFFF59E0B).withOpacity(0.3)),
+                  BorderSide(color: context.colors.amber.withOpacity(0.3)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide:
-                  BorderSide(color: const Color(0xFFF59E0B).withOpacity(0.3)),
+                  BorderSide(color: context.colors.amber.withOpacity(0.3)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide:
-                  const BorderSide(color: Color(0xFFF59E0B), width: 1.5),
+                  BorderSide(color: context.colors.amber, width: 1.5),
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -662,13 +663,13 @@ class _RecoveryField extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 5, left: 2),
             child: Row(children: [
-              const Icon(Icons.error_rounded,
-                  size: 12, color: Color(0xFFEF4444)),
+              Icon(Icons.error_rounded,
+                  size: 12, color: context.colors.red),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(errorText!,
-                    style: const TextStyle(
-                        color: Color(0xFFEF4444),
+                    style: TextStyle(
+                        color: context.colors.red,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w500)),
               ),

@@ -3,32 +3,12 @@ import 'package:amal_tracker/features/tracker/models/tracker_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:amal_tracker/core/theme/app_colors.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
-
-class _C {
-  static const pageBg = Color(0xFFF4F6F1);
-  static const cardBg = Color(0xFFFFFFFF);
-  static const darkGreen = Color(0xFF0E3D22);
-  static const midGreen = Color(0xFF1B7045);
-  static const gold = Color(0xFFD4A843);
-  static const green = Color(0xFF16A34A);
-  static const greenLight = Color(0xFFE8F5EE);
-  static const amber = Color(0xFFFF6B35);
-  static const textPrimary = Color(0xFF0A1A0F);
-  static const textSecondary = Color(0xFF6B7C6E);
-  static const textHint = Color(0xFFABBAAE);
-  static const border = Color(0xFFE4EAE4);
-  static const rankGold = Color(0xFFD4A843);
-  static const rankSilver = Color(0xFF94A3B8);
-  static const rankBronze = Color(0xFFCD7F32);
-  static const serialBg = Color(0xFFF0F4F0);
-  static const serialText = Color(0xFF8FA98F);
-  static const districtText = Color(0xFF2D5A3D);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // PODIUM CARD — public widget, used from leaderboard_screen
 // ─────────────────────────────────────────────────────────────────────────────
@@ -55,9 +35,9 @@ class PodiumCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: _C.cardBg,
+        color: context.colors.cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _C.border, width: 0.5),
+        border: Border.all(color: context.colors.border, width: 0.5),
       ),
       child: Column(children: [
         // ── Header ──────────────────────────────────────────────────
@@ -72,8 +52,8 @@ class PodiumCard extends StatelessWidget {
                   top3.length == 2
                       ? 'এই মাসের শীর্ষ দুইজন'
                       : 'এই মাসের শীর্ষ তিনজন',
-                  style: const TextStyle(
-                      color: _C.textSecondary,
+                  style: TextStyle(
+                      color: context.colors.textSecondary,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.2)),
@@ -160,11 +140,11 @@ class _PodiumPillar extends StatelessWidget {
     this.isFirst = false,
   });
 
-  Color get _rankColor => rank == 1
-      ? _C.rankGold
+  Color _rankColor(BuildContext context) => rank == 1
+      ? context.colors.rankGold
       : rank == 2
-          ? _C.rankSilver
-          : _C.rankBronze;
+          ? context.colors.rankSilver
+          : context.colors.rankBronze;
 
   String get _rankEmoji => rank == 1
       ? '🥇'
@@ -233,28 +213,28 @@ class _PodiumPillar extends StatelessWidget {
                   decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(colors: [
-                        _rankColor.withOpacity(0.20),
-                        _rankColor.withOpacity(0.0),
+                        _rankColor(context).withOpacity(0.20),
+                        _rankColor(context).withOpacity(0.0),
                       ])),
                 ),
               Container(
                 width: _avatarSize,
                 height: _avatarSize,
                 decoration: BoxDecoration(
-                    color: _rankColor.withOpacity(0.10),
+                    color: _rankColor(context).withOpacity(0.10),
                     shape: BoxShape.circle,
                     border: Border.all(
-                        color: _rankColor, width: isFirst ? 2.5 : 2.0),
+                        color: _rankColor(context), width: isFirst ? 2.5 : 2.0),
                     boxShadow: [
                       BoxShadow(
-                          color: _rankColor.withOpacity(isFirst ? 0.30 : 0.15),
+                          color: _rankColor(context).withOpacity(isFirst ? 0.30 : 0.15),
                           blurRadius: isFirst ? 14 : 8,
                           spreadRadius: 0)
                     ]),
                 child: Center(
                     child: Text(initial,
                         style: TextStyle(
-                            color: _rankColor,
+                            color: _rankColor(context),
                             fontSize: isFirst
                                 ? 28
                                 : rank == 2
@@ -271,9 +251,9 @@ class _PodiumPillar extends StatelessWidget {
                   width: 18,
                   height: 18,
                   decoration: BoxDecoration(
-                      color: canView ? const Color(0xFF0891B2) : _C.textHint,
+                      color: canView ? context.colors.avatar4 : context.colors.textHint,
                       shape: BoxShape.circle,
-                      border: Border.all(color: _C.cardBg, width: 2)),
+                      border: Border.all(color: context.colors.cardBg, width: 2)),
                   child: Icon(
                       canView ? Icons.visibility_rounded : Icons.lock_rounded,
                       size: 9,
@@ -290,7 +270,7 @@ class _PodiumPillar extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                  color: _C.textPrimary,
+                  color: context.colors.textPrimary,
                   fontSize: isFirst ? 13.5 : 11.5,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.2)),
@@ -301,12 +281,12 @@ class _PodiumPillar extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                  color: _C.serialBg,
+                  color: context.colors.serialBg,
                   borderRadius: BorderRadius.circular(5),
-                  border: Border.all(color: _C.border, width: 0.5)),
+                  border: Border.all(color: context.colors.border, width: 0.5)),
               child: Text(entry.id,
-                  style: const TextStyle(
-                      color: _C.serialText,
+                  style: TextStyle(
+                      color: context.colors.serialText,
                       fontSize: 9,
                       fontWeight: FontWeight.w600)),
             ),
@@ -316,8 +296,8 @@ class _PodiumPillar extends StatelessWidget {
           if (entry.district.isNotEmpty)
             Text(entry.district,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                    color: _C.districtText,
+                style: TextStyle(
+                    color: context.colors.districtText,
                     fontSize: 9.5,
                     fontWeight: FontWeight.w600)),
           const SizedBox(height: 10),
@@ -327,7 +307,7 @@ class _PodiumPillar extends StatelessWidget {
             entry: entry,
             rank: rank,
             isFirst: isFirst,
-            rankColor: _rankColor,
+            rankColor: _rankColor(context),
             pillarWidth: _pillarWidth,
             pillarPadding: _pillarPadding,
           ),

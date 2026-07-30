@@ -9,6 +9,7 @@ import '../models/tracker_model.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/providers/cache_provider.dart';
 import '../../../shared/widgets/delayed_progress_indicator.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SCREEN
@@ -72,7 +73,7 @@ class _MonthlyViewScreenState extends ConsumerState<MonthlyViewScreen> {
 
     // Lazy check-and-refresh for Report Tab data
     final activeIndex = ref.watch(activeTabIndexProvider);
-    if (activeIndex == 2) {
+    if (activeIndex == 3) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           checkAndRefreshTab(ref, CacheTab.monthly, () {
@@ -93,11 +94,11 @@ class _MonthlyViewScreenState extends ConsumerState<MonthlyViewScreen> {
             (entriesAsync.isLoading && entriesAsync.hasValue);
 
     return Scaffold(
-      backgroundColor: AmolColors.pageBg,
+      backgroundColor: context.colors.pageBg,
       body: Stack(
         children: [
           RefreshIndicator(
-            color: AmolColors.darkGreen,
+            color: context.colors.darkGreen,
             onRefresh: () async {
               ref
                   .read(cacheStatusProvider.notifier)
@@ -117,7 +118,7 @@ class _MonthlyViewScreenState extends ConsumerState<MonthlyViewScreen> {
                   pinned: true,
                   expandedHeight: 0,
                   toolbarHeight: 56,
-                  backgroundColor: AmolColors.darkGreen,
+                  backgroundColor: context.colors.darkGreen,
                   surfaceTintColor: Colors.transparent,
                   shadowColor: Colors.transparent,
                   automaticallyImplyLeading: false,
@@ -222,14 +223,18 @@ class _MonthlyViewScreenState extends ConsumerState<MonthlyViewScreen> {
 
                 // ── Entry card → dedicated "সব আমল" full page ───────────────────
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    child: AmolNavEntryCard(
-                      emoji: '🗂️',
-                      title: 'সব আমল দেখুন',
-                      subtitle:
-                          '$monthName মাসের প্রতিটা আমলের বিস্তারিত ও প্রগ্রেস',
-                      onTap: _openCategoryList,
+                  child: progressAsync.when(
+                    loading: () => const _SectionSkeleton(height: 72),
+                    error: (_, __) => const SizedBox.shrink(),
+                    data: (_) => Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      child: AmolNavEntryCard(
+                        emoji: '🗂️',
+                        title: 'সব আমল দেখুন',
+                        subtitle:
+                            '$monthName মাসের প্রতিটা আমলের বিস্তারিত ও প্রগ্রেস',
+                        onTap: _openCategoryList,
+                      ),
                     ),
                   ),
                 ),
@@ -317,11 +322,11 @@ class _MonthlyViewScreenState extends ConsumerState<MonthlyViewScreen> {
                           const AmolSectionHeader(
                               title: 'দিন অনুযায়ী বিস্তারিত', emoji: '📋'),
                           const SizedBox(height: 3),
-                          const Padding(
+                          Padding(
                             padding: EdgeInsets.only(bottom: 8),
                             child: Text('যেকোনো দিনে ট্যাপ করে বিস্তারিত দেখুন',
                                 style: TextStyle(
-                                    color: AmolColors.textHint,
+                                    color: context.colors.textHint,
                                     fontSize: 10.5,
                                     fontWeight: FontWeight.w500)),
                           ),
@@ -330,10 +335,10 @@ class _MonthlyViewScreenState extends ConsumerState<MonthlyViewScreen> {
                           else
                             Container(
                               decoration: BoxDecoration(
-                                color: AmolColors.cardBg,
+                                color: context.colors.cardBg,
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                    color: AmolColors.border, width: 0.5),
+                                    color: context.colors.border, width: 0.5),
                               ),
                               child: Column(
                                 children: List.generate(
@@ -409,7 +414,7 @@ class _HeroBand extends StatelessWidget {
     final rank = tracker?.rank;
 
     return Container(
-      color: AmolColors.darkGreen,
+      color: context.colors.darkGreen,
       child: Stack(children: [
         Positioned(
             top: -45,
@@ -484,7 +489,7 @@ class _HeroBand extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                              color: AmolColors.gold,
+                              color: context.colors.gold,
                               borderRadius: BorderRadius.circular(20)),
                           child: Row(mainAxisSize: MainAxisSize.min, children: [
                             const Text('🏆', style: TextStyle(fontSize: 10)),
@@ -519,8 +524,8 @@ class _HeroBand extends StatelessWidget {
                               color: Colors.white.withOpacity(0.45),
                               fontSize: 8.5)),
                       Text('#$rank',
-                          style: const TextStyle(
-                              color: AmolColors.gold,
+                          style: TextStyle(
+                              color: context.colors.gold,
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
                               height: 1.1)),
@@ -570,10 +575,10 @@ class _CircularProgress extends StatelessWidget {
     final str = '${percentage.toInt()}%';
     final innerSize = size * 0.80;
     final Color barColor = percentage >= 80
-        ? AmolColors.green
+        ? context.colors.green
         : percentage >= 50
-            ? AmolColors.gold
-            : AmolColors.amber;
+            ? context.colors.gold
+            : context.colors.amber2;
 
     return SizedBox(
       width: size,
@@ -590,8 +595,8 @@ class _CircularProgress extends StatelessWidget {
         Container(
           width: innerSize,
           height: innerSize,
-          decoration: const BoxDecoration(
-              color: AmolColors.darkGreen, shape: BoxShape.circle),
+          decoration: BoxDecoration(
+              color: context.colors.darkGreen, shape: BoxShape.circle),
           child: Center(
               child: FittedBox(
             fit: BoxFit.scaleDown,
@@ -634,17 +639,17 @@ class _ExemptBanner extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AmolColors.purplePale,
+        color: context.colors.purplePale,
         borderRadius: BorderRadius.circular(12),
         border:
-            Border.all(color: AmolColors.purple.withOpacity(0.25), width: 0.5),
+            Border.all(color: context.colors.purple.withOpacity(0.25), width: 0.5),
       ),
       child: Row(children: [
         Container(
             width: 30,
             height: 30,
             decoration: BoxDecoration(
-                color: AmolColors.purpleLight,
+                color: context.colors.purpleLight,
                 borderRadius: BorderRadius.circular(8)),
             child: const Center(
                 child: Text('🌸', style: TextStyle(fontSize: 15)))),
@@ -652,15 +657,15 @@ class _ExemptBanner extends StatelessWidget {
         Expanded(
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('মাহলির দিন চিহ্নিত',
+          Text('মাহলির দিন চিহ্নিত',
               style: TextStyle(
-                  color: AmolColors.purple,
+                  color: context.colors.purple,
                   fontSize: 12,
                   fontWeight: FontWeight.w700)),
           const SizedBox(height: 2),
           Text('$exemptCount দিন মাফ — নামাজ ও রোজার হিসাব বাদ দেওয়া হয়েছে',
               style: TextStyle(
-                  color: AmolColors.purple.withOpacity(0.7),
+                  color: context.colors.purple.withOpacity(0.7),
                   fontSize: 10,
                   fontWeight: FontWeight.w500)),
         ])),
@@ -695,26 +700,26 @@ class _StatStrip extends StatelessWidget {
           Expanded(
               child: _StatCard(
                   emoji: '🔥',
-                  emojiBg: AmolColors.amberLight,
+                  emojiBg: context.colors.amberLight,
                   value: '$streak',
                   label: 'স্ট্রিক দিন',
-                  valueColor: AmolColors.amber)),
+                  valueColor: context.colors.amber2)),
           const SizedBox(width: 8),
           Expanded(
               child: _StatCard(
                   emoji: '📅',
-                  emojiBg: AmolColors.greenLight,
+                  emojiBg: context.colors.greenLight,
                   value: '$daysActive',
                   label: 'আমল করা দিন',
-                  valueColor: AmolColors.green)),
+                  valueColor: context.colors.green)),
           const SizedBox(width: 8),
           Expanded(
               child: _StatCard(
                   emoji: '✅',
-                  emojiBg: AmolColors.greenLight,
+                  emojiBg: context.colors.greenLight,
                   value: '$farzDays',
                   label: 'পূর্ণ ফরজ দিন',
-                  valueColor: AmolColors.darkGreen)),
+                  valueColor: context.colors.darkGreen)),
         ]),
       ),
       Padding(
@@ -723,35 +728,35 @@ class _StatStrip extends StatelessWidget {
           Expanded(
               child: _StatCard(
                   emoji: '🕌',
-                  emojiBg: AmolColors.purpleLight,
+                  emojiBg: context.colors.purpleLight,
                   value: '$jamaat',
-                  label: 'জামাত দিন',
-                  valueColor: AmolColors.purple)),
+                  label: 'জামাত (ওয়াক্ত)',
+                  valueColor: context.colors.purple)),
           const SizedBox(width: 8),
           Expanded(
               child: _StatCard(
                   emoji: '⏳',
-                  emojiBg: AmolColors.greenLight,
+                  emojiBg: context.colors.greenLight,
                   value: '$eligible',
-                  label: 'হিসাবের দিন',
-                  valueColor: AmolColors.green)),
+                  label: 'হিসাবভুক্ত দিন',
+                  valueColor: context.colors.green)),
           const SizedBox(width: 8),
           if (isFemale)
             Expanded(
                 child: _StatCard(
                     emoji: '🌸',
-                    emojiBg: AmolColors.purplePale,
+                    emojiBg: context.colors.purplePale,
                     value: '$exemptDays',
                     label: 'মাহলির দিন',
-                    valueColor: AmolColors.purple))
+                    valueColor: context.colors.purple))
           else
             Expanded(
                 child: _StatCard(
                     emoji: '🏅',
-                    emojiBg: AmolColors.goldLight,
+                    emojiBg: context.colors.goldLight,
                     value: tracker?.rank != null ? '#${tracker!.rank}' : '---',
                     label: 'র‍্যাংক',
-                    valueColor: AmolColors.gold)),
+                    valueColor: context.colors.gold)),
         ]),
       ),
     ]);
@@ -773,9 +778,9 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
-          color: AmolColors.cardBg,
+          color: context.colors.cardBg,
           borderRadius: BorderRadius.circular(13),
-          border: Border.all(color: AmolColors.border, width: 0.5)),
+          border: Border.all(color: context.colors.border, width: 0.5)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Container(
             width: 28,
@@ -797,8 +802,8 @@ class _StatCard extends StatelessWidget {
                     height: 1))),
         const SizedBox(height: 2),
         Text(label,
-            style: const TextStyle(
-                color: AmolColors.textSecondary,
+            style: TextStyle(
+                color: context.colors.textSecondary,
                 fontSize: 9.5,
                 fontWeight: FontWeight.w500)),
       ]),
@@ -822,9 +827,9 @@ class _FardSection extends StatelessWidget {
     final jamaat = tracker.congregationDaysSum;
 
     Color statusColor() {
-      if (pct >= 90) return AmolColors.green;
-      if (pct >= 70) return AmolColors.amber;
-      return AmolColors.red;
+      if (pct >= 90) return context.colors.green;
+      if (pct >= 70) return context.colors.amber2;
+      return context.colors.red;
     }
 
     String statusLabel() {
@@ -857,10 +862,10 @@ class _FardSection extends StatelessWidget {
             bigValue: '$jamaat',
             subValue: '৫ ওয়াক্ত × দিন মিলিয়ে',
             badgeLabel: jamaat > 0 ? 'জামাতে পড়া হয়েছে' : 'কোনো জামাত নেই',
-            badgeColor: jamaat > 0 ? AmolColors.purple : AmolColors.textHint,
+            badgeColor: jamaat > 0 ? context.colors.purple : context.colors.textHint,
             barValue:
                 eligible > 0 ? (jamaat / (eligible * 5)).clamp(0.0, 1.0) : 0,
-            barColor: AmolColors.purple,
+            barColor: context.colors.purple,
           )),
         ]),
       ]),
@@ -886,15 +891,15 @@ class _FardCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-          color: AmolColors.cardBg,
+          color: context.colors.cardBg,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AmolColors.border, width: 0.5)),
+          border: Border.all(color: context.colors.border, width: 0.5)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Expanded(
               child: Text(title,
-                  style: const TextStyle(
-                      color: AmolColors.textPrimary,
+                  style: TextStyle(
+                      color: context.colors.textPrimary,
                       fontSize: 11,
                       fontWeight: FontWeight.w700))),
           Container(
@@ -921,14 +926,14 @@ class _FardCard extends StatelessWidget {
                     height: 1))),
         const SizedBox(height: 2),
         Text(subValue,
-            style: const TextStyle(color: AmolColors.textHint, fontSize: 9.5)),
+            style: TextStyle(color: context.colors.textHint, fontSize: 9.5)),
         const SizedBox(height: 8),
         ClipRRect(
             borderRadius: BorderRadius.circular(99),
             child: LinearProgressIndicator(
                 value: barValue.clamp(0.0, 1.0),
                 minHeight: 5,
-                backgroundColor: AmolColors.pageBg,
+                backgroundColor: context.colors.pageBg,
                 valueColor: AlwaysStoppedAnimation(barColor))),
       ]),
     );
@@ -1067,9 +1072,9 @@ class _PrevMonthsSectionState extends State<_PrevMonthsSection> {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-              color: AmolColors.cardBg,
+              color: context.colors.cardBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AmolColors.border, width: 0.5)),
+              border: Border.all(color: context.colors.border, width: 0.5)),
           child: Column(children: [
             LayoutBuilder(builder: (ctx, constraints) {
               final chartH = (constraints.maxWidth * 0.36).clamp(90.0, 150.0);
@@ -1099,7 +1104,8 @@ class _PrevMonthsSectionState extends State<_PrevMonthsSection> {
                   children: [
                     CustomPaint(
                       size: Size(constraints.maxWidth, chartH),
-                      painter: _TrendLinePainter(points: points),
+                      painter: _TrendLinePainter(
+                          points: points, goldColor: context.colors.gold),
                     ),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -1128,8 +1134,8 @@ class _PrevMonthsSectionState extends State<_PrevMonthsSection> {
                                         style: TextStyle(
                                             fontSize: 9,
                                             color: isActive
-                                                ? AmolColors.darkGreen
-                                                : AmolColors.textHint,
+                                                ? context.colors.darkGreen
+                                                : context.colors.textHint,
                                             fontWeight: isActive
                                                 ? FontWeight.w800
                                                 : FontWeight.w500)),
@@ -1143,16 +1149,16 @@ class _PrevMonthsSectionState extends State<_PrevMonthsSection> {
                                   decoration: BoxDecoration(
                                     color: val > 0
                                         ? (isActive
-                                            ? AmolColors.darkGreen
-                                            : AmolColors.midGreen
+                                            ? context.colors.darkGreen
+                                            : context.colors.midGreen
                                                 .withOpacity(0.5))
-                                        : AmolColors.pageBg,
+                                        : context.colors.pageBg,
                                     borderRadius: const BorderRadius.vertical(
                                         top: Radius.circular(6)),
                                     border: val > 0
                                         ? null
                                         : Border.all(
-                                            color: AmolColors.border,
+                                            color: context.colors.border,
                                             width: 0.5),
                                   ),
                                 ),
@@ -1165,8 +1171,8 @@ class _PrevMonthsSectionState extends State<_PrevMonthsSection> {
                                         style: TextStyle(
                                             fontSize: 9,
                                             color: isActive
-                                                ? AmolColors.darkGreen
-                                                : AmolColors.textSecondary,
+                                                ? context.colors.darkGreen
+                                                : context.colors.textSecondary,
                                             fontWeight: isActive
                                                 ? FontWeight.w800
                                                 : FontWeight.w500)),
@@ -1184,8 +1190,8 @@ class _PrevMonthsSectionState extends State<_PrevMonthsSection> {
             }),
             if (months.length >= 2) ...[
               const SizedBox(height: 12),
-              const Divider(
-                  height: 1, thickness: 0.5, color: AmolColors.border),
+              Divider(
+                  height: 1, thickness: 0.5, color: context.colors.border),
               const SizedBox(height: 10),
               _TrendLine(months: months, metric: _metric),
             ],
@@ -1218,8 +1224,8 @@ class _TrendLine extends StatelessWidget {
             : (isUp ? Icons.trending_up_rounded : Icons.trending_down_rounded),
         size: 16,
         color: isSame
-            ? AmolColors.textHint
-            : (isUp ? AmolColors.green : AmolColors.red),
+            ? context.colors.textHint
+            : (isUp ? context.colors.green : context.colors.red),
       ),
       const SizedBox(width: 6),
       Expanded(
@@ -1229,8 +1235,8 @@ class _TrendLine extends StatelessWidget {
               : '${metric.labelBn} গত মাসের তুলনায় ${isUp ? "বেড়েছে" : "কমেছে"} ${diff.abs().toInt()}${metric == _CompareMetric.completion ? "%" : ""}',
           style: TextStyle(
               color: isSame
-                  ? AmolColors.textHint
-                  : (isUp ? AmolColors.green : AmolColors.red),
+                  ? context.colors.textHint
+                  : (isUp ? context.colors.green : context.colors.red),
               fontSize: 11,
               fontWeight: FontWeight.w600),
         ),
@@ -1241,13 +1247,14 @@ class _TrendLine extends StatelessWidget {
 
 class _TrendLinePainter extends CustomPainter {
   final List<Offset> points;
-  const _TrendLinePainter({required this.points});
+  final Color goldColor;
+  const _TrendLinePainter({required this.points, required this.goldColor});
 
   @override
   void paint(Canvas canvas, Size size) {
     if (points.length < 2) return;
     final linePaint = Paint()
-      ..color = AmolColors.gold.withOpacity(0.6)
+      ..color = goldColor.withOpacity(0.6)
       ..strokeWidth = 1.6
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -1258,7 +1265,7 @@ class _TrendLinePainter extends CustomPainter {
     }
     canvas.drawPath(path, linePaint);
 
-    final dotPaint = Paint()..color = AmolColors.gold;
+    final dotPaint = Paint()..color = goldColor;
     for (final p in points) {
       canvas.drawCircle(p, 2.6, dotPaint);
     }
@@ -1298,15 +1305,15 @@ class _RankSection extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-              color: AmolColors.cardBg,
+              color: context.colors.cardBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AmolColors.border, width: 0.5)),
+              border: Border.all(color: context.colors.border, width: 0.5)),
           child: Row(children: [
             Container(
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                    color: AmolColors.greenLight,
+                    color: context.colors.greenLight,
                     borderRadius: BorderRadius.circular(14)),
                 child: Center(
                     child: FittedBox(
@@ -1314,8 +1321,8 @@ class _RankSection extends StatelessWidget {
                         child: Padding(
                             padding: const EdgeInsets.all(4),
                             child: Text('#$rank',
-                                style: const TextStyle(
-                                    color: AmolColors.darkGreen,
+                                style: TextStyle(
+                                    color: context.colors.darkGreen,
                                     fontSize: 22,
                                     fontWeight: FontWeight.w900)))))),
             const SizedBox(width: 14),
@@ -1324,15 +1331,15 @@ class _RankSection extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                   Text(rankLabel(),
-                      style: const TextStyle(
-                          color: AmolColors.textPrimary,
+                      style: TextStyle(
+                          color: context.colors.textPrimary,
                           fontSize: 13,
                           fontWeight: FontWeight.w700)),
                   const SizedBox(height: 3),
                   Text(
                       'সম্পন্ন ${pct.toInt()}% · $farzDays পূর্ণ ফরজ দিন · $jamaat জামাত',
-                      style: const TextStyle(
-                          color: AmolColors.textSecondary,
+                      style: TextStyle(
+                          color: context.colors.textSecondary,
                           fontSize: 10,
                           fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
@@ -1341,19 +1348,19 @@ class _RankSection extends StatelessWidget {
                       child: LinearProgressIndicator(
                           value: pct / 100,
                           minHeight: 5,
-                          backgroundColor: AmolColors.pageBg,
-                          valueColor: const AlwaysStoppedAnimation(
-                              AmolColors.darkGreen))),
+                          backgroundColor: context.colors.pageBg,
+                          valueColor: AlwaysStoppedAnimation(
+                              context.colors.darkGreen))),
                 ])),
             if (tracker.isWinner) ...[
               const SizedBox(width: 12),
               Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                      color: AmolColors.goldLight,
+                      color: context.colors.goldLight,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                          color: AmolColors.gold.withOpacity(0.3), width: 0.5)),
+                          color: context.colors.gold.withOpacity(0.3), width: 0.5)),
                   child: const Text('🏆', style: TextStyle(fontSize: 22))),
             ],
           ]),
@@ -1423,17 +1430,17 @@ class _HeatmapCalendar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-          color: AmolColors.cardBg,
+          color: context.colors.cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AmolColors.border, width: 0.5)),
+          border: Border.all(color: context.colors.border, width: 0.5)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(
             children: weekdays
                 .map((d) => Expanded(
                     child: Center(
                         child: Text(d,
-                            style: const TextStyle(
-                                color: AmolColors.textHint,
+                            style: TextStyle(
+                                color: context.colors.textHint,
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.w500)))))
                 .toList()),
@@ -1466,25 +1473,25 @@ class _HeatmapCalendar extends StatelessWidget {
             Color numColor;
 
             if (isExempt) {
-              cellColor = AmolColors.purplePale;
-              numColor = AmolColors.purple;
+              cellColor = context.colors.purplePale;
+              numColor = context.colors.purple;
             } else if (isFuture) {
-              cellColor = AmolColors.pageBg;
-              numColor = AmolColors.textHint;
+              cellColor = context.colors.pageBg;
+              numColor = context.colors.textHint;
             } else if (!hasAct) {
-              cellColor = AmolColors.greenLight.withOpacity(0.4);
-              numColor = AmolColors.textHint;
+              cellColor = context.colors.greenLight.withOpacity(0.4);
+              numColor = context.colors.textHint;
             } else if (intensity < 0.25) {
-              cellColor = AmolColors.green.withOpacity(0.18);
-              numColor = AmolColors.green;
+              cellColor = context.colors.green.withOpacity(0.18);
+              numColor = context.colors.green;
             } else if (intensity < 0.5) {
-              cellColor = AmolColors.green.withOpacity(0.38);
-              numColor = AmolColors.green;
+              cellColor = context.colors.green.withOpacity(0.38);
+              numColor = context.colors.green;
             } else if (intensity < 0.75) {
-              cellColor = AmolColors.green.withOpacity(0.60);
+              cellColor = context.colors.green.withOpacity(0.60);
               numColor = Colors.white;
             } else {
-              cellColor = AmolColors.green.withOpacity(0.85);
+              cellColor = context.colors.green.withOpacity(0.85);
               numColor = Colors.white;
             }
 
@@ -1493,7 +1500,7 @@ class _HeatmapCalendar extends StatelessWidget {
                 color: cellColor,
                 borderRadius: BorderRadius.circular(5),
                 border: isToday
-                    ? Border.all(color: AmolColors.gold, width: 1.5)
+                    ? Border.all(color: context.colors.gold, width: 1.5)
                     : null,
               ),
               child: Column(
@@ -1526,8 +1533,8 @@ class _HeatmapCalendar extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-          const Text('কম ',
-              style: TextStyle(color: AmolColors.textHint, fontSize: 9.5)),
+          Text('কম ',
+              style: TextStyle(color: context.colors.textHint, fontSize: 9.5)),
           ...List.generate(
               5,
               (i) => Container(
@@ -1536,12 +1543,12 @@ class _HeatmapCalendar extends StatelessWidget {
                     margin: const EdgeInsets.only(right: 3),
                     decoration: BoxDecoration(
                         color: i == 0
-                            ? AmolColors.greenLight.withOpacity(0.4)
-                            : AmolColors.green.withOpacity(0.15 + i * 0.18),
+                            ? context.colors.greenLight.withOpacity(0.4)
+                            : context.colors.green.withOpacity(0.15 + i * 0.18),
                         borderRadius: BorderRadius.circular(3)),
                   )),
-          const Text(' বেশি',
-              style: TextStyle(color: AmolColors.textHint, fontSize: 9.5)),
+          Text(' বেশি',
+              style: TextStyle(color: context.colors.textHint, fontSize: 9.5)),
           if (isFemale) ...[
             const SizedBox(width: 8),
             Container(
@@ -1549,13 +1556,13 @@ class _HeatmapCalendar extends StatelessWidget {
                 height: 12,
                 margin: const EdgeInsets.only(right: 3),
                 decoration: BoxDecoration(
-                    color: AmolColors.purplePale,
+                    color: context.colors.purplePale,
                     borderRadius: BorderRadius.circular(3),
                     border: Border.all(
-                        color: AmolColors.purple.withOpacity(0.3),
+                        color: context.colors.purple.withOpacity(0.3),
                         width: 0.5))),
-            const Text('মাহলি',
-                style: TextStyle(color: AmolColors.textHint, fontSize: 9.5)),
+            Text('মাহলি',
+                style: TextStyle(color: context.colors.textHint, fontSize: 9.5)),
           ],
         ]),
       ]),
@@ -1619,12 +1626,12 @@ class _HeatmapCalendar extends StatelessWidget {
 //             : 0.0;
 
 //     Color barColor = isExempt
-//         ? AmolColors.purple
+//         ? context.colors.purple
 //         : congregation >= 3
-//             ? AmolColors.green
+//             ? context.colors.green
 //             : congregation >= 1
-//                 ? AmolColors.amber
-//                 : AmolColors.border;
+//                 ? context.colors.amber2
+//                 : context.colors.border;
 
 //     return InkWell(
 //       onTap: () => _showDayDetail(context),
@@ -1632,14 +1639,14 @@ class _HeatmapCalendar extends StatelessWidget {
 //         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
 //         decoration: BoxDecoration(
 //           color: isExempt
-//               ? AmolColors.purplePale.withOpacity(0.4)
+//               ? context.colors.purplePale.withOpacity(0.4)
 //               : hasActivity
-//                   ? AmolColors.greenLight.withOpacity(0.15)
+//                   ? context.colors.greenLight.withOpacity(0.15)
 //                   : Colors.transparent,
 //           border: isLast
 //               ? null
 //               : const Border(
-//                   bottom: BorderSide(color: AmolColors.border, width: 0.5)),
+//                   bottom: BorderSide(color: context.colors.border, width: 0.5)),
 //           borderRadius: isLast
 //               ? const BorderRadius.vertical(bottom: Radius.circular(16))
 //               : null,
@@ -1651,16 +1658,16 @@ class _HeatmapCalendar extends StatelessWidget {
 //             decoration: BoxDecoration(
 //               gradient: isExempt
 //                   ? const LinearGradient(
-//                       colors: [AmolColors.purple, Color(0xFF9B6BE8)],
+//                       colors: [context.colors.purple, Color(0xFF9B6BE8)],
 //                       begin: Alignment.topLeft,
 //                       end: Alignment.bottomRight)
 //                   : hasActivity
 //                       ? const LinearGradient(
-//                           colors: [AmolColors.darkGreen, AmolColors.midGreen],
+//                           colors: [context.colors.darkGreen, context.colors.midGreen],
 //                           begin: Alignment.topLeft,
 //                           end: Alignment.bottomRight)
 //                       : null,
-//               color: isExempt || hasActivity ? null : AmolColors.pageBg,
+//               color: isExempt || hasActivity ? null : context.colors.pageBg,
 //               borderRadius: BorderRadius.circular(12),
 //             ),
 //             child:
@@ -1669,7 +1676,7 @@ class _HeatmapCalendar extends StatelessWidget {
 //                   style: TextStyle(
 //                       color: isExempt || hasActivity
 //                           ? Colors.white
-//                           : AmolColors.textHint,
+//                           : context.colors.textHint,
 //                       fontWeight: FontWeight.w800,
 //                       fontSize: 15,
 //                       height: 1)),
@@ -1677,7 +1684,7 @@ class _HeatmapCalendar extends StatelessWidget {
 //                   style: TextStyle(
 //                       color: isExempt || hasActivity
 //                           ? Colors.white.withOpacity(0.6)
-//                           : AmolColors.textHint,
+//                           : context.colors.textHint,
 //                       fontSize: 8.5)),
 //             ]),
 //           ),
@@ -1696,10 +1703,10 @@ class _HeatmapCalendar extends StatelessWidget {
 //                                   : 'কোনো আমল নেই',
 //                           style: TextStyle(
 //                               color: isExempt
-//                                   ? AmolColors.purple
+//                                   ? context.colors.purple
 //                                   : hasActivity
-//                                       ? AmolColors.textPrimary
-//                                       : AmolColors.textSecondary,
+//                                       ? context.colors.textPrimary
+//                                       : context.colors.textSecondary,
 //                               fontWeight: FontWeight.w700,
 //                               fontSize: 12),
 //                           overflow: TextOverflow.ellipsis)),
@@ -1707,22 +1714,22 @@ class _HeatmapCalendar extends StatelessWidget {
 //                     const SizedBox(width: 5),
 //                     _Pill(
 //                         text: '🕌 $congregation জামাত',
-//                         bg: AmolColors.purpleLight,
-//                         fg: AmolColors.purple),
+//                         bg: context.colors.purpleLight,
+//                         fg: context.colors.purple),
 //                   ] else if (solo > 0) ...[
 //                     const SizedBox(width: 5),
 //                     _Pill(
 //                         text: '🤲 $solo একাকী',
-//                         bg: AmolColors.greenLight,
-//                         fg: AmolColors.green),
+//                         bg: context.colors.greenLight,
+//                         fg: context.colors.green),
 //                   ],
 //                 ]),
 //                 if (missed > 0) ...[
 //                   const SizedBox(height: 3),
 //                   _Pill(
 //                       text: '⚠️ $missed মিস',
-//                       bg: AmolColors.redLight,
-//                       fg: AmolColors.red),
+//                       bg: context.colors.redLight2,
+//                       fg: context.colors.red),
 //                 ],
 //                 const SizedBox(height: 5),
 //                 ClipRRect(
@@ -1730,7 +1737,7 @@ class _HeatmapCalendar extends StatelessWidget {
 //                     child: LinearProgressIndicator(
 //                         value: progressVal.clamp(0.0, 1.0),
 //                         minHeight: 4,
-//                         backgroundColor: AmolColors.pageBg,
+//                         backgroundColor: context.colors.pageBg,
 //                         valueColor: AlwaysStoppedAnimation(barColor))),
 //               ])),
 //           const SizedBox(width: 10),
@@ -1738,16 +1745,16 @@ class _HeatmapCalendar extends StatelessWidget {
 //             if (isExempt)
 //               const Text('🌸', style: TextStyle(fontSize: 18))
 //             else if (congregation >= 4)
-//               const Icon(Icons.star_rounded, color: AmolColors.gold, size: 22)
+//               const Icon(Icons.star_rounded, color: context.colors.gold, size: 22)
 //             else if (congregation >= 1 || solo >= 1)
 //               const Icon(Icons.check_circle_rounded,
-//                   color: AmolColors.green, size: 22)
+//                   color: context.colors.green, size: 22)
 //             else if (hasActivity)
 //               const Icon(Icons.circle_outlined,
-//                   color: AmolColors.amber, size: 22)
+//                   color: context.colors.amber2, size: 22)
 //             else
 //               const Icon(Icons.remove_circle_outline_rounded,
-//                   color: AmolColors.border, size: 22),
+//                   color: context.colors.border, size: 22),
 //             const SizedBox(height: 2),
 //             Text(
 //                 isExempt
@@ -1760,12 +1767,12 @@ class _HeatmapCalendar extends StatelessWidget {
 //                                 ? 'কিছু'
 //                                 : 'শূন্য',
 //                 style: const TextStyle(
-//                     color: AmolColors.textHint,
+//                     color: context.colors.textHint,
 //                     fontSize: 8.5,
 //                     fontWeight: FontWeight.w500)),
 //             const SizedBox(height: 4),
 //             const Icon(Icons.chevron_right_rounded,
-//                 color: AmolColors.textHint, size: 16),
+//                 color: context.colors.textHint, size: 16),
 //           ]),
 //         ]),
 //       ),
@@ -1835,28 +1842,28 @@ class _DayRow extends ConsumerWidget {
     if (isExempt) {
       statusIcon = Icons.spa_rounded;
       statusLabel = 'মাফ';
-      statusColor = AmolColors.purple;
+      statusColor = context.colors.purple;
     } else if (completionRate >= 0.80) {
       // মোট আমলের ৮০%+ করলে তবেই "পূর্ণ"
       statusIcon =
           (congregation >= 4) ? Icons.star_rounded : Icons.check_circle_rounded;
       statusLabel = 'পূর্ণ';
-      statusColor = (congregation >= 4) ? AmolColors.gold : AmolColors.green;
+      statusColor = (congregation >= 4) ? context.colors.gold : context.colors.green;
     } else if (completionRate >= 0.35) {
       // ৩৫% থেকে ৭৯% আমল করলে "আংশিক"
       statusIcon = Icons.pie_chart_outline_rounded;
       statusLabel = 'আংশিক';
-      statusColor = AmolColors.amber;
+      statusColor = context.colors.amber2;
     } else if (totalCompleted > 0) {
       // খুব কম (১ বা ২টি) আমল করলে "কিছু"
       statusIcon = Icons.circle_outlined;
       statusLabel = 'কিছু';
-      statusColor = AmolColors.amber;
+      statusColor = context.colors.amber2;
     } else {
       // ০টি আমল
       statusIcon = Icons.remove_circle_outline_rounded;
       statusLabel = 'শূন্য';
-      statusColor = AmolColors.border;
+      statusColor = context.colors.border;
     }
 
     String monthShort(int idx) {
@@ -1870,14 +1877,14 @@ class _DayRow extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
           color: isExempt
-              ? AmolColors.purplePale.withOpacity(0.4)
+              ? context.colors.purplePale.withOpacity(0.4)
               : hasActivity
-                  ? AmolColors.greenLight.withOpacity(0.15)
+                  ? context.colors.greenLight.withOpacity(0.15)
                   : Colors.transparent,
           border: isLast
               ? null
-              : const Border(
-                  bottom: BorderSide(color: AmolColors.border, width: 0.5)),
+              : Border(
+                  bottom: BorderSide(color: context.colors.border, width: 0.5)),
           borderRadius: isLast
               ? const BorderRadius.vertical(bottom: Radius.circular(16))
               : null,
@@ -1890,17 +1897,17 @@ class _DayRow extends ConsumerWidget {
               height: 44,
               decoration: BoxDecoration(
                 gradient: isExempt
-                    ? const LinearGradient(
-                        colors: [AmolColors.purple, Color(0xFF9B6BE8)],
+                    ? LinearGradient(
+                        colors: [context.colors.purple, Color(0xFF9B6BE8)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight)
                     : hasActivity
-                        ? const LinearGradient(
-                            colors: [AmolColors.darkGreen, AmolColors.midGreen],
+                        ? LinearGradient(
+                            colors: [context.colors.darkGreen, context.colors.midGreen],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight)
                         : null,
-                color: isExempt || hasActivity ? null : AmolColors.pageBg,
+                color: isExempt || hasActivity ? null : context.colors.pageBg,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -1911,7 +1918,7 @@ class _DayRow extends ConsumerWidget {
                     style: TextStyle(
                       color: isExempt || hasActivity
                           ? Colors.white
-                          : AmolColors.textHint,
+                          : context.colors.textHint,
                       fontWeight: FontWeight.w800,
                       fontSize: 15,
                       height: 1,
@@ -1922,7 +1929,7 @@ class _DayRow extends ConsumerWidget {
                     style: TextStyle(
                       color: isExempt || hasActivity
                           ? Colors.white.withOpacity(0.6)
-                          : AmolColors.textHint,
+                          : context.colors.textHint,
                       fontSize: 8.5,
                     ),
                   ),
@@ -1947,10 +1954,10 @@ class _DayRow extends ConsumerWidget {
                                   : 'কোনো আমল নেই',
                           style: TextStyle(
                             color: isExempt
-                                ? AmolColors.purple
+                                ? context.colors.purple
                                 : hasActivity
-                                    ? AmolColors.textPrimary
-                                    : AmolColors.textSecondary,
+                                    ? context.colors.textPrimary
+                                    : context.colors.textSecondary,
                             fontWeight: FontWeight.w700,
                             fontSize: 12,
                           ),
@@ -1961,15 +1968,15 @@ class _DayRow extends ConsumerWidget {
                         const SizedBox(width: 5),
                         _Pill(
                           text: '🕌 $congregation জামাত',
-                          bg: AmolColors.purpleLight,
-                          fg: AmolColors.purple,
+                          bg: context.colors.purpleLight,
+                          fg: context.colors.purple,
                         ),
                       ] else if (solo > 0) ...[
                         const SizedBox(width: 5),
                         _Pill(
                           text: '🤲 $solo একাকী',
-                          bg: AmolColors.greenLight,
-                          fg: AmolColors.green,
+                          bg: context.colors.greenLight,
+                          fg: context.colors.green,
                         ),
                       ],
                     ],
@@ -1978,8 +1985,8 @@ class _DayRow extends ConsumerWidget {
                     const SizedBox(height: 3),
                     _Pill(
                       text: '⚠️ $missed মিস',
-                      bg: AmolColors.redLight,
-                      fg: AmolColors.red,
+                      bg: context.colors.redLight2,
+                      fg: context.colors.red,
                     ),
                   ],
                   const SizedBox(height: 5),
@@ -1989,9 +1996,9 @@ class _DayRow extends ConsumerWidget {
                     child: LinearProgressIndicator(
                       value: completionRate,
                       minHeight: 4,
-                      backgroundColor: AmolColors.pageBg,
+                      backgroundColor: context.colors.pageBg,
                       valueColor: AlwaysStoppedAnimation(
-                        hasActivity ? statusColor : AmolColors.border,
+                        hasActivity ? statusColor : context.colors.border,
                       ),
                     ),
                   ),
@@ -2009,8 +2016,8 @@ class _DayRow extends ConsumerWidget {
                 else
                   Icon(
                     statusIcon,
-                    color: statusColor == AmolColors.border
-                        ? AmolColors.textHint
+                    color: statusColor == context.colors.border
+                        ? context.colors.textHint
                         : statusColor,
                     size: 20,
                   ),
@@ -2018,17 +2025,17 @@ class _DayRow extends ConsumerWidget {
                 Text(
                   statusLabel,
                   style: TextStyle(
-                    color: statusColor == AmolColors.border
-                        ? AmolColors.textHint
+                    color: statusColor == context.colors.border
+                        ? context.colors.textHint
                         : statusColor,
                     fontSize: 8.5,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Icon(
+                Icon(
                   Icons.chevron_right_rounded,
-                  color: AmolColors.textHint,
+                  color: context.colors.textHint,
                   size: 16,
                 ),
               ],
@@ -2086,8 +2093,8 @@ class _DayDetailContainer extends ConsumerWidget {
       maxChildSize: 0.9,
       expand: false,
       builder: (context, scrollController) => Container(
-        decoration: const BoxDecoration(
-          color: AmolColors.cardBg,
+        decoration: BoxDecoration(
+          color: context.colors.cardBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: Column(
@@ -2098,7 +2105,7 @@ class _DayDetailContainer extends ConsumerWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AmolColors.border,
+                color: context.colors.border,
                 borderRadius: BorderRadius.circular(99),
               ),
             ),
@@ -2116,8 +2123,8 @@ class _DayDetailContainer extends ConsumerWidget {
                       children: [
                         Text(
                           '${entry.day} তারিখে যা করেছেন',
-                          style: const TextStyle(
-                            color: AmolColors.textPrimary,
+                          style: TextStyle(
+                            color: context.colors.textPrimary,
                             fontWeight: FontWeight.w800,
                             fontSize: 16,
                           ),
@@ -2138,17 +2145,17 @@ class _DayDetailContainer extends ConsumerWidget {
                             }).length;
                             return Text(
                               '$count টি আমল সম্পন্ন',
-                              style: const TextStyle(
-                                color: AmolColors.textHint,
+                              style: TextStyle(
+                                color: context.colors.textHint,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
                               ),
                             );
                           },
-                          loading: () => const Text(
+                          loading: () => Text(
                             'ডেটা লোড হচ্ছে...',
                             style: TextStyle(
-                              color: AmolColors.textHint,
+                              color: context.colors.textHint,
                               fontSize: 11,
                             ),
                           ),
@@ -2163,11 +2170,11 @@ class _DayDetailContainer extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                          color: AmolColors.purplePale,
+                          color: context.colors.purplePale,
                           borderRadius: BorderRadius.circular(20)),
-                      child: const Text('🌸 মাহলি',
+                      child: Text('🌸 মাহলি',
                           style: TextStyle(
-                              color: AmolColors.purple,
+                              color: context.colors.purple,
                               fontSize: 10,
                               fontWeight: FontWeight.w700)),
                     ),
@@ -2176,14 +2183,14 @@ class _DayDetailContainer extends ConsumerWidget {
                     onTap: () => Navigator.pop(context),
                     child: Container(
                       padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: AmolColors.pageBg,
+                      decoration: BoxDecoration(
+                        color: context.colors.pageBg,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.close_rounded,
                         size: 18,
-                        color: AmolColors.textSecondary,
+                        color: context.colors.textSecondary,
                       ),
                     ),
                   ),
@@ -2191,7 +2198,7 @@ class _DayDetailContainer extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 10),
-            const Divider(height: 1, color: AmolColors.border, thickness: 0.5),
+            Divider(height: 1, color: context.colors.border, thickness: 0.5),
 
             // ৩. বডি অংশ (Shimmer Skeleton অথবা Grouped Amol List)
             Expanded(
@@ -2295,7 +2302,7 @@ class _DayDetailSheet extends StatelessWidget {
                     : 'এই দিনে কোনো আমল সম্পন্ন হয়নি',
                 textAlign: TextAlign.center,
                 style:
-                    const TextStyle(color: AmolColors.textHint, fontSize: 13),
+                    TextStyle(color: context.colors.textHint, fontSize: 13),
               ),
             ],
           ),
@@ -2355,7 +2362,7 @@ class _DayDetailSheet extends StatelessWidget {
               child: Text(
                 AmolSectionMeta.label(sec),
                 style: TextStyle(
-                  color: AmolSectionMeta.color(sec),
+                  color: AmolSectionMeta.color(sec, ctx),
                   fontWeight: FontWeight.w800,
                   fontSize: 12,
                 ),
@@ -2363,9 +2370,9 @@ class _DayDetailSheet extends StatelessWidget {
             ),
             Container(
               decoration: BoxDecoration(
-                color: AmolColors.cardBg,
+                color: context.colors.cardBg,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AmolColors.border, width: 0.6),
+                border: Border.all(color: context.colors.border, width: 0.6),
               ),
               child: Column(
                 children: List.generate(items.length, (i) {
@@ -2374,9 +2381,9 @@ class _DayDetailSheet extends StatelessWidget {
                     decoration: BoxDecoration(
                       border: isLastItem
                           ? null
-                          : const Border(
+                          : Border(
                               bottom: BorderSide(
-                                color: AmolColors.border,
+                                color: context.colors.border,
                                 width: 0.5,
                               ),
                             ),
@@ -2413,17 +2420,17 @@ class _DayDetailRow extends StatelessWidget {
     if (isFardPrayer) {
       final isCongregation = item.prayerMode == PrayerMode.congregation;
       statusText = isCongregation ? 'জামাতে আদায়' : 'একাকী আদায়';
-      statusColor = isCongregation ? AmolColors.purple : AmolColors.amber;
+      statusColor = isCongregation ? context.colors.purple : context.colors.amber2;
       statusIcon = isCongregation ? Icons.people_rounded : Icons.person_rounded;
     } else if (category.inputType == AmalInputType.counter ||
         category.inputType == AmalInputType.duration) {
       final unitBn = AmolUnit.bn(category.unit);
       statusText = '${item.count}${unitBn.isNotEmpty ? " $unitBn" : ""}';
-      statusColor = AmolColors.green;
+      statusColor = context.colors.green;
       statusIcon = Icons.check_circle_rounded;
     } else {
       statusText = 'সম্পন্ন';
-      statusColor = AmolColors.green;
+      statusColor = context.colors.green;
       statusIcon = Icons.check_circle_rounded;
     }
 
@@ -2432,8 +2439,8 @@ class _DayDetailRow extends StatelessWidget {
       const SizedBox(width: 12),
       Expanded(
         child: Text(category.nameBn,
-            style: const TextStyle(
-                color: AmolColors.textPrimary,
+            style: TextStyle(
+                color: context.colors.textPrimary,
                 fontWeight: FontWeight.w700,
                 fontSize: 13)),
       ),
@@ -2476,8 +2483,8 @@ class _PeriodPickerSheetState extends State<_PeriodPickerSheet> {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     return Container(
-      decoration: const BoxDecoration(
-          color: AmolColors.cardBg,
+      decoration: BoxDecoration(
+          color: context.colors.cardBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -2485,12 +2492,12 @@ class _PeriodPickerSheetState extends State<_PeriodPickerSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-                color: AmolColors.border,
+                color: context.colors.border,
                 borderRadius: BorderRadius.circular(99))),
         const SizedBox(height: 22),
-        const Text('মাস বেছে নিন',
+        Text('মাস বেছে নিন',
             style: TextStyle(
-                color: AmolColors.textPrimary,
+                color: context.colors.textPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.w700)),
         const SizedBox(height: 18),
@@ -2502,11 +2509,11 @@ class _PeriodPickerSheetState extends State<_PeriodPickerSheet> {
           Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               decoration: BoxDecoration(
-                  color: AmolColors.greenLight,
+                  color: context.colors.greenLight,
                   borderRadius: BorderRadius.circular(12)),
               child: Text('$_y',
-                  style: const TextStyle(
-                      color: AmolColors.darkGreen,
+                  style: TextStyle(
+                      color: context.colors.darkGreen,
                       fontWeight: FontWeight.w800,
                       fontSize: 18))),
           _YearArrow(
@@ -2537,14 +2544,14 @@ class _PeriodPickerSheetState extends State<_PeriodPickerSheet> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 decoration: BoxDecoration(
-                  color: isSelected ? AmolColors.darkGreen : AmolColors.pageBg,
+                  color: isSelected ? context.colors.darkGreen : context.colors.pageBg,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                       color: isSelected
-                          ? AmolColors.darkGreen
+                          ? context.colors.darkGreen
                           : isFuture
-                              ? AmolColors.border.withOpacity(0.4)
-                              : AmolColors.border,
+                              ? context.colors.border.withOpacity(0.4)
+                              : context.colors.border,
                       width: 0.5),
                 ),
                 child: Center(
@@ -2557,8 +2564,8 @@ class _PeriodPickerSheetState extends State<_PeriodPickerSheet> {
                                     color: isSelected
                                         ? Colors.white
                                         : isFuture
-                                            ? AmolColors.textHint
-                                            : AmolColors.textSecondary,
+                                            ? context.colors.textHint
+                                            : context.colors.textSecondary,
                                     fontSize: 12,
                                     fontWeight: isSelected
                                         ? FontWeight.w700
@@ -2589,14 +2596,14 @@ class _YearArrow extends StatelessWidget {
         height: 38,
         margin: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: enabled ? AmolColors.greenLight : AmolColors.pageBg,
+          color: enabled ? context.colors.greenLight : context.colors.pageBg,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-              color: enabled ? AmolColors.borderMid : AmolColors.border,
+              color: enabled ? context.colors.borderMid : context.colors.border,
               width: 0.5),
         ),
         child: Icon(icon,
-            color: enabled ? AmolColors.darkGreen : AmolColors.textHint,
+            color: enabled ? context.colors.darkGreen : context.colors.textHint,
             size: 20),
       ),
     );
@@ -2613,7 +2620,7 @@ class _HeroBandSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AmolColors.darkGreen,
+      color: context.colors.darkGreen,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -2694,9 +2701,9 @@ class _EntriesSkeleton extends StatelessWidget {
       const SizedBox(height: 12),
       Container(
         decoration: BoxDecoration(
-            color: AmolColors.cardBg,
+            color: context.colors.cardBg,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AmolColors.border, width: 0.5)),
+            border: Border.all(color: context.colors.border, width: 0.5)),
         child: Column(
             children: List.generate(
                 5,

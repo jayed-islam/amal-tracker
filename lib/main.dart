@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
+import 'core/providers/theme_provider.dart';
 import 'core/router/app_router.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -167,12 +168,17 @@ class _AmalTrackerAppState extends ConsumerState<AmalTrackerApp> {
 
     // টোকেন চেক চলাকালীন সময় GoRouter কে রেন্ডার হতে দেওয়া হবে না।
     if (authStatus == AuthStatus.unknown) {
+      final themeMode = ref.watch(themeModeProvider);
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: themeMode,
         home: const Scaffold(body: SizedBox.shrink()),
       );
     }
+
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       title: 'আমল ট্র্যাকার',
@@ -188,6 +194,8 @@ class _AmalTrackerAppState extends ConsumerState<AmalTrackerApp> {
         Locale('bn'),
       ],
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: themeMode,
       routerConfig: router,
       builder: (context, child) {
         return MediaQuery(

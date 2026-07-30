@@ -106,7 +106,7 @@ class MyRankData {
   });
 
   factory MyRankData.fromProgressSummary(Map<String, dynamic> data) {
-    // GET /tracker/progress এর response এর currentMonth field থেকে build করা হয়
+    // GET /tracker/monthly-progress এর response এর currentMonth field থেকে build করা হয়
     final currentMonth = data['currentMonth'];
     final rank = (currentMonth?['rank'] as num?)?.toInt();
 
@@ -119,7 +119,8 @@ class MyRankData {
       farzCompletedDays:
           (currentMonth?['farzCompletedDays'] as num?)?.toInt() ?? 0,
       congregationDaysTotal:
-          (currentMonth?['congregationDaysTotal'] as num?)?.toInt() ?? 0,
+          (currentMonth?['congregationDaysTotal'] as num?)?.toInt() ??
+          (currentMonth?['congregationDaysSum'] as num?)?.toInt() ?? 0,
       streakDays: (currentMonth?['streakDays'] as num?)?.toInt() ?? 0,
       daysActive: (currentMonth?['daysActive'] as num?)?.toInt() ?? 0,
       eligibleDays: (currentMonth?['eligibleDays'] as num?)?.toInt() ?? 1,
@@ -261,7 +262,7 @@ class LeaderboardNotifier extends StateNotifier<LeaderboardState> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MY RANK PROVIDER — /tracker/progress endpoint থেকে currentMonth নেয়
+// MY RANK PROVIDER — /tracker/monthly-progress endpoint থেকে currentMonth নেয়
 // ─────────────────────────────────────────────────────────────────────────────
 
 final myRankProvider = FutureProvider.autoDispose
@@ -269,7 +270,7 @@ final myRankProvider = FutureProvider.autoDispose
   final api = ref.read(apiServiceProvider);
   try {
     final res = await api.get<Map<String, dynamic>>(
-      '/tracker/progress?year=${params.year}&month=${params.month}',
+      '/tracker/monthly-progress?year=${params.year}&month=${params.month}',
     );
     final data = res['data'] ?? {};
     return MyRankData.fromProgressSummary(data);

@@ -3,6 +3,7 @@ import 'package:amal_tracker/features/notification/provider/notification_provide
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 class NotificationScreen extends ConsumerWidget {
   const NotificationScreen({super.key});
@@ -88,17 +89,17 @@ class NotificationScreen extends ConsumerWidget {
                       style: TextStyle(fontFamily: 'Poppins', fontSize: 13)),
                 ]),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'clear_all',
                 child: Row(children: [
                   Icon(Icons.delete_sweep_rounded,
-                      size: 18, color: Color(0xFFE53935)),
+                      size: 18, color: context.colors.red3),
                   SizedBox(width: 10),
                   Text('সব মুছুন',
                       style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 13,
-                          color: Color(0xFFE53935))),
+                          color: context.colors.red3)),
                 ]),
               ),
             ],
@@ -131,11 +132,11 @@ class NotificationScreen extends ConsumerWidget {
               ref.read(notificationHistoryProvider.notifier).clearAll();
               Navigator.pop(ctx);
             },
-            child: const Text('মুছুন',
+            child: Text('মুছুন',
                 style: TextStyle(
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFFE53935))),
+                    color: context.colors.red3)),
           ),
         ],
       ),
@@ -212,17 +213,17 @@ class _NotifTile extends StatelessWidget {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         color: const Color(0xFFFFEBEE),
-        child: const Column(
+        child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.delete_outline_rounded,
-                  color: Color(0xFFE53935), size: 22),
+                  color: context.colors.red3, size: 22),
               SizedBox(height: 2),
               Text('মুছুন',
                   style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 10,
-                      color: Color(0xFFE53935))),
+                      color: context.colors.red3)),
             ]),
       ),
       onDismissed: (_) => onDismiss(),
@@ -255,9 +256,9 @@ class _NotifTile extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                    color: notif.type.color.withOpacity(0.12),
+                    color: notif.type.color(context).withOpacity(0.12),
                     borderRadius: BorderRadius.circular(12)),
-                child: Icon(notif.type.icon, color: notif.type.color, size: 20),
+                child: Icon(notif.type.icon, color: notif.type.color(context), size: 20),
               ),
               const SizedBox(width: 11),
 
@@ -360,14 +361,14 @@ class _TypeBadge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
         decoration: BoxDecoration(
-            color: type.color.withOpacity(0.1),
+            color: type.color(context).withOpacity(0.1),
             borderRadius: BorderRadius.circular(6)),
         child: Text(type.label,
             style: TextStyle(
                 fontFamily: 'Poppins',
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
-                color: type.color)),
+                color: type.color(context))),
       );
 }
 

@@ -3,18 +3,12 @@ import 'package:amal_tracker/core/router/app_router.dart';
 import 'package:amal_tracker/features/onboarding/provider/onboarding_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:amal_tracker/core/theme/app_colors.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ══════════════════════════════════════════════════════════════════════════
 // COLORS
 // ══════════════════════════════════════════════════════════════════════════
-class _C {
-  static const darkGreen = Color(0xFF033019);
-  static const greenMid = Color(0xFF2D8A52);
-  static const greenAccent = Color(0xFF4CAF78);
-  static const gold = Color(0xFFF5C842);
-  static const textSec = Color(0xFF5A7A67);
-}
-
 // ══════════════════════════════════════════════════════════════════════════
 // RESPONSIVE — single source of truth
 // sh < 640   → compact  (SE, Moto G)
@@ -443,13 +437,13 @@ class _Tag extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: _C.gold.withOpacity(0.14),
+          color: context.colors.gold2.withOpacity(0.14),
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: _C.gold.withOpacity(0.30)),
+          border: Border.all(color: context.colors.gold2.withOpacity(0.30)),
         ),
         child: Text(label,
             style: TextStyle(
-                color: _C.gold.withOpacity(0.9),
+                color: context.colors.gold2.withOpacity(0.9),
                 fontSize: r.eyebrowFs,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.6)),
@@ -473,7 +467,7 @@ class _QuoteStrip extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _C.gold.withOpacity(0.28)),
+        border: Border.all(color: context.colors.gold2.withOpacity(0.28)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -484,7 +478,7 @@ class _QuoteStrip extends StatelessWidget {
             height: 36,
             margin: const EdgeInsets.only(right: 10, top: 1),
             decoration: BoxDecoration(
-              color: _C.gold.withOpacity(0.7),
+              color: context.colors.gold2.withOpacity(0.7),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -508,7 +502,7 @@ class _QuoteStrip extends StatelessWidget {
                 Text(
                   source,
                   style: TextStyle(
-                    color: _C.gold.withOpacity(0.6),
+                    color: context.colors.gold2.withOpacity(0.6),
                     fontSize: r.isCompact ? 10.0 : 10.5,
                     fontWeight: FontWeight.w600,
                   ),
@@ -606,7 +600,7 @@ class _NextBtn extends StatelessWidget {
           ],
         ),
         child: Icon(Icons.arrow_forward_rounded,
-            color: _C.darkGreen, size: r.isCompact ? 20.0 : 22.0),
+            color: context.colors.darkGreen2, size: r.isCompact ? 20.0 : 22.0),
       ),
     );
   }
@@ -624,11 +618,11 @@ class _FinishBtn extends StatelessWidget {
               horizontal: r.isCompact ? 18 : 22,
               vertical: r.isCompact ? 12 : 14),
           decoration: BoxDecoration(
-            color: _C.gold,
+            color: context.colors.gold2,
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                  color: _C.gold.withOpacity(0.4),
+                  color: context.colors.gold2.withOpacity(0.4),
                   blurRadius: 16,
                   offset: const Offset(0, 5))
             ],
@@ -638,13 +632,14 @@ class _FinishBtn extends StatelessWidget {
             children: [
               Text('শুরু করি',
                   style: TextStyle(
-                      color: _C.darkGreen,
+                      color: context.colors.darkGreen2,
                       fontSize: r.isCompact ? 14.0 : 15.0,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.2)),
               const SizedBox(width: 7),
               Icon(Icons.arrow_forward_rounded,
-                  color: _C.darkGreen, size: r.isCompact ? 17.0 : 18.0),
+                  color: context.colors.darkGreen2,
+                  size: r.isCompact ? 17.0 : 18.0),
             ],
           ),
         ),
@@ -700,11 +695,15 @@ class _MosqueIllustration extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = r.sw * 0.72;
-    return CustomPaint(painter: _MosquePainter(), size: Size(s, s));
+    return CustomPaint(
+        painter: _MosquePainter(colors: context.colors), size: Size(s, s));
   }
 }
 
 class _MosquePainter extends CustomPainter {
+  final AppColorTokens colors;
+  const _MosquePainter({required this.colors});
+
   @override
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
@@ -723,7 +722,7 @@ class _MosquePainter extends CustomPainter {
 
     final w = Paint()..color = Colors.white.withOpacity(0.93);
     final w2 = Paint()..color = Colors.white.withOpacity(0.78);
-    final g = Paint()..color = _C.gold.withOpacity(0.88);
+    final g = Paint()..color = colors.gold2.withOpacity(0.88);
 
     // body
     canvas.drawRRect(
@@ -771,7 +770,7 @@ class _MosquePainter extends CustomPainter {
         Offset(mx, cy - size.height * 0.3),
         Offset(mx, cy - size.height * 0.22),
         Paint()
-          ..color = _C.gold
+          ..color = colors.gold2
           ..strokeWidth = 2
           ..strokeCap = StrokeCap.round,
       );
@@ -790,7 +789,7 @@ class _MosquePainter extends CustomPainter {
             math.pi)
         ..lineTo(cx + dw / 2, dt + dw * 1.3)
         ..close(),
-      Paint()..color = _C.greenMid.withOpacity(0.55),
+      Paint()..color = colors.greenMid.withOpacity(0.55),
     );
     // crescent
     canvas.drawPath(
@@ -805,10 +804,10 @@ class _MosquePainter extends CustomPainter {
               center: Offset(cx + size.width * 0.025, cy - size.height * 0.305),
               radius: size.width * 0.042)),
       ),
-      Paint()..color = _C.gold,
+      Paint()..color = colors.gold2,
     );
     // stars
-    final sp = Paint()..color = _C.gold.withOpacity(0.6);
+    final sp = Paint()..color = colors.gold2.withOpacity(0.6);
     for (final (ox, oy) in [(-0.36, -0.36), (0.37, -0.29), (0.13, -0.40)])
       _star(canvas, Offset(cx + ox * size.width, cy + oy * size.height),
           size.width * 0.02, sp);
@@ -849,12 +848,15 @@ class _TrackerIllustration extends StatelessWidget {
   const _TrackerIllustration({required this.float, required this.r});
   @override
   Widget build(BuildContext context) => CustomPaint(
-        painter: _TrackerPainter(),
+        painter: _TrackerPainter(colors: context.colors),
         size: Size(r.sw * 0.58, r.sh * 0.30),
       );
 }
 
 class _TrackerPainter extends CustomPainter {
+  final AppColorTokens colors;
+  const _TrackerPainter({required this.colors});
+
   @override
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
@@ -879,20 +881,20 @@ class _TrackerPainter extends CustomPainter {
         topLeft: const Radius.circular(20),
         topRight: const Radius.circular(20),
       ),
-      Paint()..color = _C.darkGreen,
+      Paint()..color = colors.darkGreen2,
     );
     _blob(canvas, Offset(cx - size.width * .1, cy - size.height * .44),
         size.width * .2, 5, Colors.white.withOpacity(0.7), 3);
 
     // Rows
     const done = [true, true, true, false, false, true];
-    final colors = [
-      _C.greenAccent,
-      _C.greenAccent,
-      _C.greenAccent,
-      _C.gold,
+    final rowColors = [
+      colors.greenAccent,
+      colors.greenAccent,
+      colors.greenAccent,
+      colors.gold2,
       Colors.grey,
-      _C.greenAccent,
+      colors.greenAccent,
     ];
     for (int i = 0; i < 6; i++) {
       final ry = cy - size.height * 0.26 + i * size.height * 0.115;
@@ -906,7 +908,7 @@ class _TrackerPainter extends CustomPainter {
         ),
         Paint()
           ..color = done[i]
-              ? colors[i].withOpacity(0.1)
+              ? rowColors[i].withOpacity(0.1)
               : Colors.grey.withOpacity(0.05),
       );
       final cb = Offset(cx - size.width * 0.35, ry);
@@ -914,7 +916,7 @@ class _TrackerPainter extends CustomPainter {
         RRect.fromRectAndRadius(
             Rect.fromCenter(center: cb, width: 14, height: 14),
             const Radius.circular(4)),
-        Paint()..color = done[i] ? colors[i] : Colors.grey.withOpacity(0.2),
+        Paint()..color = done[i] ? rowColors[i] : Colors.grey.withOpacity(0.2),
       );
       if (done[i]) {
         final ck = Paint()
@@ -932,7 +934,9 @@ class _TrackerPainter extends CustomPainter {
           Offset(cx - size.width * .12, ry),
           size.width * .3,
           5,
-          done[i] ? colors[i].withOpacity(0.45) : Colors.grey.withOpacity(0.2),
+          done[i]
+              ? rowColors[i].withOpacity(0.45)
+              : Colors.grey.withOpacity(0.2),
           3);
     }
     // progress bar
@@ -946,7 +950,7 @@ class _TrackerPainter extends CustomPainter {
         RRect.fromRectAndRadius(
             Rect.fromLTWH(cx - size.width * .36, py, size.width * .72 * .67, 5),
             const Radius.circular(3)),
-        Paint()..color = _C.greenAccent);
+        Paint()..color = colors.greenAccent);
   }
 
   void _blob(
@@ -968,12 +972,15 @@ class _LeaderboardIllustration extends StatelessWidget {
   const _LeaderboardIllustration({required this.float, required this.r});
   @override
   Widget build(BuildContext context) => CustomPaint(
-        painter: _LeaderboardPainter(),
+        painter: _LeaderboardPainter(colors: context.colors),
         size: Size(r.sw * 0.74, r.sh * 0.30),
       );
 }
 
 class _LeaderboardPainter extends CustomPainter {
+  final AppColorTokens colors;
+  const _LeaderboardPainter({required this.colors});
+
   @override
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
@@ -986,28 +993,29 @@ class _LeaderboardPainter extends CustomPainter {
 
     _podium(canvas, Offset(cx - bw * 1.05, baseY), bw * 0.9, size.height * 0.28,
         Colors.white.withOpacity(0.68), '২');
-    _podium(canvas, Offset(cx, baseY), bw, size.height * 0.44, _C.gold, '১');
+    _podium(
+        canvas, Offset(cx, baseY), bw, size.height * 0.44, colors.gold2, '১');
     _podium(canvas, Offset(cx + bw * 1.05, baseY), bw * 0.9, size.height * 0.2,
-        _C.greenAccent.withOpacity(0.72), '৩');
+        colors.greenAccent.withOpacity(0.72), '৩');
 
     _avatar(canvas, Offset(cx - bw * 1.05, baseY - size.height * .28 - 28), 20,
-        Colors.white.withOpacity(0.82), _C.textSec);
+        Colors.white.withOpacity(0.82), colors.textSec4);
 
     canvas.drawCircle(
         Offset(cx, baseY - size.height * .44 - 28),
         30,
         Paint()
-          ..color = _C.gold.withOpacity(0.24)
+          ..color = colors.gold2.withOpacity(0.24)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8));
-    _avatar(canvas, Offset(cx, baseY - size.height * .44 - 28), 25, _C.gold,
-        _C.darkGreen);
+    _avatar(canvas, Offset(cx, baseY - size.height * .44 - 28), 25,
+        colors.gold2, colors.darkGreen2);
 
     _avatar(canvas, Offset(cx + bw * 1.05, baseY - size.height * .2 - 26), 19,
-        _C.greenAccent, Colors.white);
+        colors.greenAccent, Colors.white);
 
     // rays
     final rp = Paint()
-      ..color = _C.gold.withOpacity(0.35)
+      ..color = colors.gold2.withOpacity(0.35)
       ..strokeWidth = 1.5;
     final oc = Offset(cx, baseY - size.height * .44 - 28);
     for (int i = 0; i < 8; i++) {
@@ -1033,8 +1041,9 @@ class _LeaderboardPainter extends CustomPainter {
       text: TextSpan(
           text: rank,
           style: TextStyle(
-              color:
-                  rank == '১' ? _C.darkGreen : Colors.white.withOpacity(0.85),
+              color: rank == '১'
+                  ? colors.darkGreen2
+                  : Colors.white.withOpacity(0.85),
               fontSize: 15,
               fontWeight: FontWeight.w800)),
       textDirection: TextDirection.ltr,
@@ -1061,7 +1070,7 @@ class _LeaderboardPainter extends CustomPainter {
   }
 
   void _trophy(Canvas canvas, Offset c, double r) {
-    final p = Paint()..color = _C.gold;
+    final p = Paint()..color = colors.gold2;
     canvas.drawPath(
       Path()
         ..moveTo(c.dx - r, c.dy - r * .3)
@@ -1082,7 +1091,7 @@ class _LeaderboardPainter extends CustomPainter {
         math.pi,
         false,
         Paint()
-          ..color = _C.gold
+          ..color = colors.gold2
           ..style = PaintingStyle.stroke
           ..strokeWidth = r * .13,
       );
@@ -1115,12 +1124,15 @@ class _PrivacyIllustration extends StatelessWidget {
   const _PrivacyIllustration({required this.float, required this.r});
   @override
   Widget build(BuildContext context) => CustomPaint(
-        painter: _PrivacyPainter(),
+        painter: _PrivacyPainter(colors: context.colors),
         size: Size(r.sw * 0.68, r.sh * 0.29),
       );
 }
 
 class _PrivacyPainter extends CustomPainter {
+  final AppColorTokens colors;
+  const _PrivacyPainter({required this.colors});
+
   @override
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
@@ -1138,9 +1150,9 @@ class _PrivacyPainter extends CustomPainter {
     canvas.drawPath(
         shield,
         Paint()
-          ..color = _C.greenAccent.withOpacity(0.2)
+          ..color = colors.greenAccent.withOpacity(0.2)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14));
-    canvas.drawPath(shield, Paint()..color = _C.greenMid.withOpacity(0.65));
+    canvas.drawPath(shield, Paint()..color = colors.greenMid.withOpacity(0.65));
     canvas.drawPath(
         shield,
         Paint()
@@ -1170,10 +1182,11 @@ class _PrivacyPainter extends CustomPainter {
         ..strokeWidth = 4
         ..strokeCap = StrokeCap.round,
     );
-    canvas.drawCircle(Offset(cx, lcy - 2), 4.5, Paint()..color = _C.greenMid);
+    canvas.drawCircle(
+        Offset(cx, lcy - 2), 4.5, Paint()..color = colors.greenMid);
     canvas.drawRect(
         Rect.fromCenter(center: Offset(cx, lcy + 6), width: 3.5, height: 8),
-        Paint()..color = _C.greenMid);
+        Paint()..color = colors.greenMid);
 
     // floating feature chips
     final chips = [
@@ -1227,7 +1240,7 @@ class _PrivacyPainter extends CustomPainter {
       );
       // gold dot
       canvas.drawCircle(Offset(fx, fy - ch * .2), ch * .12,
-          Paint()..color = _C.gold.withOpacity(0.5));
+          Paint()..color = colors.gold2.withOpacity(0.5));
       // label
       final tp = TextPainter(
         text: TextSpan(

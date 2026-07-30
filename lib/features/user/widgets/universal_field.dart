@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:amal_tracker/core/theme/app_colors.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 enum FieldType {
   password, // obscure toggle, strength bar if label == new
@@ -11,23 +13,6 @@ enum FieldType {
 }
 
 enum FieldStatus { none, match, error }
-
-class _C {
-  static const bg = Color(0xFFF4F6F1);
-  static const card = Color(0xFFFFFFFF);
-  static const darkGreen = Color(0xFF0E3D22);
-  static const midGreen = Color(0xFF1B7045);
-  static const green = Color(0xFF16A34A);
-  static const greenLight = Color(0xFFE8F5EE);
-  static const gold = Color(0xFFD4A843);
-  static const red = Color(0xFFE53935);
-  static const amber = Color(0xFFF59E0B);
-  static const border = Color(0xFFE2E8E2);
-  static const textPrimary = Color(0xFF0A1A0F);
-  static const textSecondary = Color(0xFF6B7C6E);
-  static const textHint = Color(0xFFB0BDB2);
-}
-
 class UniversalField extends StatefulWidget {
   final String label;
   final String hint;
@@ -99,13 +84,13 @@ class UniversalFieldState extends State<UniversalField> {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: focused ? _C.greenLight : _C.bg,
+              color: focused ? context.colors.greenLight : context.colors.bg,
               borderRadius: BorderRadius.circular(9),
             ),
             child: Icon(
               _typeIcon,
               size: 17,
-              color: focused ? _C.darkGreen : _C.textHint,
+              color: focused ? context.colors.darkGreen : context.colors.textHint3,
             ),
           ),
 
@@ -124,7 +109,7 @@ class UniversalFieldState extends State<UniversalField> {
                       style: TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w600,
-                        color: focused ? _C.darkGreen : _C.textSecondary,
+                        color: focused ? context.colors.darkGreen : context.colors.textSecondary,
                       ),
                     ),
                     const Spacer(),
@@ -135,13 +120,13 @@ class UniversalFieldState extends State<UniversalField> {
                         FieldStatus.match => Row(
                             key: const ValueKey('m'),
                             mainAxisSize: MainAxisSize.min,
-                            children: const [
+                            children: [
                               Icon(Icons.check_circle_rounded,
-                                  color: _C.green, size: 12),
+                                  color: context.colors.green, size: 12),
                               SizedBox(width: 3),
                               Text('মিলেছে',
                                   style: TextStyle(
-                                      color: _C.green,
+                                      color: context.colors.green,
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600)),
                             ],
@@ -150,12 +135,12 @@ class UniversalFieldState extends State<UniversalField> {
                             key: const ValueKey('e'),
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.error_outline_rounded,
-                                  color: _C.red, size: 12),
+                              Icon(Icons.error_outline_rounded,
+                                  color: context.colors.red3, size: 12),
                               const SizedBox(width: 3),
                               Text(widget.error ?? '',
-                                  style: const TextStyle(
-                                      color: _C.red,
+                                  style: TextStyle(
+                                      color: context.colors.red3,
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600)),
                             ],
@@ -179,8 +164,8 @@ class UniversalFieldState extends State<UniversalField> {
                     textInputAction: widget.textInputAction,
                     onSubmitted: widget.onSubmitted ??
                         (_) => widget.nextFocus?.requestFocus(),
-                    style: const TextStyle(
-                      color: _C.textPrimary,
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -190,8 +175,8 @@ class UniversalFieldState extends State<UniversalField> {
                           top: 13, bottom: 13, left: 13, right: 13),
                       border: InputBorder.none,
                       hintText: widget.hint,
-                      hintStyle: const TextStyle(
-                        color: _C.textHint,
+                      hintStyle: TextStyle(
+                        color: context.colors.textHint3,
                         fontSize: 13,
                         fontWeight: FontWeight.w400,
                       ),
@@ -213,8 +198,8 @@ class UniversalFieldState extends State<UniversalField> {
                             children: [
                               Expanded(
                                 child: Text(widget.error!,
-                                    style: const TextStyle(
-                                      color: _C.red,
+                                    style: TextStyle(
+                                      color: context.colors.red3,
                                       fontSize: 11,
                                       fontWeight: FontWeight.w500,
                                       height: 1.3,
@@ -244,7 +229,7 @@ class UniversalFieldState extends State<UniversalField> {
                         : Icons.visibility_off_outlined,
                     key: ValueKey(_obscure),
                     size: 20,
-                    color: focused ? _C.darkGreen : _C.textHint,
+                    color: focused ? context.colors.darkGreen : context.colors.textHint3,
                   ),
                 ),
               ),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:amal_tracker/core/providers/connectivity_provider.dart';
 import 'package:amal_tracker/core/services/connectivity_service.dart';
 import 'package:amal_tracker/core/services/api_service.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─── OfflineBanner ────────────────────────────────────────────────────────────
 //
@@ -133,20 +134,20 @@ class NoInternetWidget extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'ইন্টারনেট সংযোগ নেই',
               style: TextStyle(
-                color: ColorT.textPrimary,
+                color: context.colors.textPri,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'আপনার ইন্টারনেট সংযোগ পরীক্ষা করুন\nএবং আবার চেষ্টা করুন।',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: ColorT.textSecondary,
+                color: context.colors.textMuted,
                 fontSize: 13,
                 height: 1.6,
               ),
@@ -157,7 +158,7 @@ class NoInternetWidget extends StatelessWidget {
               icon: const Icon(Icons.refresh_rounded, size: 16),
               label: const Text('আবার চেষ্টা করুন'),
               style: FilledButton.styleFrom(
-                backgroundColor: ColorT.darkGreen,
+                backgroundColor: context.colors.avatar1,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
@@ -208,20 +209,20 @@ class ApiErrorWidget extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: ColorT.amberLight,
+                color: context.colors.amberLight,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.cloud_off_rounded,
                 size: 32,
-                color: ColorT.amber,
+                color: context.colors.amber,
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'কিছু একটা ভুল হয়েছে',
               style: TextStyle(
-                color: ColorT.textPrimary,
+                color: context.colors.textPri,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
@@ -232,8 +233,8 @@ class ApiErrorWidget extends StatelessWidget {
                   ? (error as ApiException).message
                   : 'অনুগ্রহ করে পরে আবার চেষ্টা করুন।',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: ColorT.textSecondary,
+              style: TextStyle(
+                color: context.colors.textMuted,
                 fontSize: 13,
                 height: 1.6,
               ),
@@ -244,7 +245,7 @@ class ApiErrorWidget extends StatelessWidget {
               icon: const Icon(Icons.refresh_rounded, size: 16),
               label: const Text('আবার চেষ্টা করুন'),
               style: FilledButton.styleFrom(
-                backgroundColor: ColorT.darkGreen,
+                backgroundColor: context.colors.avatar1,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,

@@ -5,28 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:amal_tracker/core/theme/app_colors.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
-class _C {
-  static const card = Color(0xFFFFFFFF);
-  static const darkGreen = Color(0xFF0E3D22);
-  static const midGreen = Color(0xFF1B7045);
-  static const greenLight = Color(0xFFE8F5EE);
-  static const greenBorder = Color(0xFFD4E9D9);
-  static const goldBg = Color(0xFFFDFAF3);
-  static const goldBorder = Color(0xFFEDD98A);
-  static const goldText = Color(0xFF8B6914);
-  static const border = Color(0xFFE0E8E2);
-  static const textPri = Color(0xFF0A1A0F);
-  static const textSec = Color(0xFF4A5C50);
-  static const textMuted = Color(0xFF6B7C6E);
-  static const textHint = Color(0xFFABBABE);
-  static const chipBg = Color(0xFFF4F6F1);
-  static const tafsirBg = Color(0xFFF6FAF7);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // MODEL
 // ─────────────────────────────────────────────────────────────────────────────
@@ -292,9 +276,9 @@ class _LoadingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: _C.card,
+        color: context.colors.card,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _C.border, width: 0.5),
+        border: Border.all(color: context.colors.border2, width: 0.5),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
@@ -304,23 +288,23 @@ class _LoadingCard extends StatelessWidget {
             height: 13,
             child: CircularProgressIndicator(
               strokeWidth: 1.5,
-              color: _C.midGreen,
-              backgroundColor: _C.border,
+              color: context.colors.midGreen,
+              backgroundColor: context.colors.border2,
             ),
           ),
           const SizedBox(width: 10),
           RichText(
-            text: const TextSpan(
+            text: TextSpan(
               style: TextStyle(
                 fontSize: 12,
-                color: _C.textSec,
+                color: context.colors.textSec,
                 fontWeight: FontWeight.w500,
               ),
               children: [
                 TextSpan(
                   text: 'আপনার জন্য ',
                   style: TextStyle(
-                    color: _C.darkGreen,
+                    color: context.colors.darkGreen,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -395,9 +379,9 @@ class _AyahCardState extends ConsumerState<_AyahCard>
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: _C.card,
+        color: context.colors.card,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _C.border, width: 0.5),
+        border: Border.all(color: context.colors.border2, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -415,15 +399,15 @@ class _AyahCardState extends ConsumerState<_AyahCard>
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: _C.greenLight,
+                      color: context.colors.greenLight,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
+                    child: Text(
                       '📖 আজকের আয়াত',
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w700,
-                        color: _C.midGreen,
+                        color: context.colors.midGreen,
                       ),
                     ),
                   ),
@@ -431,8 +415,8 @@ class _AyahCardState extends ConsumerState<_AyahCard>
                   Container(
                     width: 3,
                     height: 3,
-                    decoration: const BoxDecoration(
-                      color: _C.greenBorder,
+                    decoration: BoxDecoration(
+                      color: context.colors.greenBorder,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -442,10 +426,10 @@ class _AyahCardState extends ConsumerState<_AyahCard>
                       '${widget.ayah.surahNameBn} '
                       '${_bnNum(widget.ayah.surahNumber)}:'
                       '${_bnNum(widget.ayah.ayahNumber)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
-                        color: _C.textHint,
+                        color: context.colors.textHint2,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -467,10 +451,10 @@ class _AyahCardState extends ConsumerState<_AyahCard>
                         overflow: _expanded
                             ? TextOverflow.visible
                             : TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14.5,
                           fontWeight: FontWeight.w600,
-                          color: _C.textPri,
+                          color: context.colors.textPri,
                           height: 1.75,
                           letterSpacing: 0.05,
                         ),
@@ -479,19 +463,19 @@ class _AyahCardState extends ConsumerState<_AyahCard>
                       Row(children: [
                         Text(
                           _expanded ? 'কম দেখুন' : 'আরো পড়ুন',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w700,
-                            color: _C.midGreen,
+                            color: context.colors.midGreen,
                           ),
                         ),
                         const SizedBox(width: 3),
                         RotationTransition(
                           turns: _chevron,
-                          child: const Icon(
+                          child: Icon(
                             Icons.keyboard_arrow_down_rounded,
                             size: 14,
-                            color: _C.midGreen,
+                            color: context.colors.midGreen,
                           ),
                         ),
                       ]),
@@ -520,20 +504,20 @@ class _AyahCardState extends ConsumerState<_AyahCard>
 
           // ── BOTTOM — always visible ──────────────────────────────────────
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               border: Border(
-                top: BorderSide(color: _C.border, width: 0.5),
+                top: BorderSide(color: context.colors.border2, width: 0.5),
               ),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'প্রতিবার নতুন আয়াত',
                   style: TextStyle(
                     fontSize: 9,
-                    color: _C.textHint,
+                    color: context.colors.textHint2,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -543,26 +527,26 @@ class _AyahCardState extends ConsumerState<_AyahCard>
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: _C.greenLight,
+                      color: context.colors.greenLight,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: _C.greenBorder, width: 0.5),
+                      border: Border.all(color: context.colors.greenBorder, width: 0.5),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
+                      children: [
                         Text(
                           'অন্য আয়াত',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: _C.midGreen,
+                            color: context.colors.midGreen,
                           ),
                         ),
                         SizedBox(width: 4),
                         Icon(
                           Icons.arrow_forward_rounded,
                           size: 11,
-                          color: _C.midGreen,
+                          color: context.colors.midGreen,
                         ),
                       ],
                     ),
@@ -606,18 +590,18 @@ class _ExpandedPanel extends ConsumerWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: _C.goldBg,
+              color: context.colors.goldBg,
               borderRadius: BorderRadius.circular(9),
-              border: Border.all(color: _C.goldBorder, width: 0.5),
+              border: Border.all(color: context.colors.goldBorder, width: 0.5),
             ),
             child: Text(
               ayah.arabic,
               textDirection: TextDirection.rtl,
               textAlign: TextAlign.right,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: _C.goldText,
+                color: context.colors.goldText,
                 height: 2.0,
                 letterSpacing: 0.5,
               ),
@@ -649,32 +633,32 @@ class _ExpandedPanel extends ConsumerWidget {
                 return Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(11),
-                  decoration: const BoxDecoration(
-                    color: _C.tafsirBg,
+                  decoration: BoxDecoration(
+                    color: context.colors.tafsirBg,
                     borderRadius: BorderRadius.all(Radius.circular(9)),
                     border: Border(
-                      left: BorderSide(color: _C.midGreen, width: 2.5),
+                      left: BorderSide(color: context.colors.midGreen, width: 2.5),
                     ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'তাফসির',
                         style: TextStyle(
                           fontSize: 8.5,
                           fontWeight: FontWeight.w700,
-                          color: _C.midGreen,
+                          color: context.colors.midGreen,
                           letterSpacing: 0.5,
                         ),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         result.text!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           height: 1.8,
-                          color: _C.textSec,
+                          color: context.colors.textSec,
                         ),
                       ),
                     ],
@@ -700,22 +684,22 @@ class _TafsirLoadingBlock extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(11),
-      decoration: const BoxDecoration(
-        color: _C.tafsirBg,
+      decoration: BoxDecoration(
+        color: context.colors.tafsirBg,
         borderRadius: BorderRadius.all(Radius.circular(9)),
         border: Border(
-          left: BorderSide(color: _C.midGreen, width: 2.5),
+          left: BorderSide(color: context.colors.midGreen, width: 2.5),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'তাফসির',
             style: TextStyle(
               fontSize: 8.5,
               fontWeight: FontWeight.w700,
-              color: _C.midGreen,
+              color: context.colors.midGreen,
               letterSpacing: 0.5,
             ),
           ),
@@ -727,7 +711,7 @@ class _TafsirLoadingBlock extends StatelessWidget {
               height: 11,
               width: i == 2 ? 130 : double.infinity,
               decoration: BoxDecoration(
-                color: _C.greenBorder.withOpacity(0.5),
+                color: context.colors.greenBorder.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(3),
               ),
             ).animate(onPlay: (c) => c.repeat(reverse: true)).fadeIn(
@@ -753,27 +737,27 @@ class _InfoChip extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
           decoration: BoxDecoration(
-            color: _C.chipBg,
+            color: context.colors.chipBg,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: _C.border, width: 0.5),
+            border: Border.all(color: context.colors.border2, width: 0.5),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 8.5,
-                  color: _C.textMuted,
+                  color: context.colors.textMuted,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
-                  color: _C.textPri,
+                  color: context.colors.textPri,
                   fontWeight: FontWeight.w700,
                 ),
                 overflow: TextOverflow.ellipsis,

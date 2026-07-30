@@ -7,32 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/tracker_provider.dart';
 import '../models/tracker_model.dart';
 import '../../../core/constants/app_constants.dart';
+import 'package:amal_tracker/core/theme/app_colors.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
-
-class _C {
-  static const pageBg = Color(0xFFF4F6F1);
-  static const cardBg = Color(0xFFFFFFFF);
-  static const darkGreen = Color(0xFF0E3D22);
-  static const midGreen = Color(0xFF1B7045);
-  static const gold = Color(0xFFD4A843);
-  static const green = Color(0xFF16A34A);
-  static const greenLight = Color(0xFFE8F5EE);
-  static const amber = Color(0xFFFF6B35);
-  static const amberLight = Color(0xFFFFF3E0);
-  static const red = Color(0xFFEF4444);
-  static const textPrimary = Color(0xFF0A1A0F);
-  static const textSecondary = Color(0xFF6B7C6E);
-  static const textHint = Color(0xFFABBAAE);
-  static const border = Color(0xFFE4EAE4);
-  static const borderMid = Color(0xFFD0DAD2);
-  static const success = Color(0xFF16A34A);
-  static const maafBg = Color(0xFFE8F5EE);
-  static const maafText = Color(0xFF1B7045);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -317,7 +297,7 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
                 : 'আমল আপডেট হয়েছে! ✨')
             : 'সেভ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।'),
       ]),
-      backgroundColor: ok ? _C.success : _C.red,
+      backgroundColor: ok ? context.colors.success : context.colors.red,
       margin: const EdgeInsets.all(16),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -332,10 +312,60 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
     final sections = _activeSections;
     final fard = _fardSummary;
 
+    if (sections.isEmpty) {
+      return Container(
+        height: size.height * 0.96,
+        decoration: BoxDecoration(
+          color: context.colors.pageBg,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline_rounded, color: context.colors.red, size: 40),
+              const SizedBox(height: 12),
+              Text(
+                'কোনো আমল ক্যাটাগরি পাওয়া যায়নি',
+                style: TextStyle(
+                  color: context.colors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'দয়া করে ইন্টারনেট সংযোগ চেক করে আবার চেষ্টা করুন।',
+                style: TextStyle(
+                  color: context.colors.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  ref.invalidate(categoriesProvider);
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: context.colors.darkGreen,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text('বন্ধ করুন'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Container(
       height: size.height * 0.96,
-      decoration: const BoxDecoration(
-        color: _C.pageBg,
+      decoration: BoxDecoration(
+        color: context.colors.pageBg,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(children: [
@@ -422,8 +452,8 @@ class _SheetHeader extends StatelessWidget {
     final y = parts[0];
 
     return Container(
-      decoration: const BoxDecoration(
-        color: _C.darkGreen,
+      decoration: BoxDecoration(
+        color: context.colors.darkGreen,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Stack(children: [
@@ -628,7 +658,7 @@ class _SectionTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: _C.cardBg,
+      color: context.colors.cardBg,
       child: Column(children: [
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -652,14 +682,14 @@ class _SectionTabBar extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: active ? _C.darkGreen : _C.pageBg,
+                    color: active ? context.colors.darkGreen : context.colors.pageBg,
                     borderRadius: BorderRadius.circular(99),
                     border: Border.all(
                       color: active
-                          ? _C.darkGreen
+                          ? context.colors.darkGreen
                           : allDone
-                              ? _C.green.withOpacity(0.4)
-                              : _C.border,
+                              ? context.colors.green.withOpacity(0.4)
+                              : context.colors.border,
                       width: 0.5,
                     ),
                   ),
@@ -669,8 +699,8 @@ class _SectionTabBar extends StatelessWidget {
                         color: active
                             ? Colors.white
                             : allDone
-                                ? _C.green
-                                : _C.textSecondary),
+                                ? context.colors.green
+                                : context.colors.textSecondary),
                     const SizedBox(width: 5),
                     Text(label,
                         style: TextStyle(
@@ -680,8 +710,8 @@ class _SectionTabBar extends StatelessWidget {
                             color: active
                                 ? Colors.white
                                 : allDone
-                                    ? _C.green
-                                    : _C.textSecondary)),
+                                    ? context.colors.green
+                                    : context.colors.textSecondary)),
                     if (done > 0) ...[
                       const SizedBox(width: 6),
                       Container(
@@ -691,8 +721,8 @@ class _SectionTabBar extends StatelessWidget {
                             color: active
                                 ? Colors.white.withOpacity(0.2)
                                 : allDone
-                                    ? _C.greenLight
-                                    : _C.pageBg,
+                                    ? context.colors.greenLight
+                                    : context.colors.pageBg,
                             borderRadius: BorderRadius.circular(20)),
                         child: Text('$done/$total',
                             style: TextStyle(
@@ -701,8 +731,8 @@ class _SectionTabBar extends StatelessWidget {
                                 color: active
                                     ? Colors.white
                                     : allDone
-                                        ? _C.green
-                                        : _C.textHint)),
+                                        ? context.colors.green
+                                        : context.colors.textHint)),
                       ),
                     ],
                   ]),
@@ -711,7 +741,7 @@ class _SectionTabBar extends StatelessWidget {
             }).toList(),
           ),
         ),
-        const Divider(height: 0.5, thickness: 0.5, color: _C.border),
+        Divider(height: 0.5, thickness: 0.5, color: context.colors.border),
       ]),
     );
   }
@@ -735,13 +765,13 @@ class _ExemptDayBanner extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: isExemptDay
-              ? _C.midGreen.withOpacity(0.08)
+              ? context.colors.midGreen.withOpacity(0.08)
               : const Color(0xFFFFF8EE),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isExemptDay
-                ? _C.midGreen.withOpacity(0.35)
-                : const Color(0xFFD4A843).withOpacity(0.5),
+                ? context.colors.midGreen.withOpacity(0.35)
+                : context.colors.gold.withOpacity(0.5),
             width: 1,
           ),
         ),
@@ -752,8 +782,8 @@ class _ExemptDayBanner extends StatelessWidget {
             height: 42,
             decoration: BoxDecoration(
               color: isExemptDay
-                  ? _C.midGreen.withOpacity(0.12)
-                  : const Color(0xFFD4A843).withOpacity(0.15),
+                  ? context.colors.midGreen.withOpacity(0.12)
+                  : context.colors.gold.withOpacity(0.15),
               borderRadius: BorderRadius.circular(11),
             ),
             child:
@@ -767,7 +797,7 @@ class _ExemptDayBanner extends StatelessWidget {
                 Text(
                   isExemptDay ? 'আজ মাহলির দিন' : 'আজ কি মাহলি আছেন?',
                   style: TextStyle(
-                      color: isExemptDay ? _C.darkGreen : _C.textPrimary,
+                      color: isExemptDay ? context.colors.darkGreen : context.colors.textPrimary,
                       fontWeight: FontWeight.w700,
                       fontSize: 13),
                 ),
@@ -777,7 +807,7 @@ class _ExemptDayBanner extends StatelessWidget {
                       ? 'ফরজ আমলগুলো মাফ হিসেবে চিহ্নিত হয়েছে'
                       : 'চালু করলে ফরজ আমলগুলো মাফ ধরা হবে',
                   style: TextStyle(
-                      color: isExemptDay ? _C.midGreen : _C.textSecondary,
+                      color: isExemptDay ? context.colors.midGreen : context.colors.textSecondary,
                       fontSize: 11),
                 ),
               ])),
@@ -785,7 +815,7 @@ class _ExemptDayBanner extends StatelessWidget {
           _ToggleSwitch(
               value: isExemptDay,
               onChanged: onToggle,
-              activeColor: _C.midGreen),
+              activeColor: context.colors.midGreen),
         ]),
       ),
     ).animate().fadeIn(duration: 220.ms).slideY(begin: -0.04);
@@ -812,7 +842,7 @@ class _ToggleSwitch extends StatelessWidget {
         height: 26,
         padding: const EdgeInsets.all(3),
         decoration: BoxDecoration(
-            color: value ? activeColor : _C.borderMid,
+            color: value ? activeColor : context.colors.borderMid,
             borderRadius: BorderRadius.circular(99)),
         child: AnimatedAlign(
           duration: 200.ms,
@@ -862,9 +892,9 @@ class _SectionForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (categories.isEmpty) {
-      return const Center(
+      return Center(
           child: Text('এই বিভাগে কোনো আমল নেই',
-              style: TextStyle(color: _C.textHint, fontSize: 13)));
+              style: TextStyle(color: context.colors.textHint, fontSize: 13)));
     }
 
     final hPad =
@@ -970,12 +1000,12 @@ class _SectionForm extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color(0xFFF1F0EB),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: _C.border, width: 0.5),
+                    border: Border.all(color: context.colors.border, width: 0.5),
                   ),
                   child: Text(notApplicableLabel,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 9.5,
-                          color: _C.textHint,
+                          color: context.colors.textHint,
                           fontWeight: FontWeight.w500)),
                 ),
               ),
@@ -1004,9 +1034,9 @@ class _ExemptedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-          color: _C.pageBg,
+          color: context.colors.pageBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _C.border, width: 0.5)),
+          border: Border.all(color: context.colors.border, width: 0.5)),
       child: Opacity(
         opacity: 0.55,
         child: Padding(
@@ -1016,11 +1046,11 @@ class _ExemptedCard extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                  color: _C.pageBg,
+                  color: context.colors.pageBg,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: _C.border, width: 0.5)),
-              child: const Icon(Icons.mosque_rounded,
-                  color: _C.textHint, size: 18),
+                  border: Border.all(color: context.colors.border, width: 0.5)),
+              child: Icon(Icons.mosque_rounded,
+                  color: context.colors.textHint, size: 18),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1028,27 +1058,27 @@ class _ExemptedCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                   Text(cat.nameBn,
-                      style: const TextStyle(
-                          color: _C.textHint,
+                      style: TextStyle(
+                          color: context.colors.textHint,
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                           decoration: TextDecoration.lineThrough,
-                          decorationColor: _C.textHint)),
+                          decorationColor: context.colors.textHint)),
                   Text(cat.nameEn,
-                      style: const TextStyle(color: _C.textHint, fontSize: 11)),
+                      style: TextStyle(color: context.colors.textHint, fontSize: 11)),
                 ])),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                  color: _C.maafBg,
+                  color: context.colors.maafBg,
                   borderRadius: BorderRadius.circular(20),
                   border:
-                      Border.all(color: _C.green.withOpacity(0.3), width: 0.5)),
-              child: const Text('মাফ আছে',
+                      Border.all(color: context.colors.green.withOpacity(0.3), width: 0.5)),
+              child: Text('মাফ আছে',
                   style: TextStyle(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
-                      color: _C.maafText)),
+                      color: context.colors.maafText)),
             ),
           ]),
         ),
@@ -1074,14 +1104,14 @@ class _FardPrayerCard extends StatelessWidget {
     final mode = item?.prayerMode ?? PrayerMode.missed;
 
     final borderColor = mode == PrayerMode.congregation
-        ? _C.green.withOpacity(0.5)
+        ? context.colors.green.withOpacity(0.5)
         : mode == PrayerMode.solo
-            ? _C.amber.withOpacity(0.5)
-            : _C.border;
+            ? context.colors.amber2.withOpacity(0.5)
+            : context.colors.border;
 
     return Container(
       decoration: BoxDecoration(
-          color: _C.cardBg,
+          color: context.colors.cardBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: borderColor, width: 1)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1091,26 +1121,26 @@ class _FardPrayerCard extends StatelessWidget {
             _IconBadge(
                 icon: Icons.mosque_rounded,
                 active: mode != PrayerMode.missed,
-                color: _C.green),
+                color: context.colors.green),
             const SizedBox(width: 12),
             Expanded(
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                   Text(cat.nameBn,
-                      style: const TextStyle(
-                          color: _C.textPrimary,
+                      style: TextStyle(
+                          color: context.colors.textPrimary,
                           fontWeight: FontWeight.w700,
                           fontSize: 13)),
                   Text(cat.nameEn,
-                      style: const TextStyle(
-                          color: _C.textSecondary, fontSize: 11)),
+                      style: TextStyle(
+                          color: context.colors.textSecondary, fontSize: 11)),
                 ])),
             // mode badge
             _ModeBadge(mode: mode),
           ]),
         ),
-        const Divider(height: 0.5, thickness: 0.5, color: _C.border),
+        Divider(height: 0.5, thickness: 0.5, color: context.colors.border),
         const SizedBox(height: 10),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -1120,8 +1150,8 @@ class _FardPrayerCard extends StatelessWidget {
                     label: 'জামাতে',
                     icon: Icons.people_rounded,
                     isSelected: mode == PrayerMode.congregation,
-                    activeColor: _C.green,
-                    activeBg: _C.greenLight,
+                    activeColor: context.colors.green,
+                    activeBg: context.colors.greenLight,
                     onTap: () => onMode(PrayerMode.congregation))),
             const SizedBox(width: 8),
             Expanded(
@@ -1129,8 +1159,8 @@ class _FardPrayerCard extends StatelessWidget {
                     label: 'একাকী',
                     icon: Icons.person_rounded,
                     isSelected: mode == PrayerMode.solo,
-                    activeColor: _C.amber,
-                    activeBg: _C.amberLight,
+                    activeColor: context.colors.amber2,
+                    activeBg: context.colors.amberLight,
                     onTap: () => onMode(PrayerMode.solo))),
             const SizedBox(width: 8),
             Expanded(
@@ -1138,8 +1168,8 @@ class _FardPrayerCard extends StatelessWidget {
                     label: 'মিস',
                     icon: Icons.close_rounded,
                     isSelected: mode == PrayerMode.missed,
-                    activeColor: _C.textSecondary,
-                    activeBg: _C.pageBg,
+                    activeColor: context.colors.textSecondary,
+                    activeBg: context.colors.pageBg,
                     onTap: () => onMode(PrayerMode.missed))),
           ]),
         ),
@@ -1155,7 +1185,7 @@ class _ModeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (mode == PrayerMode.missed) return const SizedBox.shrink();
-    final color = mode == PrayerMode.congregation ? _C.green : _C.amber;
+    final color = mode == PrayerMode.congregation ? context.colors.green : context.colors.amber2;
     final bg = color.withOpacity(0.1);
     final label = mode == PrayerMode.congregation ? 'জামাতে ✓' : 'একাকী ✓';
     return Container(
@@ -1192,19 +1222,19 @@ class _ModeBtn extends StatelessWidget {
         duration: 160.ms,
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-            color: isSelected ? activeBg : _C.pageBg,
+            color: isSelected ? activeBg : context.colors.pageBg,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-                color: isSelected ? activeColor : _C.border,
+                color: isSelected ? activeColor : context.colors.border,
                 width: isSelected ? 1.5 : 0.5)),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 18, color: isSelected ? activeColor : _C.textHint),
+          Icon(icon, size: 18, color: isSelected ? activeColor : context.colors.textHint),
           const SizedBox(height: 4),
           Text(label,
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: isSelected ? activeColor : _C.textSecondary)),
+                  color: isSelected ? activeColor : context.colors.textSecondary)),
         ]),
       ),
     );
@@ -1233,10 +1263,10 @@ class _RakaatCounterCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-          color: _C.cardBg,
+          color: context.colors.cardBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-              color: count > 0 ? _C.green.withOpacity(0.4) : _C.border,
+              color: count > 0 ? context.colors.green.withOpacity(0.4) : context.colors.border,
               width: count > 0 ? 1.5 : 0.5)),
       child: Column(children: [
         Padding(
@@ -1245,32 +1275,32 @@ class _RakaatCounterCard extends StatelessWidget {
             _IconBadge(
                 icon: Icons.mosque_rounded,
                 active: count > 0,
-                color: _C.darkGreen),
+                color: context.colors.darkGreen),
             const SizedBox(width: 12),
             Expanded(
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                   Text(cat.nameBn,
-                      style: const TextStyle(
-                          color: _C.textPrimary,
+                      style: TextStyle(
+                          color: context.colors.textPrimary,
                           fontWeight: FontWeight.w700,
                           fontSize: 13)),
                   if (cat.description != null)
                     Text(cat.description!,
-                        style: const TextStyle(
-                            color: _C.textSecondary, fontSize: 11)),
+                        style: TextStyle(
+                            color: context.colors.textSecondary, fontSize: 11)),
                 ])),
             // count badge
             if (count > 0)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
-                    color: _C.greenLight,
+                    color: context.colors.greenLight,
                     borderRadius: BorderRadius.circular(20)),
                 child: Text('$count রাকাত',
-                    style: const TextStyle(
-                        color: _C.darkGreen,
+                    style: TextStyle(
+                        color: context.colors.darkGreen,
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700)),
               ),
@@ -1279,12 +1309,12 @@ class _RakaatCounterCard extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(top: 6, bottom: 2),
           child: Text(hint,
-              style: const TextStyle(
-                  color: _C.textHint,
+              style: TextStyle(
+                  color: context.colors.textHint,
                   fontSize: 10,
                   fontWeight: FontWeight.w500)),
         ),
-        const Divider(height: 0.5, thickness: 0.5, color: _C.border),
+        Divider(height: 0.5, thickness: 0.5, color: context.colors.border),
         const SizedBox(height: 20),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           _StepBtn(
@@ -1345,13 +1375,13 @@ class _SunnahToggleCard extends StatelessWidget {
         duration: 160.ms,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-            color: done ? _C.greenLight : _C.cardBg,
+            color: done ? context.colors.greenLight : context.colors.cardBg,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-                color: done ? _C.green.withOpacity(0.4) : _C.border,
+                color: done ? context.colors.green.withOpacity(0.4) : context.colors.border,
                 width: done ? 1.5 : 0.5)),
         child: Row(children: [
-          _IconBadge(icon: Icons.mosque_rounded, active: done, color: _C.green),
+          _IconBadge(icon: Icons.mosque_rounded, active: done, color: context.colors.green),
           const SizedBox(width: 13),
           Expanded(
               child: Column(
@@ -1359,14 +1389,14 @@ class _SunnahToggleCard extends StatelessWidget {
                   children: [
                 Text(cat.nameBn,
                     style: TextStyle(
-                        color: done ? _C.darkGreen : _C.textPrimary,
+                        color: done ? context.colors.darkGreen : context.colors.textPrimary,
                         fontWeight: FontWeight.w600,
                         fontSize: 13)),
                 if (cat.description != null) ...[
                   const SizedBox(height: 2),
                   Text(cat.description!,
-                      style: const TextStyle(
-                          color: _C.textSecondary, fontSize: 11)),
+                      style: TextStyle(
+                          color: context.colors.textSecondary, fontSize: 11)),
                 ],
               ])),
           const SizedBox(width: 8),
@@ -1375,10 +1405,10 @@ class _SunnahToggleCard extends StatelessWidget {
             width: 30,
             height: 30,
             decoration: BoxDecoration(
-                color: done ? _C.darkGreen : Colors.transparent,
+                color: done ? context.colors.darkGreen : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                    color: done ? _C.darkGreen : _C.borderMid, width: 1.5)),
+                    color: done ? context.colors.darkGreen : context.colors.borderMid, width: 1.5)),
             child: done
                 ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
                 : null,
@@ -1391,12 +1421,12 @@ class _SunnahToggleCard extends StatelessWidget {
                   color: const Color(0xFFFFF8EE),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                      color: const Color(0xFFD4A843).withOpacity(0.5),
+                      color: context.colors.gold.withOpacity(0.5),
                       width: 0.5)),
               child: Text(badgeLabel!,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 9.5,
-                      color: Color(0xFFD4A843),
+                      color: context.colors.gold,
                       fontWeight: FontWeight.w600)),
             ),
           ],
@@ -1425,10 +1455,10 @@ class _GenericCounterCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-          color: _C.cardBg,
+          color: context.colors.cardBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-              color: count > 0 ? _C.green.withOpacity(0.4) : _C.border,
+              color: count > 0 ? context.colors.green.withOpacity(0.4) : context.colors.border,
               width: count > 0 ? 1.5 : 0.5)),
       child: Column(children: [
         Padding(
@@ -1437,41 +1467,41 @@ class _GenericCounterCard extends StatelessWidget {
             _IconBadge(
                 icon: Icons.add_circle_outline_rounded,
                 active: count > 0,
-                color: _C.darkGreen),
+                color: context.colors.darkGreen),
             const SizedBox(width: 12),
             Expanded(
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                   Text(cat.nameBn,
-                      style: const TextStyle(
-                          color: _C.textPrimary,
+                      style: TextStyle(
+                          color: context.colors.textPrimary,
                           fontWeight: FontWeight.w700,
                           fontSize: 13)),
                   if (cat.description != null)
                     Text(cat.description!,
-                        style: const TextStyle(
-                            color: _C.textSecondary, fontSize: 11)),
+                        style: TextStyle(
+                            color: context.colors.textSecondary, fontSize: 11)),
                 ])),
             // count badge — মোট count দেখাও
             if (count > 0)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
-                    color: _C.greenLight,
+                    color: context.colors.greenLight,
                     borderRadius: BorderRadius.circular(20)),
                 child: Text(
                     maxVal != null
                         ? '$count / $maxVal $unitBn'
                         : '$count $unitBn',
-                    style: const TextStyle(
-                        color: _C.darkGreen,
+                    style: TextStyle(
+                        color: context.colors.darkGreen,
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700)),
               ),
           ]),
         ),
-        const Divider(height: 0.5, thickness: 0.5, color: _C.border),
+        Divider(height: 0.5, thickness: 0.5, color: context.colors.border),
         const SizedBox(height: 20),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           _StepBtn(
@@ -1521,10 +1551,10 @@ class _GenericToggleCard extends StatelessWidget {
         duration: 160.ms,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-            color: done ? _C.greenLight : _C.cardBg,
+            color: done ? context.colors.greenLight : context.colors.cardBg,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-                color: done ? _C.green.withOpacity(0.4) : _C.border,
+                color: done ? context.colors.green.withOpacity(0.4) : context.colors.border,
                 width: done ? 1.5 : 0.5)),
         child: Row(children: [
           AnimatedContainer(
@@ -1532,10 +1562,10 @@ class _GenericToggleCard extends StatelessWidget {
             width: 30,
             height: 30,
             decoration: BoxDecoration(
-                color: done ? _C.darkGreen : Colors.transparent,
+                color: done ? context.colors.darkGreen : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                    color: done ? _C.darkGreen : _C.borderMid, width: 1.5)),
+                    color: done ? context.colors.darkGreen : context.colors.borderMid, width: 1.5)),
             child: done
                 ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
                 : null,
@@ -1547,14 +1577,14 @@ class _GenericToggleCard extends StatelessWidget {
                   children: [
                 Text(cat.nameBn,
                     style: TextStyle(
-                        color: done ? _C.darkGreen : _C.textPrimary,
+                        color: done ? context.colors.darkGreen : context.colors.textPrimary,
                         fontWeight: FontWeight.w600,
                         fontSize: 13)),
                 if (cat.description != null) ...[
                   const SizedBox(height: 2),
                   Text(cat.description!,
-                      style: const TextStyle(
-                          color: _C.textSecondary, fontSize: 11)),
+                      style: TextStyle(
+                          color: context.colors.textSecondary, fontSize: 11)),
                 ],
               ])),
           // done badge
@@ -1563,11 +1593,11 @@ class _GenericToggleCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                  color: _C.greenLight,
+                  color: context.colors.greenLight,
                   borderRadius: BorderRadius.circular(20)),
-              child: const Text('সম্পন্ন',
+              child: Text('সম্পন্ন',
                   style: TextStyle(
-                      color: _C.darkGreen,
+                      color: context.colors.darkGreen,
                       fontSize: 10,
                       fontWeight: FontWeight.w600)),
             ),
@@ -1600,9 +1630,9 @@ class _BottomSaveBar extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(
           16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
-      decoration: const BoxDecoration(
-          color: _C.cardBg,
-          border: Border(top: BorderSide(color: _C.border, width: 0.5))),
+      decoration: BoxDecoration(
+          color: context.colors.cardBg,
+          border: Border(top: BorderSide(color: context.colors.border, width: 0.5))),
       child: Row(children: [
         GestureDetector(
           onTap: onCancel,
@@ -1610,11 +1640,11 @@ class _BottomSaveBar extends StatelessWidget {
             width: 50,
             height: 52,
             decoration: BoxDecoration(
-                color: _C.pageBg,
+                color: context.colors.pageBg,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: _C.border, width: 0.5)),
-            child: const Icon(Icons.close_rounded,
-                color: _C.textSecondary, size: 20),
+                border: Border.all(color: context.colors.border, width: 0.5)),
+            child: Icon(Icons.close_rounded,
+                color: context.colors.textSecondary, size: 20),
           ),
         ),
         const SizedBox(width: 10),
@@ -1625,7 +1655,7 @@ class _BottomSaveBar extends StatelessWidget {
               duration: 160.ms,
               height: 52,
               decoration: BoxDecoration(
-                  color: saving ? _C.darkGreen.withOpacity(0.7) : _C.darkGreen,
+                  color: saving ? context.colors.darkGreen.withOpacity(0.7) : context.colors.darkGreen,
                   borderRadius: BorderRadius.circular(14)),
               child:
                   Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -1675,11 +1705,11 @@ class _IconBadge extends StatelessWidget {
       width: 38,
       height: 38,
       decoration: BoxDecoration(
-          color: active ? color.withOpacity(0.1) : _C.pageBg,
+          color: active ? color.withOpacity(0.1) : context.colors.pageBg,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-              color: active ? color.withOpacity(0.25) : _C.border, width: 0.5)),
-      child: Icon(icon, size: 18, color: active ? color : _C.textHint),
+              color: active ? color.withOpacity(0.25) : context.colors.border, width: 0.5)),
+      child: Icon(icon, size: 18, color: active ? color : context.colors.textHint),
     );
   }
 }
@@ -1698,10 +1728,10 @@ class _CounterDisplay extends StatelessWidget {
       height: 78,
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-          color: active ? _C.greenLight : _C.pageBg,
+          color: active ? context.colors.greenLight : context.colors.pageBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-              color: active ? _C.green.withOpacity(0.3) : _C.border,
+              color: active ? context.colors.green.withOpacity(0.3) : context.colors.border,
               width: 0.5)),
       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
         Text('$count',
@@ -1709,11 +1739,11 @@ class _CounterDisplay extends StatelessWidget {
                 fontSize: 34,
                 fontWeight: FontWeight.w900,
                 height: 1,
-                color: active ? _C.darkGreen : _C.textHint)),
+                color: active ? context.colors.darkGreen : context.colors.textHint)),
         const SizedBox(height: 3),
         Text(max != null ? '/ $max $unit' : unit,
             style: TextStyle(
-                fontSize: 10, color: active ? _C.textSecondary : _C.textHint)),
+                fontSize: 10, color: active ? context.colors.textSecondary : context.colors.textHint)),
       ]),
     );
   }
@@ -1734,13 +1764,13 @@ class _StepBtn extends StatelessWidget {
         width: 52,
         height: 52,
         decoration: BoxDecoration(
-            color: enabled ? _C.greenLight : _C.pageBg,
+            color: enabled ? context.colors.greenLight : context.colors.pageBg,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-                color: enabled ? _C.green.withOpacity(0.3) : _C.border,
+                color: enabled ? context.colors.green.withOpacity(0.3) : context.colors.border,
                 width: 0.5)),
         child:
-            Icon(icon, color: enabled ? _C.darkGreen : _C.textHint, size: 24),
+            Icon(icon, color: enabled ? context.colors.darkGreen : context.colors.textHint, size: 24),
       ),
     );
   }
@@ -1763,7 +1793,7 @@ class _WitrDots extends StatelessWidget {
           height: 8,
           margin: const EdgeInsets.symmetric(horizontal: 3),
           decoration: BoxDecoration(
-              color: filled ? _C.darkGreen : _C.border,
+              color: filled ? context.colors.darkGreen : context.colors.border,
               borderRadius: BorderRadius.circular(99)),
           child: filled
               ? Center(
@@ -1791,20 +1821,20 @@ class _BoundedProgress extends StatelessWidget {
         child: Column(children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text('$count',
-                style: const TextStyle(
-                    color: _C.darkGreen,
+                style: TextStyle(
+                    color: context.colors.darkGreen,
                     fontWeight: FontWeight.w700,
                     fontSize: 11)),
             Text('$max',
-                style: const TextStyle(color: _C.textHint, fontSize: 11)),
+                style: TextStyle(color: context.colors.textHint, fontSize: 11)),
           ]),
           const SizedBox(height: 6),
           ClipRRect(
             borderRadius: BorderRadius.circular(99),
             child: LinearProgressIndicator(
               value: (count / max).clamp(0.0, 1.0),
-              backgroundColor: _C.border,
-              valueColor: const AlwaysStoppedAnimation(_C.darkGreen),
+              backgroundColor: context.colors.border,
+              valueColor: AlwaysStoppedAnimation(context.colors.darkGreen),
               minHeight: 8,
             ),
           ),
@@ -1821,7 +1851,7 @@ class _BoundedProgress extends StatelessWidget {
                 height: 7,
                 margin: const EdgeInsets.symmetric(horizontal: 2),
                 decoration: BoxDecoration(
-                    color: i < count ? _C.darkGreen : _C.border,
+                    color: i < count ? context.colors.darkGreen : context.colors.border,
                     borderRadius: BorderRadius.circular(99)),
               )),
     );
@@ -1837,12 +1867,12 @@ class _UnboundedProgress extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
       Icon(Icons.trending_up_rounded,
-          color: count > 0 ? _C.darkGreen : _C.textHint, size: 16),
+          color: count > 0 ? context.colors.darkGreen : context.colors.textHint, size: 16),
       const SizedBox(width: 6),
       Text(
           count > 0 ? '$count $unitBn যোগ করা হয়েছে' : 'যত বেশি, তত বেশি বরকত',
           style: TextStyle(
-              color: count > 0 ? _C.darkGreen : _C.textHint,
+              color: count > 0 ? context.colors.darkGreen : context.colors.textHint,
               fontSize: 11,
               fontWeight: FontWeight.w500)),
     ]);

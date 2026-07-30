@@ -14,25 +14,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:amal_tracker/core/theme/app_colors.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ── Re-use the same design tokens from home_screen.dart ──────────────────────
 // (copy _C and _fmt into this file if you extract it; otherwise keep inline)
-
-class _C {
-  static const pageBg = Color(0xFFF4F6F1);
-  static const card = Color(0xFFFFFFFF);
-  static const darkGreen = Color(0xFF0E3D22);
-  static const midGreen = Color(0xFF1B7045);
-  static const gold = Color(0xFFD4A843);
-  static const goldLight = Color(0xFFFFF3E0);
-  static const goldBorder = Color(0xFFFFCC80);
-  static const textPri = Color(0xFF0A1A0F);
-  static const textSec = Color(0xFF6B7C6E);
-  static const textHint = Color(0xFFABBAAE);
-  static const border = Color(0xFFE4EAE4);
-  static const greenLight = Color(0xFFE8F5EE);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // SADAQAH BANNER  (subtle, non-intrusive)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -48,13 +34,13 @@ class SadaqahBanner extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
           // Warm gold gradient — distinct from the green hero, softer feel
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFFF8E7), Color(0xFFFFF3D0)],
+          gradient: LinearGradient(
+            colors: [context.colors.goldLight, Color(0xFFFFF3D0)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFFFCC80), width: 0.8),
+          border: Border.all(color: context.colors.goldBorder2, width: 0.8),
         ),
         child: Row(children: [
           // Icon container — small, warm
@@ -62,9 +48,9 @@ class SadaqahBanner extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: _C.gold.withOpacity(0.18),
+              color: context.colors.gold.withOpacity(0.18),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: _C.gold.withOpacity(0.35), width: 0.5),
+              border: Border.all(color: context.colors.gold.withOpacity(0.35), width: 0.5),
             ),
             child: const Center(
               child: Text('🤲', style: TextStyle(fontSize: 16)),
@@ -103,7 +89,7 @@ class SadaqahBanner extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: _C.gold.withOpacity(0.15),
+              color: context.colors.gold.withOpacity(0.15),
               borderRadius: BorderRadius.circular(6),
             ),
             child: const Icon(
@@ -163,7 +149,7 @@ class _SadaqahSheetState extends State<_SadaqahSheet> {
     return Container(
       margin: const EdgeInsets.fromLTRB(10, 0, 10, 10),
       decoration: BoxDecoration(
-        color: _C.card,
+        color: context.colors.card,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -175,7 +161,7 @@ class _SadaqahSheetState extends State<_SadaqahSheet> {
             width: 36,
             height: 4,
             decoration: BoxDecoration(
-              color: _C.border,
+              color: context.colors.border,
               borderRadius: BorderRadius.circular(99),
             ),
           ),
@@ -197,20 +183,20 @@ class _SadaqahSheetState extends State<_SadaqahSheet> {
                     ),
                     borderRadius: BorderRadius.circular(12),
                     border:
-                        Border.all(color: const Color(0xFFFFCC80), width: 0.8),
+                        Border.all(color: context.colors.goldBorder2, width: 0.8),
                   ),
                   child: const Center(
                       child: Text('🤲', style: TextStyle(fontSize: 20))),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'সদকাহ করুন',
                         style: TextStyle(
-                          color: _C.textPri,
+                          color: context.colors.textPri,
                           fontWeight: FontWeight.w800,
                           fontSize: 17,
                           letterSpacing: -0.4,
@@ -220,7 +206,7 @@ class _SadaqahSheetState extends State<_SadaqahSheet> {
                       Text(
                         'Sabeq অ্যাপের জন্য স্বেচ্ছামূলক সহায়তা',
                         style: TextStyle(
-                          color: _C.textSec,
+                          color: context.colors.textSec2,
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
                         ),
@@ -295,10 +281,10 @@ class _SadaqahSheetState extends State<_SadaqahSheet> {
             child: Row(children: [
               const Text('💳', style: TextStyle(fontSize: 11)),
               const SizedBox(width: 6),
-              const Text(
+              Text(
                 'পাঠানোর মাধ্যম',
                 style: TextStyle(
-                  color: _C.textSec,
+                  color: context.colors.textSec2,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.2,
@@ -314,9 +300,9 @@ class _SadaqahSheetState extends State<_SadaqahSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Container(
               decoration: BoxDecoration(
-                color: _C.pageBg,
+                color: context.colors.pageBg,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: _C.border, width: 0.5),
+                border: Border.all(color: context.colors.border, width: 0.5),
               ),
               child: Column(children: [
                 _PayRow(
@@ -329,8 +315,8 @@ class _SadaqahSheetState extends State<_SadaqahSheet> {
                   onCopy: _copy,
                   isFirst: true,
                 ),
-                const Divider(
-                    height: 1, color: _C.border, indent: 14, endIndent: 14),
+                Divider(
+                    height: 1, color: context.colors.border, indent: 14, endIndent: 14),
                 _PayRow(
                   icon: '🩷',
                   label: 'bKash',
@@ -340,8 +326,8 @@ class _SadaqahSheetState extends State<_SadaqahSheet> {
                   copyKey: 'bkash',
                   onCopy: _copy,
                 ),
-                const Divider(
-                    height: 1, color: _C.border, indent: 14, endIndent: 14),
+                Divider(
+                    height: 1, color: context.colors.border, indent: 14, endIndent: 14),
                 _PayRow(
                   icon: '🟠',
                   label: 'Nagad',
@@ -364,7 +350,7 @@ class _SadaqahSheetState extends State<_SadaqahSheet> {
               child: Text(
                 '«مَنْ ذَا الَّذِي يُقْرِضُ اللَّهَ قَرْضًا حَسَنًا»',
                 style: TextStyle(
-                  color: _C.textHint,
+                  color: context.colors.textHint,
                   fontSize: 12,
                   fontStyle: FontStyle.italic,
                   letterSpacing: 0.3,
@@ -380,7 +366,7 @@ class _SadaqahSheetState extends State<_SadaqahSheet> {
               child: Text(
                 'আল্লাহকে উত্তম ঋণ দেওয়ার জন্য কে আছ?  — সূরা বাকারা ২:২৪৫',
                 style: TextStyle(
-                  color: _C.textHint.withOpacity(0.75),
+                  color: context.colors.textHint.withOpacity(0.75),
                   fontSize: 9.5,
                 ),
                 textAlign: TextAlign.center,
@@ -459,9 +445,9 @@ class _PayRow extends StatelessWidget {
           width: 34,
           height: 34,
           decoration: BoxDecoration(
-            color: _C.card,
+            color: context.colors.card,
             borderRadius: BorderRadius.circular(9),
-            border: Border.all(color: _C.border, width: 0.5),
+            border: Border.all(color: context.colors.border, width: 0.5),
           ),
           child:
               Center(child: Text(icon, style: const TextStyle(fontSize: 16))),
@@ -475,8 +461,8 @@ class _PayRow extends StatelessWidget {
             Row(children: [
               Text(
                 label,
-                style: const TextStyle(
-                  color: _C.textPri,
+                style: TextStyle(
+                  color: context.colors.textPri,
                   fontWeight: FontWeight.w700,
                   fontSize: 12.5,
                 ),
@@ -485,13 +471,13 @@ class _PayRow extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                 decoration: BoxDecoration(
-                  color: _C.greenLight,
+                  color: context.colors.greenLight,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   sublabel,
-                  style: const TextStyle(
-                    color: _C.darkGreen,
+                  style: TextStyle(
+                    color: context.colors.darkGreen,
                     fontSize: 8.5,
                     fontWeight: FontWeight.w600,
                   ),
@@ -501,8 +487,8 @@ class _PayRow extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               value,
-              style: const TextStyle(
-                color: _C.textSec,
+              style: TextStyle(
+                color: context.colors.textSec2,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.5,
@@ -518,20 +504,20 @@ class _PayRow extends StatelessWidget {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: isCopied ? _C.darkGreen : _C.greenLight,
+              color: isCopied ? context.colors.darkGreen : context.colors.greenLight,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(
                 isCopied ? Icons.check_rounded : Icons.copy_rounded,
                 size: 11,
-                color: isCopied ? Colors.white : _C.darkGreen,
+                color: isCopied ? Colors.white : context.colors.darkGreen,
               ),
               const SizedBox(width: 3),
               Text(
                 isCopied ? 'কপি হয়েছে' : 'কপি করুন',
                 style: TextStyle(
-                  color: isCopied ? Colors.white : _C.darkGreen,
+                  color: isCopied ? Colors.white : context.colors.darkGreen,
                   fontSize: 9.5,
                   fontWeight: FontWeight.w700,
                 ),

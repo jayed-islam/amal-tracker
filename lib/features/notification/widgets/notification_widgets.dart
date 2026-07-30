@@ -1,43 +1,13 @@
 import 'package:amal_tracker/core/router/app_router.dart';
-import 'package:amal_tracker/features/home/screens/home_screen.dart';
 import 'package:amal_tracker/features/notification/provider/notification_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
-class ColorT {
-  // Backgrounds
-  static const pageBg = Color(0xFFF4F6F1);
-  static const cardBg = Color(0xFFFFFFFF);
-  static const darkGreen = Color(0xFF0E3D22);
-  static const midGreen = Color(0xFF1B7045);
-
-  // Accents
-  static const gold = Color(0xFFD4A843);
-  static const goldLight = Color(0xFFFFF3E0);
-  static const goldBorder = Color(0xFFFFCC80);
-
-  // Status
-  static const green = Color(0xFF16A34A);
-  static const greenLight = Color(0xFFE8F5EE);
-  static const amber = Color(0xFFF59E0B);
-  static const amberLight = Color(0xFFFFF3E0);
-  static const red = Color(0xFFEF4444);
-
-  // Text
-  static const textPrimary = Color(0xFF0A1A0F);
-  static const textSecondary = Color(0xFF6B7C6E);
-  static const textHint = Color(0xFFABBAAE);
-
-  // Borders
-  static const border = Color(0xFFE4EAE4);
-  static const borderMid = Color(0xFFD0DAD2);
-
-  // Rank colours
-  static const rankGold = Color(0xFFD4A843);
-  static const rankSilver = Color(0xFF94A3B8);
-  static const rankBronze = Color(0xFFCD7F32);
-}
+// ColorT design tokens used to be defined here as a static const class,
+// duplicating the same green/gold palette yet again. Removed — every
+// reference now points at the single shared context.colors.xxx source.
 
 class NotificationBellWidget extends ConsumerWidget {
   const NotificationBellWidget({super.key});
@@ -57,13 +27,13 @@ class NotificationBellWidget extends ConsumerWidget {
             width: 35,
             height: 35,
             decoration: BoxDecoration(
-              color: ColorT.pageBg,
+              color: context.colors.bg,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: ColorT.border, width: 0.5),
+              border: Border.all(color: context.colors.border, width: 0.5),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.notifications_none_rounded,
-              color: ColorT.textSecondary,
+              color: context.colors.textMuted,
               size: 18,
             ),
           ),
@@ -178,16 +148,16 @@ class SettingsButtonWidget extends StatelessWidget {
         width: 35,
         height: 35,
         decoration: BoxDecoration(
-          color: ColorT.pageBg,
+          color: context.colors.bg,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: ColorT.border,
+            color: context.colors.border,
             width: 0.5,
           ),
         ),
-        child: const Icon(
+        child: Icon(
           Icons.settings_outlined,
-          color: ColorT.textSecondary,
+          color: context.colors.textMuted,
           size: 18,
         ),
       ),

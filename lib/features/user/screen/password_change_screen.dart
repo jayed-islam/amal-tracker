@@ -10,21 +10,7 @@ import '../../auth/providers/auth_provider.dart';
 // ─────────────────────────────────────────────────────────────
 // TOKENS  (unchanged)
 // ─────────────────────────────────────────────────────────────
-class _C {
-  static const bg = Color(0xFFF4F6F1);
-  static const card = Color(0xFFFFFFFF);
-  static const darkGreen = Color(0xFF0E3D22);
-  static const midGreen = Color(0xFF1B7045);
-  static const green = Color(0xFF16A34A);
-  static const greenLight = Color(0xFFE8F5EE);
-  static const gold = Color(0xFFD4A843);
-  static const red = Color(0xFFE53935);
-  static const amber = Color(0xFFF59E0B);
-  static const border = Color(0xFFE2E8E2);
-  static const textPrimary = Color(0xFF0A1A0F);
-  static const textSecondary = Color(0xFF6B7C6E);
-  static const textHint = Color(0xFFB0BDB2);
-}
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────
 // SCREEN
@@ -48,7 +34,8 @@ class _State extends ConsumerState<ChangePasswordScreen> {
   bool _saving = false;
   int _score = 0;
   String _strengthLabel = '';
-  Color _strengthColor = _C.textHint;
+  late Color _strengthColor = context.colors
+      .textHint; // dead default; live value set via context in _onNewChanged
 
   final _scrollController = ScrollController();
 
@@ -77,10 +64,10 @@ class _State extends ConsumerState<ChangePasswordScreen> {
     if (RegExp(r'[0-9]').hasMatch(p)) s++;
     if (RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(p)) s++;
     final (lbl, col) = switch (s) {
-      0 || 1 => ('দুর্বল', _C.red),
-      2 => ('মধ্যম', _C.amber),
-      3 => ('ভালো', _C.green),
-      _ => ('শক্তিশালী', _C.darkGreen),
+      0 || 1 => ('দুর্বল', context.colors.red),
+      2 => ('মধ্যম', context.colors.amber),
+      3 => ('ভালো', context.colors.green),
+      _ => ('শক্তিশালী', context.colors.darkGreen),
     };
     if (_newErr != null) _valNew(p);
     setState(() {
@@ -150,7 +137,7 @@ class _State extends ConsumerState<ChangePasswordScreen> {
           SizedBox(width: 8),
           Text('পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!'),
         ]),
-        backgroundColor: _C.darkGreen,
+        backgroundColor: context.colors.darkGreen,
         margin: const EdgeInsets.all(16),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -170,7 +157,7 @@ class _State extends ConsumerState<ChangePasswordScreen> {
     final hPad = isTablet ? (mq.size.width - 600) / 2 + 20.0 : 20.0;
 
     return Scaffold(
-      backgroundColor: _C.bg,
+      backgroundColor: context.colors.bg,
       bottomNavigationBar:
           _SubmitBar(saving: _saving, canSubmit: _canSubmit, onTap: _save),
       body: CustomScrollView(
@@ -183,7 +170,7 @@ class _State extends ConsumerState<ChangePasswordScreen> {
             title: 'পাসওয়ার্ড পরিবর্তন',
             subtitle: 'নিরাপদ থাকতে নিয়মিত পরিবর্তন করুন',
             icon: Icons.lock_reset_rounded,
-            color: _C.darkGreen,
+            color: context.colors.darkGreen,
           ),
 
           // ── body ──────────────────────────────────────────
@@ -290,8 +277,8 @@ class _FormSection extends StatelessWidget {
             padding: const EdgeInsets.only(left: 2, bottom: 8),
             child: Text(
               label!.toUpperCase(),
-              style: const TextStyle(
-                color: _C.textHint,
+              style: TextStyle(
+                color: context.colors.textHint,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.7,
@@ -300,9 +287,9 @@ class _FormSection extends StatelessWidget {
           ),
         Container(
           decoration: BoxDecoration(
-            color: _C.card,
+            color: context.colors.card,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _C.border, width: 0.5),
+            border: Border.all(color: context.colors.border, width: 0.5),
           ),
           child: Column(
             children: List.generate(children.length, (i) {
@@ -310,10 +297,10 @@ class _FormSection extends StatelessWidget {
                 children: [
                   children[i],
                   if (i < children.length - 1)
-                    const Divider(
+                    Divider(
                         height: 0.5,
                         thickness: 0.5,
-                        color: _C.border,
+                        color: context.colors.border,
                         indent: 52),
                 ],
               );
@@ -327,8 +314,8 @@ class _FormSection extends StatelessWidget {
 
 class _CardDivider extends StatelessWidget {
   @override
-  Widget build(BuildContext context) =>
-      const Divider(height: 0.5, thickness: 0.5, color: _C.border, indent: 16);
+  Widget build(BuildContext context) => Divider(
+      height: 0.5, thickness: 0.5, color: context.colors.border, indent: 16);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -368,7 +355,8 @@ class _StrengthBar extends StatelessWidget {
                               height: 4,
                               margin: EdgeInsets.only(right: i < 3 ? 4 : 0),
                               decoration: BoxDecoration(
-                                color: i < score ? color : _C.border,
+                                color:
+                                    i < score ? color : context.colors.border,
                                 borderRadius: BorderRadius.circular(99),
                               ),
                             ),
@@ -414,10 +402,12 @@ class _Chip extends StatelessWidget {
         duration: 200.ms,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: met ? _C.greenLight : _C.bg,
+          color: met ? context.colors.greenLight : context.colors.bg,
           borderRadius: BorderRadius.circular(20),
-          border:
-              Border.all(color: met ? _C.green.withOpacity(0.35) : _C.border),
+          border: Border.all(
+              color: met
+                  ? context.colors.green.withOpacity(0.35)
+                  : context.colors.border),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           AnimatedSwitcher(
@@ -426,13 +416,13 @@ class _Chip extends StatelessWidget {
               met ? Icons.check_rounded : Icons.remove_rounded,
               key: ValueKey(met),
               size: 11,
-              color: met ? _C.green : _C.textHint,
+              color: met ? context.colors.green : context.colors.textHint,
             ),
           ),
           const SizedBox(width: 4),
           Text(label,
               style: TextStyle(
-                color: met ? _C.darkGreen : _C.textHint,
+                color: met ? context.colors.darkGreen : context.colors.textHint,
                 fontSize: 10.5,
                 fontWeight: FontWeight.w600,
               )),
@@ -457,9 +447,10 @@ class _TipsCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF8E7),
+          color: context.colors.goldLight,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _C.gold.withOpacity(0.35), width: 0.5),
+          border: Border.all(
+              color: context.colors.gold.withOpacity(0.35), width: 0.5),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -469,11 +460,11 @@ class _TipsCard extends StatelessWidget {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: _C.gold.withOpacity(0.15),
+                  color: context.colors.gold.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.lightbulb_rounded,
-                    color: _C.gold, size: 14),
+                child: Icon(Icons.lightbulb_rounded,
+                    color: context.colors.gold, size: 14),
               ),
               const SizedBox(width: 8),
               const Text('শক্তিশালী পাসওয়ার্ডের নিয়ম',
@@ -493,13 +484,13 @@ class _TipsCard extends StatelessWidget {
                         width: 4,
                         height: 4,
                         margin: const EdgeInsets.only(top: 6, right: 8),
-                        decoration: const BoxDecoration(
-                            color: _C.gold, shape: BoxShape.circle),
+                        decoration: BoxDecoration(
+                            color: context.colors.gold, shape: BoxShape.circle),
                       ),
                       Expanded(
                         child: Text(t,
-                            style: const TextStyle(
-                              color: Color(0xFF92400E),
+                            style: TextStyle(
+                              color: context.colors.ambalText,
                               fontSize: 12,
                               height: 1.45,
                             )),
@@ -526,9 +517,10 @@ class _SubmitBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        decoration: const BoxDecoration(
-          color: _C.card,
-          border: Border(top: BorderSide(color: _C.border, width: 0.5)),
+        decoration: BoxDecoration(
+          color: context.colors.card,
+          border:
+              Border(top: BorderSide(color: context.colors.border, width: 0.5)),
         ),
         padding: EdgeInsets.fromLTRB(
           20,
@@ -543,15 +535,15 @@ class _SubmitBar extends StatelessWidget {
             height: 54,
             decoration: BoxDecoration(
               color: saving
-                  ? _C.darkGreen.withOpacity(0.6)
+                  ? context.colors.darkGreen.withOpacity(0.6)
                   : canSubmit
-                      ? _C.darkGreen
-                      : _C.darkGreen.withOpacity(0.35),
+                      ? context.colors.darkGreen
+                      : context.colors.darkGreen.withOpacity(0.35),
               borderRadius: BorderRadius.circular(16),
               boxShadow: canSubmit && !saving
                   ? [
                       BoxShadow(
-                        color: _C.darkGreen.withOpacity(0.22),
+                        color: context.colors.darkGreen.withOpacity(0.22),
                         blurRadius: 16,
                         offset: const Offset(0, 6),
                       )

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'app_color_tokens.dart';
 
 class AppColors {
   AppColors._();
@@ -53,6 +54,43 @@ class AppColors {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AppColorsDark — dark-mode counterparts for the ColorScheme/Material-component
+// colors above. First-draft, auto-generated (HSL inversion by role), same
+// review note as AppColorTokens.dark in app_color_tokens.dart.
+// ─────────────────────────────────────────────────────────────────────────────
+class AppColorsDark {
+  AppColorsDark._();
+  static const Color primary = Color(0xFF2A845A);
+  static const Color primaryDark = Color(0xFF1A6146);
+  static const Color primaryLight = Color(0xFF41A273);
+  static const Color primaryPale = Color(0xFF293D32);
+  static const Color primarySoft = Color(0xFF293D32);
+  static const Color gold = Color(0xFFD3B46D);
+  static const Color goldLight = Color(0xFFE9CC86);
+  static const Color goldPale = Color(0xFF493D1D);
+  static const Color success = Color(0xFF28BA5E);
+  static const Color warning = Color(0xFFE8AA41);
+  static const Color error = Color(0xFFD65555);
+  static const Color errorPale = Color(0xFF491D1D);
+  static const Color info = Color(0xFF5782E2);
+  static const Color congregation = Color(0xFF2A845A);
+  static const Color solo = Color(0xFFE8AA41);
+  static const Color missed = Color(0xFF303236);
+  static const Color background = Color(0xFF12160F);
+  static const Color surface = Color(0xFF1B211A);
+  static const Color surfaceAlt = Color(0xFF212820);
+  static const Color border = Color(0xFF33402F);
+  static const Color divider = Color(0xFF262E24);
+  static const Color textPrimary = Color(0xFFE0E3EB);
+  static const Color textSecondary = Color(0xFFE4E5E7);
+  static const Color textTertiary = Color(0xFFF2F2F3);
+  static const Color textHint = Color(0xFFF2F3F2);
+  static const Color rankGold = Color(0xFFEFD239);
+  static const Color rankSilver = Color(0xFFAEBBC1);
+  static const Color rankBronze = Color(0xFFCEA174);
 }
 
 class AppRadius {
@@ -117,6 +155,7 @@ class AppTheme {
         useMaterial3: true,
         brightness: Brightness.light,
         scaffoldBackgroundColor: AppColors.background,
+        extensions: const [AppColorTokens.light],
         colorScheme: const ColorScheme(
           brightness: Brightness.light,
           primary: AppColors.primary,
@@ -240,6 +279,146 @@ class AppTheme {
           shape: RoundedRectangleBorder(
               borderRadius: AppRadius.lg_,
               side: const BorderSide(color: AppColors.border)),
+          margin: EdgeInsets.zero,
+          clipBehavior: Clip.antiAlias,
+        ),
+      );
+
+  // ─── Dark theme ─────────────────────────────────────────────────────────
+  // Mirrors `light` exactly, just swapping AppColors -> AppColorsDark and
+  // the ThemeExtension to AppColorTokens.dark. First-draft palette — see the
+  // review note on AppColorTokens.dark / AppColorsDark above.
+  static ThemeData get dark => ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: AppColorsDark.background,
+        extensions: const [AppColorTokens.dark],
+        colorScheme: const ColorScheme(
+          brightness: Brightness.dark,
+          primary: AppColorsDark.primary,
+          onPrimary: Colors.white,
+          primaryContainer: AppColorsDark.primaryPale,
+          onPrimaryContainer: AppColorsDark.primaryLight,
+          secondary: AppColorsDark.gold,
+          onSecondary: Colors.black,
+          secondaryContainer: AppColorsDark.goldPale,
+          onSecondaryContainer: Color(0xFFE9CC86),
+          tertiary: AppColorsDark.info,
+          onTertiary: Colors.white,
+          tertiaryContainer: Color(0xFF1E3A5F),
+          onTertiaryContainer: Color(0xFFBFDBFE),
+          error: AppColorsDark.error,
+          onError: Colors.white,
+          errorContainer: AppColorsDark.errorPale,
+          onErrorContainer: Color(0xFFFCA5A5),
+          background: AppColorsDark.background,
+          onBackground: AppColorsDark.textPrimary,
+          surface: AppColorsDark.surface,
+          onSurface: AppColorsDark.textPrimary,
+          surfaceVariant: AppColorsDark.surfaceAlt,
+          onSurfaceVariant: AppColorsDark.textSecondary,
+          outline: AppColorsDark.border,
+          outlineVariant: AppColorsDark.divider,
+          shadow: Color(0x40000000),
+          scrim: Color(0x80000000),
+          inverseSurface: AppColorsDark.textPrimary,
+          onInverseSurface: Colors.black,
+          inversePrimary: AppColorsDark.primaryDark,
+          surfaceTint: AppColorsDark.primary,
+        ),
+        textTheme: GoogleFonts.interTextTheme(const TextTheme(
+          displayLarge: TextStyle(
+              fontSize: 54,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -1.5,
+              height: 1.1),
+          headlineLarge: TextStyle(
+              fontSize: 30, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+          headlineMedium: TextStyle(
+              fontSize: 26, fontWeight: FontWeight.w600, letterSpacing: -0.3),
+          headlineSmall: TextStyle(
+              fontSize: 22, fontWeight: FontWeight.w600, letterSpacing: -0.2),
+          titleLarge: TextStyle(
+              fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.1),
+          titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          bodyLarge:
+              TextStyle(fontSize: 16, fontWeight: FontWeight.w400, height: 1.6),
+          bodyMedium:
+              TextStyle(fontSize: 14, fontWeight: FontWeight.w400, height: 1.5),
+          bodySmall:
+              TextStyle(fontSize: 12, fontWeight: FontWeight.w400, height: 1.4),
+          labelLarge: TextStyle(
+              fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.1),
+          labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          labelSmall: TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 0.3),
+        )).apply(
+            bodyColor: AppColorsDark.textPrimary,
+            displayColor: AppColorsDark.textPrimary),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          centerTitle: false,
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.light,
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+          backgroundColor: AppColorsDark.primary,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColorsDark.primary.withOpacity(0.35),
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.md_),
+          minimumSize: const Size(double.infinity, 54),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        )),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: AppColorsDark.surfaceAlt,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          border: OutlineInputBorder(
+              borderRadius: AppRadius.md_,
+              borderSide: const BorderSide(color: AppColorsDark.border)),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: AppRadius.md_,
+              borderSide: const BorderSide(color: AppColorsDark.border)),
+          focusedBorder: OutlineInputBorder(
+              borderRadius: AppRadius.md_,
+              borderSide:
+                  const BorderSide(color: AppColorsDark.primary, width: 2)),
+          errorBorder: OutlineInputBorder(
+              borderRadius: AppRadius.md_,
+              borderSide: const BorderSide(color: AppColorsDark.error)),
+          focusedErrorBorder: OutlineInputBorder(
+              borderRadius: AppRadius.md_,
+              borderSide:
+                  const BorderSide(color: AppColorsDark.error, width: 2)),
+          floatingLabelBehavior: FloatingLabelBehavior.never,
+          errorStyle: const TextStyle(
+              color: AppColorsDark.error,
+              fontSize: 12,
+              fontWeight: FontWeight.w500),
+        ),
+        snackBarTheme: SnackBarThemeData(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColorsDark.surfaceAlt,
+          contentTextStyle: const TextStyle(color: AppColorsDark.textPrimary),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.md_),
+        ),
+        dividerTheme: const DividerThemeData(
+            color: AppColorsDark.divider, thickness: 1, space: 0),
+        cardTheme: CardThemeData(
+          color: AppColorsDark.surface,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+              borderRadius: AppRadius.lg_,
+              side: const BorderSide(color: AppColorsDark.border)),
           margin: EdgeInsets.zero,
           clipBehavior: Clip.antiAlias,
         ),

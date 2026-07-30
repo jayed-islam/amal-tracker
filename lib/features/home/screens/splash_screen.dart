@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -207,9 +208,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                                           width: isSmallScreen ? 18 : 22,
                                           height: isSmallScreen ? 18 : 22,
                                           decoration: BoxDecoration(
-                                            gradient: const LinearGradient(
+                                            gradient: LinearGradient(
                                               colors: [
-                                                Color(0xFFD4A843),
+                                                context.colors.gold,
                                                 Color(0xFFF0C96B)
                                               ],
                                             ),
@@ -281,9 +282,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                                       width: isSmallScreen ? 40 : 48,
                                       height: 2,
                                       decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
+                                        gradient: LinearGradient(
                                           colors: [
-                                            Color(0xFFD4A843),
+                                            context.colors.gold,
                                             Color(0xFFF0C96B)
                                           ],
                                         ),

@@ -7,30 +7,12 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
+import 'package:amal_tracker/core/theme/app_colors.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
-
-class _C {
-  static const bg = Color(0xFFF4F6F1);
-  static const card = Color(0xFFFFFFFF);
-  static const darkGreen = Color(0xFF0E3D22);
-  static const midGreen = Color(0xFF1B7045);
-  static const green = Color(0xFF16A34A);
-  static const greenLight = Color(0xFFE8F5EE);
-  static const gold = Color(0xFFD4A843);
-  static const red = Color(0xFFEF4444);
-  static const border = Color(0xFFE4EAE4);
-  static const borderMid = Color(0xFFD0DAD2);
-  static const textPrimary = Color(0xFF0A1A0F);
-  static const textSecondary = Color(0xFF6B7C6E);
-  static const textHint = Color(0xFFABBAAE);
-  static const inputBg = Color(0xFFF8FAF8);
-  static const amber = Color(0xFFF59E0B);
-  static const amberLight = Color(0xFFFFF3E0);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // DISTRICT MAPPING
 // ─────────────────────────────────────────────────────────────────────────────
@@ -264,7 +246,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
-      backgroundColor: err ? _C.red : _C.amber,
+      backgroundColor: err ? context.colors.red : context.colors.amber,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       duration: const Duration(seconds: 3),
@@ -323,7 +305,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 ),
               ],
             ),
-            backgroundColor: _C.darkGreen,
+            backgroundColor: context.colors.darkGreen,
             margin: const EdgeInsets.all(16),
             behavior: SnackBarBehavior.floating,
             shape:
@@ -360,7 +342,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             ),
           ],
         ),
-        backgroundColor: _C.red,
+        backgroundColor: context.colors.red,
         margin: const EdgeInsets.all(16),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -377,7 +359,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     final isFemale = user?.gender?.toLowerCase() == 'female';
 
     return Scaffold(
-      backgroundColor: _C.bg,
+      backgroundColor: context.colors.bg,
       bottomNavigationBar: _SubmitBar(
         saving: _saving,
         onTap: _save,
@@ -393,7 +375,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             title: 'প্রোফাইল সম্পাদনা',
             subtitle: 'নিরাপদ থাকতে নিয়মিত পরিবর্তন করুন',
             icon: Icons.lock_reset_rounded,
-            color: _C.darkGreen,
+            color: context.colors.darkGreen,
             actions: [
               GestureDetector(
                 onTap: (_saving || !_hasChanges) ? null : _save,
@@ -403,8 +385,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
                     color: (_saving || !_hasChanges)
-                        ? _C.gold.withOpacity(0.4)
-                        : _C.gold,
+                        ? context.colors.gold.withOpacity(0.4)
+                        : context.colors.gold,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: _saving
@@ -552,22 +534,22 @@ class _GpsDistrictField extends StatelessWidget {
             height: 34,
             decoration: BoxDecoration(
               color: hasErr
-                  ? _C.red.withOpacity(0.08)
+                  ? context.colors.red.withOpacity(0.08)
                   : (isLocating || hasDist)
-                      ? _C.greenLight
-                      : _C.bg,
+                      ? context.colors.greenLight
+                      : context.colors.bg,
               borderRadius: BorderRadius.circular(9),
             ),
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               child: isLocating
-                  ? const Center(
+                  ? Center(
                       child: SizedBox(
                         width: 14,
                         height: 14,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.0,
-                          color: _C.darkGreen,
+                          color: context.colors.darkGreen,
                         ),
                       ),
                     )
@@ -579,10 +561,10 @@ class _GpsDistrictField extends StatelessWidget {
                               : Icons.my_location_rounded,
                       size: 17,
                       color: hasErr
-                          ? _C.red
+                          ? context.colors.red
                           : (isLocating || hasDist)
-                              ? _C.darkGreen
-                              : _C.textHint,
+                              ? context.colors.darkGreen
+                              : context.colors.textHint,
                     ),
             ),
           ),
@@ -594,17 +576,17 @@ class _GpsDistrictField extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       'জেলা',
                       style: TextStyle(
-                        color: _C.textSecondary,
+                        color: context.colors.textSecondary,
                         fontSize: 10.5,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const Text(
+                    Text(
                       ' *',
-                      style: TextStyle(color: _C.red, fontSize: 10),
+                      style: TextStyle(color: context.colors.red, fontSize: 10),
                     ),
                   ],
                 ),
@@ -613,7 +595,7 @@ class _GpsDistrictField extends StatelessWidget {
                   behavior: HitTestBehavior.opaque,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: _C.darkGreen.withOpacity(0.10),
+                      color: context.colors.darkGreen.withOpacity(0.10),
                       borderRadius: BorderRadius.circular(11),
                     ),
                     padding: const EdgeInsets.only(
@@ -637,7 +619,7 @@ class _GpsDistrictField extends StatelessWidget {
                                 ? Text(
                                     'লোকেশন খোঁজা হচ্ছে...',
                                     style: TextStyle(
-                                      color: _C.darkGreen.withOpacity(0.7),
+                                      color: context.colors.darkGreen.withOpacity(0.7),
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -646,16 +628,16 @@ class _GpsDistrictField extends StatelessWidget {
                                 : hasDist
                                     ? Text(
                                         district!,
-                                        style: const TextStyle(
-                                          color: _C.textPrimary,
+                                        style: TextStyle(
+                                          color: context.colors.textPrimary,
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,
                                         ),
                                       )
-                                    : const Text(
+                                    : Text(
                                         'GPS দিয়ে জেলা আপডেট করুন',
                                         style: TextStyle(
-                                          color: _C.textHint,
+                                          color: context.colors.textHint,
                                           fontSize: 13,
                                           fontWeight: FontWeight.w400,
                                         ),
@@ -670,7 +652,7 @@ class _GpsDistrictField extends StatelessWidget {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: _C.darkGreen.withOpacity(0.10),
+                                      color: context.colors.darkGreen.withOpacity(0.10),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Row(
@@ -678,7 +660,7 @@ class _GpsDistrictField extends StatelessWidget {
                                         Icon(Icons.refresh_rounded,
                                             size: 11,
                                             color:
-                                                _C.darkGreen.withOpacity(0.75)),
+                                                context.colors.darkGreen.withOpacity(0.75)),
                                         const SizedBox(width: 3),
                                         Text(
                                           'পরিবর্তন',
@@ -686,7 +668,7 @@ class _GpsDistrictField extends StatelessWidget {
                                             fontSize: 10,
                                             fontWeight: FontWeight.w700,
                                             color:
-                                                _C.darkGreen.withOpacity(0.85),
+                                                context.colors.darkGreen.withOpacity(0.85),
                                           ),
                                         ),
                                       ],
@@ -697,7 +679,7 @@ class _GpsDistrictField extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: hasErr ? _C.red : _C.darkGreen,
+                                    color: hasErr ? context.colors.red : context.colors.darkGreen,
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: const Text(
@@ -722,9 +704,9 @@ class _GpsDistrictField extends StatelessWidget {
                           padding: const EdgeInsets.only(left: 9),
                           child: Text(
                             error!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 10,
-                              color: _C.red,
+                              color: context.colors.red,
                             ),
                           ),
                         )
@@ -758,8 +740,8 @@ class _FormSection extends StatelessWidget {
           padding: const EdgeInsets.only(left: 2, bottom: 8),
           child: Text(
             label.toUpperCase(),
-            style: const TextStyle(
-              color: _C.textHint,
+            style: TextStyle(
+              color: context.colors.textHint,
               fontSize: 10,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.7,
@@ -768,9 +750,9 @@ class _FormSection extends StatelessWidget {
         ),
         Container(
           decoration: BoxDecoration(
-            color: _C.card,
+            color: context.colors.card,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _C.border, width: 0.5),
+            border: Border.all(color: context.colors.border, width: 0.5),
           ),
           child: Column(
             children: List.generate(children.length, (i) {
@@ -778,10 +760,10 @@ class _FormSection extends StatelessWidget {
                 children: [
                   children[i],
                   if (i < children.length - 1)
-                    const Divider(
+                    Divider(
                         height: 0.5,
                         thickness: 0.5,
-                        color: _C.border,
+                        color: context.colors.border,
                         indent: 52),
                 ],
               );
@@ -850,11 +832,11 @@ class _FieldItemState extends State<_FieldItem> {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: _focused ? _C.greenLight : _C.bg,
+              color: _focused ? context.colors.greenLight : context.colors.bg,
               borderRadius: BorderRadius.circular(9),
             ),
             child: Icon(widget.icon,
-                size: 17, color: _focused ? _C.darkGreen : _C.textHint),
+                size: 17, color: _focused ? context.colors.darkGreen : context.colors.textHint),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -865,18 +847,18 @@ class _FieldItemState extends State<_FieldItem> {
                   children: [
                     Text(
                       widget.label,
-                      style: const TextStyle(
-                        color: _C.textSecondary,
+                      style: TextStyle(
+                        color: context.colors.textSecondary,
                         fontSize: 10.5,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     if (widget.required)
-                      const Text(' *',
-                          style: TextStyle(color: _C.red, fontSize: 10)),
+                      Text(' *',
+                          style: TextStyle(color: context.colors.red, fontSize: 10)),
                     if (widget.isPhoneField)
-                      const Text(' (ঐচ্ছিক)',
-                          style: TextStyle(color: _C.textHint, fontSize: 9)),
+                      Text(' (ঐচ্ছিক)',
+                          style: TextStyle(color: context.colors.textHint, fontSize: 9)),
                   ],
                 ),
                 Focus(
@@ -899,8 +881,8 @@ class _FieldItemState extends State<_FieldItem> {
                         ? (v) => setState(
                             () => _errorText = _validateBangladeshPhone(v))
                         : null,
-                    style: const TextStyle(
-                      color: _C.textPrimary,
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -910,13 +892,13 @@ class _FieldItemState extends State<_FieldItem> {
                           const EdgeInsets.only(top: 15, bottom: 15, left: 9),
                       border: InputBorder.none,
                       hintText: widget.hint,
-                      hintStyle: const TextStyle(
-                        color: _C.textHint,
+                      hintStyle: TextStyle(
+                        color: context.colors.textHint,
                         fontSize: 13,
                         fontWeight: FontWeight.w400,
                       ),
                       errorText: _errorText,
-                      errorStyle: const TextStyle(fontSize: 10, color: _C.red),
+                      errorStyle: TextStyle(fontSize: 10, color: context.colors.red),
                     ),
                   ),
                 ),
@@ -953,10 +935,10 @@ class _ReadonlyField extends StatelessWidget {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: _C.bg,
+              color: context.colors.bg,
               borderRadius: BorderRadius.circular(9),
             ),
-            child: Icon(icon, size: 17, color: _C.textHint),
+            child: Icon(icon, size: 17, color: context.colors.textHint),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -965,8 +947,8 @@ class _ReadonlyField extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: _C.textHint,
+                  style: TextStyle(
+                    color: context.colors.textHint,
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
                   ),
@@ -974,8 +956,8 @@ class _ReadonlyField extends StatelessWidget {
                 const SizedBox(height: 1),
                 Text(
                   value,
-                  style: const TextStyle(
-                    color: _C.textSecondary,
+                  style: TextStyle(
+                    color: context.colors.textSecondary,
                     fontSize: 13.5,
                     fontWeight: FontWeight.w500,
                   ),
@@ -986,13 +968,13 @@ class _ReadonlyField extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
             decoration: BoxDecoration(
-              color: _C.bg,
+              color: context.colors.bg,
               borderRadius: BorderRadius.circular(6),
             ),
-            child: const Text(
+            child: Text(
               'লক',
               style: TextStyle(
-                color: _C.textHint,
+                color: context.colors.textHint,
                 fontSize: 9,
                 fontWeight: FontWeight.w600,
               ),
@@ -1030,12 +1012,12 @@ class _SaveButton extends StatelessWidget {
         width: double.infinity,
         height: 54,
         decoration: BoxDecoration(
-          color: _getBackgroundColor(isEnabled),
+          color: _getBackgroundColor(isEnabled, context),
           borderRadius: BorderRadius.circular(16),
           boxShadow: isEnabled && !saving
               ? [
                   BoxShadow(
-                    color: _C.darkGreen.withOpacity(0.3),
+                    color: context.colors.darkGreen.withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -1052,10 +1034,10 @@ class _SaveButton extends StatelessWidget {
     );
   }
 
-  Color _getBackgroundColor(bool isEnabled) {
-    if (saving) return _C.darkGreen.withOpacity(0.7);
-    if (!isEnabled) return _C.darkGreen.withOpacity(0.4);
-    return _C.darkGreen;
+  Color _getBackgroundColor(bool isEnabled, BuildContext context) {
+    if (saving) return context.colors.darkGreen.withOpacity(0.7);
+    if (!isEnabled) return context.colors.darkGreen.withOpacity(0.4);
+    return context.colors.darkGreen;
   }
 
   Widget _buildButtonContent(bool isEnabled) {
@@ -1132,9 +1114,9 @@ class _SubmitBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: _C.card,
-        border: Border(top: BorderSide(color: _C.border, width: 0.5)),
+      decoration: BoxDecoration(
+        color: context.colors.card,
+        border: Border(top: BorderSide(color: context.colors.border, width: 0.5)),
       ),
       padding: EdgeInsets.fromLTRB(
         20,

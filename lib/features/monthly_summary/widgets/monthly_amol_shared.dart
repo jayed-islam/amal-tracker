@@ -1,35 +1,17 @@
 import 'package:amal_tracker/features/tracker/models/tracker_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS (shared across all tracker screens)
+//
+// AmolColors used to be defined right here. It now lives in
+// core/theme/app_colors.dart as the single shared source of truth for the
+// whole app, so it's re-exported below — every existing `context.colors.xxx`
+// reference in this file and in every screen that imports this file keeps
+// working exactly as before, with the exact same color values.
 // ─────────────────────────────────────────────────────────────────────────────
-
-class AmolColors {
-  AmolColors._();
-  static const pageBg = Color(0xFFF4F6F1);
-  static const cardBg = Color(0xFFFFFFFF);
-  static const darkGreen = Color(0xFF0E3D22);
-  static const midGreen = Color(0xFF1B7045);
-  static const gold = Color(0xFFD4A843);
-  static const goldLight = Color(0xFFFFF8E7);
-  static const green = Color(0xFF16A34A);
-  static const greenLight = Color(0xFFE8F5EE);
-  static const amber = Color(0xFFFF6B35);
-  static const amberLight = Color(0xFFFFF3E0);
-  static const purple = Color(0xFF7C3AED);
-  static const purpleLight = Color(0xFFEDE9FE);
-  static const purplePale = Color(0xFFF3F0FF);
-  static const indigo = Color(0xFF4F46E5);
-  static const indigoLight = Color(0xFFE0E7FF);
-  static const red = Color(0xFFEF4444);
-  static const redLight = Color(0xFFFEE2E2);
-  static const textPrimary = Color(0xFF0A1A0F);
-  static const textSecondary = Color(0xFF6B7C6E);
-  static const textHint = Color(0xFFABBAAE);
-  static const border = Color(0xFFE4EAE4);
-  static const borderMid = Color(0xFFD0DAD2);
-}
+export 'package:amal_tracker/core/theme/app_colors.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION META — category.section এর জন্য বাংলা লেবেল + রঙ (UI-only, কোনো
@@ -48,15 +30,15 @@ class AmolColors {
 //   };
 
 //   static const Map<String, Color> _colors = {
-//     'salat': AmolColors.midGreen,
-//     'quran': AmolColors.green,
-//     'dhikr': AmolColors.amber,
-//     'fasting': AmolColors.gold,
-//     'akhlaq': AmolColors.indigo,
+//     'salat': context.colors.midGreen,
+//     'quran': context.colors.green,
+//     'dhikr': context.colors.amber2,
+//     'fasting': context.colors.gold,
+//     'akhlaq': context.colors.indigo,
 //   };
 
 //   static String label(String key) => _labels[key] ?? key;
-//   static Color color(String key) => _colors[key] ?? AmolColors.textSecondary;
+//   static Color color(String key) => _colors[key] ?? context.colors.textSecondary;
 // }
 class AmolSectionMeta {
   AmolSectionMeta._();
@@ -83,19 +65,24 @@ class AmolSectionMeta {
     'special_season': 'বিশেষ মরশুম',
   };
 
-  static const Map<String, Color> _colors = {
-    'salat': AmolColors.midGreen,
-    'sunnah_nafl': AmolColors.green,
-    'quran_dhikr': AmolColors.amber,
-    'akhlaq': AmolColors.indigo,
-    'muamalat': AmolColors.darkGreen,
-    'weekly_special': AmolColors.purple,
-    'fasting_nafl': AmolColors.gold,
-    'special_season': AmolColors.red,
-  };
+  static Color _colorFor(BuildContext context, String key) {
+    final c = context.colors;
+    final map = <String, Color>{
+      'salat': c.midGreen,
+      'sunnah_nafl': c.green,
+      'quran_dhikr': c.amber2,
+      'akhlaq': c.indigo,
+      'muamalat': c.darkGreen,
+      'weekly_special': c.purple,
+      'fasting_nafl': c.gold,
+      'special_season': c.red,
+    };
+    return map[key] ?? c.textSecondary;
+  }
 
   static String label(String key) => _labels[key] ?? key;
-  static Color color(String key) => _colors[key] ?? AmolColors.textSecondary;
+  static Color color(String key, BuildContext context) =>
+      _colorFor(context, key);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -162,15 +149,15 @@ class AmolIcon extends StatelessWidget {
     }
   }
 
-  Color get _resolvedColor =>
+  Color _resolvedColor(BuildContext context) =>
       color ??
       (_isFardPrayer
-          ? AmolColors.purple
-          : AmolSectionMeta.color(category.section));
+          ? context.colors.purple
+          : AmolSectionMeta.color(category.section, context));
 
   @override
   Widget build(BuildContext context) {
-    final c = _resolvedColor;
+    final c = _resolvedColor(context);
     return Container(
       width: size,
       height: size,
@@ -201,8 +188,8 @@ class AmolSectionHeader extends StatelessWidget {
       const SizedBox(width: 7),
       Expanded(
           child: Text(title,
-              style: const TextStyle(
-                  color: AmolColors.textPrimary,
+              style: TextStyle(
+                  color: context.colors.textPrimary,
                   fontWeight: FontWeight.w800,
                   fontSize: 15,
                   letterSpacing: -0.2))),
@@ -235,10 +222,10 @@ class AmolFilterChip extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? AmolColors.darkGreen : AmolColors.cardBg,
+          color: selected ? context.colors.darkGreen : context.colors.cardBg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-              color: selected ? AmolColors.darkGreen : AmolColors.border,
+              color: selected ? context.colors.darkGreen : context.colors.border,
               width: 0.8),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -246,7 +233,7 @@ class AmolFilterChip extends StatelessWidget {
           const SizedBox(width: 5),
           Text(label,
               style: TextStyle(
-                  color: selected ? Colors.white : AmolColors.textSecondary,
+                  color: selected ? Colors.white : context.colors.textSecondary,
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700)),
         ]),
@@ -274,7 +261,7 @@ class AmolLegendDot extends StatelessWidget {
               color: color, borderRadius: BorderRadius.circular(2))),
       const SizedBox(width: 4),
       Text(label,
-          style: const TextStyle(color: AmolColors.textHint, fontSize: 9.5)),
+          style: TextStyle(color: context.colors.textHint, fontSize: 9.5)),
     ]);
   }
 }
@@ -293,9 +280,9 @@ class AmolEmptyCard extends StatelessWidget {
     return Container(
       height: 110,
       decoration: BoxDecoration(
-          color: AmolColors.cardBg,
+          color: context.colors.cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AmolColors.border, width: 0.5)),
+          border: Border.all(color: context.colors.border, width: 0.5)),
       child: Center(
           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
         Text(emoji, style: const TextStyle(fontSize: 22)),
@@ -304,8 +291,8 @@ class AmolEmptyCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(label,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                  color: AmolColors.textHint,
+              style: TextStyle(
+                  color: context.colors.textHint,
                   fontSize: 12,
                   fontWeight: FontWeight.w500)),
         ),
@@ -324,16 +311,16 @@ class AmolErrorCard extends StatelessWidget {
       margin: const EdgeInsets.only(top: 24),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-          color: AmolColors.cardBg,
+          color: context.colors.cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AmolColors.border, width: 0.5)),
+          border: Border.all(color: context.colors.border, width: 0.5)),
       child: Column(children: [
-        const Icon(Icons.error_outline_rounded,
-            color: AmolColors.red, size: 30),
+        Icon(Icons.error_outline_rounded,
+            color: context.colors.red, size: 30),
         const SizedBox(height: 8),
-        const Text('ডেটা লোড ব্যর্থ হয়েছে',
+        Text('ডেটা লোড ব্যর্থ হয়েছে',
             style: TextStyle(
-                color: AmolColors.textPrimary,
+                color: context.colors.textPrimary,
                 fontWeight: FontWeight.w700,
                 fontSize: 14)),
         const SizedBox(height: 12),
@@ -343,11 +330,11 @@ class AmolErrorCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
                 decoration: BoxDecoration(
-                    color: AmolColors.greenLight,
+                    color: context.colors.greenLight,
                     borderRadius: BorderRadius.circular(10)),
-                child: const Text('পুনরায় চেষ্টা করুন',
+                child: Text('পুনরায় চেষ্টা করুন',
                     style: TextStyle(
-                        color: AmolColors.darkGreen,
+                        color: context.colors.darkGreen,
                         fontWeight: FontWeight.w700,
                         fontSize: 12)))),
       ]),
@@ -372,12 +359,12 @@ class AmolShimmerBox extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-          color: AmolColors.cardBg,
+          color: context.colors.cardBg,
           borderRadius: BorderRadius.circular(radius)),
     ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 1200.ms, colors: [
-      AmolColors.cardBg,
-      const Color(0xFFE8ECE8),
-      AmolColors.cardBg
+      context.colors.cardBg,
+      context.colors.shimmerHighlight,
+      context.colors.cardBg
     ]);
   }
 }
@@ -406,16 +393,16 @@ class AmolNavEntryCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: AmolColors.cardBg,
+          color: context.colors.cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AmolColors.border, width: 0.5),
+          border: Border.all(color: context.colors.border, width: 0.5),
         ),
         child: Row(children: [
           Container(
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: AmolColors.greenLight,
+              color: context.colors.greenLight,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
@@ -428,23 +415,23 @@ class AmolNavEntryCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(title,
-                    style: const TextStyle(
-                        color: AmolColors.textPrimary,
+                    style: TextStyle(
+                        color: context.colors.textPrimary,
                         fontWeight: FontWeight.w700,
                         fontSize: 13)),
                 const SizedBox(height: 2),
                 Text(subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        color: AmolColors.textHint,
+                    style: TextStyle(
+                        color: context.colors.textHint,
                         fontSize: 10.5,
                         fontWeight: FontWeight.w500)),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded,
-              color: AmolColors.textHint, size: 20),
+          Icon(Icons.chevron_right_rounded,
+              color: context.colors.textHint, size: 20),
         ]),
       ),
     );

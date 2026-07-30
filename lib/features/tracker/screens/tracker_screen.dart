@@ -1,3 +1,4 @@
+import 'package:amal_tracker/core/services/api_service.dart';
 import 'package:amal_tracker/features/auth/providers/provider_reset.dart';
 import 'package:amal_tracker/features/tracker/screens/daily_entry_sheet.dart'
     show DailyEntrySheet;
@@ -10,36 +11,11 @@ import '../providers/tracker_provider.dart';
 import '../models/tracker_model.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/router/app_router.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
-
-class _C {
-  static const pageBg = Color(0xFFF4F6F1);
-  static const cardBg = Color(0xFFFFFFFF);
-  static const darkGreen = Color(0xFF0E3D22);
-  static const midGreen = Color(0xFF1B7045);
-  static const gold = Color(0xFFD4A843);
-  static const goldLight = Color(0xFFFFF3E0);
-  static const green = Color(0xFF16A34A);
-  static const greenLight = Color(0xFFE8F5EE);
-  static const amber = Color(0xFFFF6B35);
-  static const amberLight = Color(0xFFFFF3E0);
-  static const purple = Color(0xFF7C3AED);
-  static const purpleLight = Color(0xFFEDE9FE);
-  static const red = Color(0xFFEF4444);
-  static const redLight = Color(0xFFFEE2E2);
-  static const goldPale = Color(0xFFFFFBF0);
-  static const textPrimary = Color(0xFF0A1A0F);
-  static const textSecondary = Color(0xFF6B7C6E);
-  static const textHint = Color(0xFFABBAAE);
-  static const border = Color(0xFFE4EAE4);
-  static const borderMid = Color(0xFFD0DAD2);
-  static const maafBg = Color(0xFFE8F5EE);
-  static const maafText = Color(0xFF1B7045);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -103,7 +79,7 @@ class _TrackerScreenState extends ConsumerState<TrackerScreen> {
       lastDate: DateTime.now(),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(primary: _C.darkGreen),
+          colorScheme: ColorScheme.light(primary: context.colors.darkGreen),
         ),
         child: child!,
       ),
@@ -161,7 +137,7 @@ class _TrackerScreenState extends ConsumerState<TrackerScreen> {
         ..showSnackBar(_snackBar(
           'আমল মুছে ফেলা হয়েছে',
           Icons.check_circle_rounded,
-          _C.darkGreen,
+          context.colors.darkGreen,
         ));
     } else if (result == false) {
       ScaffoldMessenger.of(context)
@@ -169,7 +145,7 @@ class _TrackerScreenState extends ConsumerState<TrackerScreen> {
         ..showSnackBar(_snackBar(
           'মুছতে সমস্যা হয়েছে। আবার চেষ্টা করুন।',
           Icons.error_outline_rounded,
-          _C.red,
+          context.colors.red,
         ));
     }
   }
@@ -198,13 +174,26 @@ class _TrackerScreenState extends ConsumerState<TrackerScreen> {
     final isFuture = _isFuture(selectedDate);
     final isToday_ = _isToday(selectedDate);
     final entryAsync = ref.watch(dailyEntryProvider(dateStr));
+    final categoriesAsync = ref.watch(categoriesProvider);
     final catsBySection = ref.watch(categoriesBySection);
 
     final size = MediaQuery.of(context).size;
     final isTablet = size.width > 600;
     final hPad = isTablet ? (size.width - 600) / 2 + 16.0 : 16.0;
 
-    final hasError = entryAsync.error != null;
+    final hasError = entryAsync.error != null || categoriesAsync.hasError;
+    String? errorMessage;
+    if (entryAsync.error != null) {
+      errorMessage = entryAsync.error;
+    } else if (categoriesAsync.hasError) {
+      final err = categoriesAsync.error;
+      if (err is ApiException) {
+        errorMessage = err.message;
+      } else {
+        errorMessage = err?.toString() ?? 'ক্যাটাগরি লোড করতে সমস্যা হয়েছে';
+      }
+    }
+
     // point নেই — entries আছে কিনা / hasActivity দেখো
     final hasEntry = !hasError &&
         entryAsync.entry != null &&
@@ -218,9 +207,9 @@ class _TrackerScreenState extends ConsumerState<TrackerScreen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
-        backgroundColor: _C.pageBg,
+        backgroundColor: context.colors.pageBg,
         body: RefreshIndicator(
-          color: _C.darkGreen,
+          color: context.colors.darkGreen,
           onRefresh: () async =>
               ref.read(dailyEntryProvider(dateStr).notifier).loadEntry(),
           child: CustomScrollView(
@@ -232,7 +221,7 @@ class _TrackerScreenState extends ConsumerState<TrackerScreen> {
                 floating: false,
                 expandedHeight: 0,
                 toolbarHeight: 56,
-                backgroundColor: _C.darkGreen,
+                backgroundColor: context.colors.darkGreen,
                 surfaceTintColor: Colors.transparent,
                 shadowColor: Colors.transparent,
                 automaticallyImplyLeading: false,
@@ -327,23 +316,30 @@ class _TrackerScreenState extends ConsumerState<TrackerScreen> {
                         hasEntry: hasEntry,
                         hasError: hasError,
                         entryState: entryAsync,
-                        isLoading: entryAsync.isLoading,
+                        isLoading:
+                            entryAsync.isLoading || categoriesAsync.isLoading,
                       ).animate().fadeIn(delay: 80.ms).slideY(begin: 0.06),
                       const SizedBox(height: 12),
 
                       // Error card
-                      if (hasError && !entryAsync.isLoading) ...[
+                      if (hasError &&
+                          !entryAsync.isLoading &&
+                          !categoriesAsync.isLoading) ...[
                         _ErrorCard(
-                          message: entryAsync.error!,
-                          onRetry: () => ref
-                              .read(dailyEntryProvider(dateStr).notifier)
-                              .loadEntry(),
+                          message: errorMessage ?? 'সংযোগ সমস্যা হয়েছে',
+                          onRetry: () {
+                            ref
+                                .read(dailyEntryProvider(dateStr).notifier)
+                                .loadEntry();
+                            ref.invalidate(categoriesProvider);
+                          },
                         ).animate().fadeIn(delay: 120.ms).slideY(begin: 0.06),
                         const SizedBox(height: 12),
                       ],
 
                       // Action buttons
-                      if (!entryAsync.isLoading) ...[
+                      if (!entryAsync.isLoading &&
+                          !categoriesAsync.isLoading) ...[
                         _ActionButtons(
                           hasEntry: hasEntry,
                           hasError: hasError,
@@ -361,12 +357,16 @@ class _TrackerScreenState extends ConsumerState<TrackerScreen> {
                       ],
 
                       // Entry read view
-                      if (hasEntry && !entryAsync.isLoading && !hasError) ...[
+                      if (hasEntry &&
+                          !entryAsync.isLoading &&
+                          !categoriesAsync.isLoading &&
+                          !hasError) ...[
                         _EntryReadView(
                           entry: entryAsync.entry!,
                           categories: catsBySection,
                         ).animate().fadeIn(delay: 240.ms),
                       ] else if (!entryAsync.isLoading &&
+                          !categoriesAsync.isLoading &&
                           !hasEntry &&
                           !hasError) ...[
                         _EmptyEntryHint(isToday: isToday_)
@@ -374,7 +374,8 @@ class _TrackerScreenState extends ConsumerState<TrackerScreen> {
                             .fadeIn(delay: 240.ms),
                       ],
 
-                      if (entryAsync.isLoading) const _EntrySkeleton(),
+                      if (entryAsync.isLoading || categoriesAsync.isLoading)
+                        const _EntrySkeleton(),
                     ],
                   ]),
                 ),
@@ -410,7 +411,7 @@ class _DateNavHero extends StatelessWidget {
     final month = AppConstants.bengaliMonths[selectedDate.month - 1];
 
     return Container(
-      color: _C.darkGreen,
+      color: context.colors.darkGreen,
       child: Stack(children: [
         Positioned(
             top: -40,
@@ -544,9 +545,10 @@ class _DailySummaryCard extends StatelessWidget {
     if (hasError) {
       return Container(
         decoration: BoxDecoration(
-          color: _C.redLight,
+          color: context.colors.redLight2,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _C.red.withOpacity(0.25), width: 0.5),
+          border: Border.all(
+              color: context.colors.red.withOpacity(0.25), width: 0.5),
         ),
         padding: const EdgeInsets.all(16),
         child: Row(children: [
@@ -554,23 +556,25 @@ class _DailySummaryCard extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-                color: _C.red.withOpacity(0.12),
+                color: context.colors.red.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(14)),
-            child: const Icon(Icons.cloud_off_rounded, color: _C.red, size: 26),
+            child: Icon(Icons.cloud_off_rounded,
+                color: context.colors.red, size: 26),
           ),
           const SizedBox(width: 14),
-          const Expanded(
+          Expanded(
               child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('ডেটা লোড হয়নি',
                   style: TextStyle(
-                      color: _C.red,
+                      color: context.colors.red,
                       fontWeight: FontWeight.w700,
                       fontSize: 13)),
               SizedBox(height: 4),
               Text('নিচের "আবার চেষ্টা করুন" বাটনে ট্যাপ করুন',
-                  style: TextStyle(color: _C.textSecondary, fontSize: 11)),
+                  style: TextStyle(
+                      color: context.colors.textSecondary, fontSize: 11)),
             ],
           )),
         ]),
@@ -599,15 +603,17 @@ class _DailySummaryCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: hasEntry ? null : _C.cardBg,
+        color: hasEntry ? null : context.colors.cardBg,
         gradient: hasEntry
-            ? const LinearGradient(
-                colors: [_C.darkGreen, _C.midGreen],
+            ? LinearGradient(
+                colors: [context.colors.darkGreen, context.colors.midGreen],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight)
             : null,
         borderRadius: BorderRadius.circular(16),
-        border: hasEntry ? null : Border.all(color: _C.border, width: 0.5),
+        border: hasEntry
+            ? null
+            : Border.all(color: context.colors.border, width: 0.5),
       ),
       padding: const EdgeInsets.all(16),
       child: hasEntry
@@ -640,7 +646,8 @@ class _FilledSummary extends StatelessWidget {
         width: 52,
         height: 52,
         decoration: BoxDecoration(
-            color: _C.gold, borderRadius: BorderRadius.circular(14)),
+            color: context.colors.gold,
+            borderRadius: BorderRadius.circular(14)),
         child: const Icon(Icons.check_circle_rounded,
             color: Colors.white, size: 28),
       ),
@@ -718,23 +725,25 @@ class _EmptySummary extends StatelessWidget {
         width: 52,
         height: 52,
         decoration: BoxDecoration(
-            color: _C.greenLight, borderRadius: BorderRadius.circular(14)),
-        child:
-            const Icon(Icons.edit_note_rounded, color: _C.darkGreen, size: 28),
+            color: context.colors.greenLight,
+            borderRadius: BorderRadius.circular(14)),
+        child: Icon(Icons.edit_note_rounded,
+            color: context.colors.darkGreen, size: 28),
       ),
       const SizedBox(width: 14),
-      const Expanded(
+      Expanded(
           child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('কোনো আমল রেকর্ড হয়নি',
               style: TextStyle(
-                  color: _C.textPrimary,
+                  color: context.colors.textPrimary,
                   fontWeight: FontWeight.w700,
                   fontSize: 13)),
           SizedBox(height: 4),
           Text('নিচের বাটনে ট্যাপ করে আমল যোগ করুন',
-              style: TextStyle(color: _C.textSecondary, fontSize: 11)),
+              style:
+                  TextStyle(color: context.colors.textSecondary, fontSize: 11)),
         ],
       )),
     ]);
@@ -749,12 +758,16 @@ class _SummaryCardSkeleton extends StatelessWidget {
     return Container(
       height: 84,
       decoration: BoxDecoration(
-          color: _C.cardBg,
+          color: context.colors.cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _C.border, width: 0.5)),
+          border: Border.all(color: context.colors.border, width: 0.5)),
     ).animate(onPlay: (c) => c.repeat()).shimmer(
       duration: 1200.ms,
-      colors: [_C.cardBg, const Color(0xFFE8ECE8), _C.cardBg],
+      colors: [
+        context.colors.cardBg,
+        context.colors.shimmerHighlight,
+        context.colors.cardBg
+      ],
     );
   }
 }
@@ -774,30 +787,34 @@ class _ErrorCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: _C.redLight,
+        color: context.colors.redLight2,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _C.red.withOpacity(0.25), width: 0.5),
+        border:
+            Border.all(color: context.colors.red.withOpacity(0.25), width: 0.5),
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Padding(
+        Padding(
           padding: EdgeInsets.only(top: 1),
-          child: Icon(Icons.error_outline_rounded, color: _C.red, size: 18),
+          child: Icon(Icons.error_outline_rounded,
+              color: context.colors.red, size: 18),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('সংযোগ সমস্যা হয়েছে',
+              Text('সংযোগ সমস্যা হয়েছে',
                   style: TextStyle(
-                      color: _C.red,
+                      color: context.colors.red,
                       fontWeight: FontWeight.w700,
                       fontSize: 13)),
               const SizedBox(height: 3),
               Text(
                 message.length > 80 ? '${message.substring(0, 80)}…' : message,
-                style: const TextStyle(
-                    color: _C.textSecondary, fontSize: 11, height: 1.4),
+                style: TextStyle(
+                    color: context.colors.textSecondary,
+                    fontSize: 11,
+                    height: 1.4),
               ),
             ],
           ),
@@ -808,7 +825,8 @@ class _ErrorCard extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: BoxDecoration(
-                color: _C.red, borderRadius: BorderRadius.circular(10)),
+                color: context.colors.red,
+                borderRadius: BorderRadius.circular(10)),
             child: const Text('আবার চেষ্টা',
                 style: TextStyle(
                     color: Colors.white,
@@ -845,14 +863,14 @@ class _ActionButtons extends StatelessWidget {
       return Container(
         height: 52,
         decoration: BoxDecoration(
-            color: _C.border, borderRadius: BorderRadius.circular(14)),
-        child:
-            const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(Icons.block_rounded, color: _C.textHint, size: 18),
+            color: context.colors.border,
+            borderRadius: BorderRadius.circular(14)),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(Icons.block_rounded, color: context.colors.textHint, size: 18),
           SizedBox(width: 8),
           Text('আমল যোগ/সম্পাদনা করা যাচ্ছে না',
               style: TextStyle(
-                  color: _C.textHint,
+                  color: context.colors.textHint,
                   fontWeight: FontWeight.w600,
                   fontSize: 13)),
         ]),
@@ -865,7 +883,8 @@ class _ActionButtons extends StatelessWidget {
         child: Container(
           height: 52,
           decoration: BoxDecoration(
-              color: _C.darkGreen, borderRadius: BorderRadius.circular(14)),
+              color: context.colors.darkGreen,
+              borderRadius: BorderRadius.circular(14)),
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             if (isSaving)
               const SizedBox(
@@ -895,7 +914,8 @@ class _ActionButtons extends StatelessWidget {
             child: Container(
               height: 50,
               decoration: BoxDecoration(
-                  color: _C.darkGreen, borderRadius: BorderRadius.circular(14)),
+                  color: context.colors.darkGreen,
+                  borderRadius: BorderRadius.circular(14)),
               child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -916,16 +936,19 @@ class _ActionButtons extends StatelessWidget {
           height: 50,
           width: 96,
           decoration: BoxDecoration(
-              color: _C.redLight,
+              color: context.colors.redLight2,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: _C.red.withOpacity(0.2), width: 0.5)),
-          child:
-              const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(Icons.delete_outline_rounded, color: _C.red, size: 16),
+              border: Border.all(
+                  color: context.colors.red.withOpacity(0.2), width: 0.5)),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(Icons.delete_outline_rounded,
+                color: context.colors.red, size: 16),
             SizedBox(width: 5),
             Text('মুছুন',
                 style: TextStyle(
-                    color: _C.red, fontWeight: FontWeight.w700, fontSize: 13)),
+                    color: context.colors.red,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13)),
           ]),
         ),
       ),
@@ -954,9 +977,9 @@ class _EntryReadView extends StatelessWidget {
         Row(children: [
           const Text('📋', style: TextStyle(fontSize: 14)),
           const SizedBox(width: 7),
-          const Text('আজকের আমলের বিবরণ',
+          Text('আজকের আমলের বিবরণ',
               style: TextStyle(
-                  color: _C.textPrimary,
+                  color: context.colors.textPrimary,
                   fontWeight: FontWeight.w800,
                   fontSize: 15,
                   letterSpacing: -0.2)),
@@ -965,15 +988,16 @@ class _EntryReadView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                  color: _C.maafBg,
+                  color: context.colors.maafBg,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                      color: _C.green.withOpacity(0.25), width: 0.5)),
-              child: const Text('🌸 মাহলির দিন',
+                      color: context.colors.green.withOpacity(0.25),
+                      width: 0.5)),
+              child: Text('🌸 মাহলির দিন',
                   style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: _C.maafText)),
+                      color: context.colors.maafText)),
             ),
           ],
         ]),
@@ -1050,9 +1074,9 @@ class _SectionReadCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: _C.cardBg,
+        color: context.colors.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _C.border, width: 0.5),
+        border: Border.all(color: context.colors.border, width: 0.5),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Padding(
@@ -1062,33 +1086,34 @@ class _SectionReadCard extends StatelessWidget {
               width: 30,
               height: 30,
               decoration: BoxDecoration(
-                  color: _C.greenLight, borderRadius: BorderRadius.circular(8)),
+                  color: context.colors.greenLight,
+                  borderRadius: BorderRadius.circular(8)),
               child: Icon(_icons[sectionKey] ?? Icons.circle_rounded,
-                  color: _C.darkGreen, size: 16),
+                  color: context.colors.darkGreen, size: 16),
             ),
             const SizedBox(width: 9),
             Expanded(
                 child: Text(label,
-                    style: const TextStyle(
-                        color: _C.darkGreen,
+                    style: TextStyle(
+                        color: context.colors.darkGreen,
                         fontWeight: FontWeight.w700,
                         fontSize: 13))),
             if (completedCount > 0)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                    color: _C.greenLight,
+                    color: context.colors.greenLight,
                     borderRadius: BorderRadius.circular(20)),
                 child: Text('$completedCount টি',
-                    style: const TextStyle(
-                        color: _C.darkGreen,
+                    style: TextStyle(
+                        color: context.colors.darkGreen,
                         fontSize: 10,
                         fontWeight: FontWeight.w700)),
               ),
           ]),
         ),
         const SizedBox(height: 8),
-        const Divider(height: 0.5, thickness: 0.5, color: _C.border),
+        Divider(height: 0.5, thickness: 0.5, color: context.colors.border),
         ...cats.asMap().entries.map((e) => _ReadItem(
               cat: e.value,
               item: entryMap[e.value.id],
@@ -1124,12 +1149,12 @@ class _ReadItem extends StatelessWidget {
         isLast: isLast,
         opacity: 0.6,
         icon: Icons.favorite_border_rounded,
-        iconColor: _C.maafText,
+        iconColor: context.colors.maafText,
         nameBn: cat.nameBn,
         strikethrough: true,
         badgeLabel: 'মাফ আছে',
-        badgeColor: _C.maafText,
-        badgeBg: _C.maafBg,
+        badgeColor: context.colors.maafText,
+        badgeBg: context.colors.maafBg,
       );
     }
 
@@ -1140,29 +1165,29 @@ class _ReadItem extends StatelessWidget {
         return _ItemRow(
           isLast: isLast,
           icon: Icons.people_rounded,
-          iconColor: _C.green,
+          iconColor: context.colors.green,
           nameBn: cat.nameBn,
           badgeLabel: 'জামাতে',
-          badgeColor: _C.green,
+          badgeColor: context.colors.green,
         );
       } else if (mode == PrayerMode.solo) {
         return _ItemRow(
           isLast: isLast,
           icon: Icons.person_rounded,
-          iconColor: _C.amber,
+          iconColor: context.colors.amber2,
           nameBn: cat.nameBn,
           badgeLabel: 'একাকী',
-          badgeColor: _C.amber,
+          badgeColor: context.colors.amber2,
         );
       } else {
         return _ItemRow(
           isLast: isLast,
           icon: Icons.close_rounded,
-          iconColor: _C.textHint,
+          iconColor: context.colors.textHint,
           nameBn: cat.nameBn,
           opacity: 0.6,
           badgeLabel: 'মিস',
-          badgeColor: _C.textHint,
+          badgeColor: context.colors.textHint,
         );
       }
     }
@@ -1174,10 +1199,10 @@ class _ReadItem extends StatelessWidget {
       return _ItemRow(
         isLast: isLast,
         icon: Icons.mosque_rounded,
-        iconColor: _C.darkGreen,
+        iconColor: context.colors.darkGreen,
         nameBn: cat.nameBn,
         badgeLabel: '$count $unitBn',
-        badgeColor: _C.darkGreen,
+        badgeColor: context.colors.darkGreen,
         subLabel: cat.key == 'witr' ? 'বেজোড়' : null,
       );
     }
@@ -1187,10 +1212,10 @@ class _ReadItem extends StatelessWidget {
       return _ItemRow(
         isLast: isLast,
         icon: Icons.check_circle_rounded,
-        iconColor: _C.green,
+        iconColor: context.colors.green,
         nameBn: cat.nameBn,
         badgeLabel: 'সম্পন্ন',
-        badgeColor: _C.green,
+        badgeColor: context.colors.green,
       );
     }
 
@@ -1202,10 +1227,10 @@ class _ReadItem extends StatelessWidget {
       return _ItemRow(
         isLast: isLast,
         icon: Icons.add_circle_outline_rounded,
-        iconColor: _C.darkGreen,
+        iconColor: context.colors.darkGreen,
         nameBn: cat.nameBn,
         badgeLabel: '$count $unitBn',
-        badgeColor: _C.darkGreen,
+        badgeColor: context.colors.darkGreen,
       );
     }
 
@@ -1213,10 +1238,10 @@ class _ReadItem extends StatelessWidget {
     return _ItemRow(
       isLast: isLast,
       icon: Icons.check_circle_rounded,
-      iconColor: _C.green,
+      iconColor: context.colors.green,
       nameBn: cat.nameBn,
       badgeLabel: 'সম্পন্ন',
-      badgeColor: _C.green,
+      badgeColor: context.colors.green,
     );
   }
 }
@@ -1259,7 +1284,8 @@ class _ItemRow extends StatelessWidget {
         decoration: BoxDecoration(
           border: isLast
               ? null
-              : const Border(bottom: BorderSide(color: _C.border, width: 0.5)),
+              : Border(
+                  bottom: BorderSide(color: context.colors.border, width: 0.5)),
           borderRadius: isLast
               ? const BorderRadius.vertical(bottom: Radius.circular(16))
               : null,
@@ -1271,11 +1297,13 @@ class _ItemRow extends StatelessWidget {
               child: Text(
             nameBn,
             style: TextStyle(
-                color: strikethrough ? _C.textHint : _C.textPrimary,
+                color: strikethrough
+                    ? context.colors.textHint
+                    : context.colors.textPrimary,
                 fontWeight: FontWeight.w500,
                 fontSize: 13,
                 decoration: strikethrough ? TextDecoration.lineThrough : null,
-                decorationColor: _C.textHint),
+                decorationColor: context.colors.textHint),
           )),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -1294,8 +1322,8 @@ class _ItemRow extends StatelessWidget {
               if (subLabel != null) ...[
                 const SizedBox(height: 2),
                 Text(subLabel!,
-                    style: const TextStyle(
-                        color: _C.textHint,
+                    style: TextStyle(
+                        color: context.colors.textHint,
                         fontSize: 9,
                         fontWeight: FontWeight.w500)),
               ],
@@ -1320,19 +1348,21 @@ class _EmptyEntryHint extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-          color: isToday ? _C.greenLight : _C.goldPale,
+          color: isToday ? context.colors.greenLight : context.colors.goldPale,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
               color: isToday
-                  ? _C.green.withOpacity(0.2)
-                  : _C.gold.withOpacity(0.3),
+                  ? context.colors.green.withOpacity(0.2)
+                  : context.colors.gold.withOpacity(0.3),
               width: 0.5)),
       child: Column(children: [
         Text(isToday ? '💡' : '📅', style: const TextStyle(fontSize: 32)),
         const SizedBox(height: 10),
         Text(isToday ? 'আজকের আমল রেকর্ড করুন!' : 'এই দিনের আমল নেই',
             style: TextStyle(
-                color: isToday ? _C.darkGreen : _C.textPrimary,
+                color: isToday
+                    ? context.colors.darkGreen
+                    : context.colors.textPrimary,
                 fontWeight: FontWeight.w700,
                 fontSize: 14)),
         const SizedBox(height: 6),
@@ -1341,8 +1371,10 @@ class _EmptyEntryHint extends StatelessWidget {
                 ? '"আমল যোগ করুন" বাটনে ট্যাপ করুন এবং প্রতিটি আমলের তথ্য পূরণ করুন।\nআল্লাহ আপনার আমল কবুল করুন।'
                 : 'এই তারিখে কোনো আমল রেকর্ড করা হয়নি।\nচাইলে এখনো যোগ করতে পারবেন।',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-                color: _C.textSecondary, fontSize: 12, height: 1.6)),
+            style: TextStyle(
+                color: context.colors.textSecondary,
+                fontSize: 12,
+                height: 1.6)),
       ]),
     );
   }
@@ -1366,16 +1398,16 @@ class _FutureLock extends StatelessWidget {
           width: 88,
           height: 88,
           decoration: BoxDecoration(
-              color: _C.cardBg,
+              color: context.colors.cardBg,
               shape: BoxShape.circle,
-              border: Border.all(color: _C.border, width: 1.5)),
-          child: const Icon(Icons.lock_clock_rounded,
-              color: _C.textHint, size: 40),
+              border: Border.all(color: context.colors.border, width: 1.5)),
+          child: Icon(Icons.lock_clock_rounded,
+              color: context.colors.textHint, size: 40),
         ),
         const SizedBox(height: 18),
-        const Text('ভবিষ্যৎ তারিখ!',
+        Text('ভবিষ্যৎ তারিখ!',
             style: TextStyle(
-                color: _C.textPrimary,
+                color: context.colors.textPrimary,
                 fontWeight: FontWeight.w800,
                 fontSize: 20,
                 letterSpacing: -0.3)),
@@ -1385,8 +1417,10 @@ class _FutureLock extends StatelessWidget {
           child: Text(
               '${date.day} $month ${date.year} তারিখে আমল রেকর্ড করা যাবে না।\nআগের বা আজকের তারিখ বেছে নিন।',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                  color: _C.textSecondary, fontSize: 13, height: 1.6)),
+              style: TextStyle(
+                  color: context.colors.textSecondary,
+                  fontSize: 13,
+                  height: 1.6)),
         ),
       ]),
     );
@@ -1434,7 +1468,7 @@ class _DeleteDialogState extends State<_DeleteDialog> {
         insetPadding: const EdgeInsets.symmetric(horizontal: 24),
         child: Container(
           decoration: BoxDecoration(
-            color: _C.cardBg,
+            color: context.colors.cardBg,
             borderRadius: BorderRadius.circular(22),
             boxShadow: [
               BoxShadow(
@@ -1457,19 +1491,19 @@ class _DeleteDialogState extends State<_DeleteDialog> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                          color: _C.redLight,
+                          color: context.colors.redLight2,
                           borderRadius: BorderRadius.circular(13)),
-                      child: const Icon(Icons.delete_outline_rounded,
-                          color: _C.red, size: 22),
+                      child: Icon(Icons.delete_outline_rounded,
+                          color: context.colors.red, size: 22),
                     ),
                     const SizedBox(width: 14),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('আমল মুছবেন?',
                               style: TextStyle(
-                                  color: _C.textPrimary,
+                                  color: context.colors.textPrimary,
                                   fontSize: 15,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: -0.2)),
@@ -1477,7 +1511,7 @@ class _DeleteDialogState extends State<_DeleteDialog> {
                           Text(
                             'এই দিনের সকল আমল তথ্য মুছে ফেলা হবে। এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।',
                             style: TextStyle(
-                                color: _C.textSecondary,
+                                color: context.colors.textSecondary,
                                 fontSize: 13,
                                 height: 1.6),
                           ),
@@ -1487,7 +1521,8 @@ class _DeleteDialogState extends State<_DeleteDialog> {
                   ],
                 ),
               ),
-              const Divider(height: 0.5, thickness: 0.5, color: _C.border),
+              Divider(
+                  height: 0.5, thickness: 0.5, color: context.colors.border),
               SizedBox(
                 height: 52,
                 child: _loading
@@ -1496,24 +1531,26 @@ class _DeleteDialogState extends State<_DeleteDialog> {
                           width: 22,
                           height: 22,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2.2, color: _C.red),
+                              strokeWidth: 2.2, color: context.colors.red),
                         ),
                       )
                     : Row(children: [
                         Expanded(
                           child: _DialogBtn(
                             label: 'বাতিল',
-                            color: _C.textSecondary,
+                            color: context.colors.textSecondary,
                             position: _BtnPos.left,
                             onTap: _handleCancel,
                           ),
                         ),
-                        const VerticalDivider(
-                            width: 0.5, thickness: 0.5, color: _C.border),
+                        VerticalDivider(
+                            width: 0.5,
+                            thickness: 0.5,
+                            color: context.colors.border),
                         Expanded(
                           child: _DialogBtn(
                             label: 'হ্যাঁ, মুছুন',
-                            color: _C.red,
+                            color: context.colors.red,
                             bold: true,
                             position: _BtnPos.right,
                             onTap: _handleConfirm,
@@ -1590,27 +1627,30 @@ class _EntrySkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget shimmer(Widget w, {int delay = 0}) =>
-        w.animate(onPlay: (c) => c.repeat()).shimmer(
-            duration: 1200.ms,
-            delay: delay.ms,
-            colors: [_C.cardBg, const Color(0xFFE8ECE8), _C.cardBg]);
+    Widget shimmer(Widget w, {int delay = 0}) => w
+            .animate(onPlay: (c) => c.repeat())
+            .shimmer(duration: 1200.ms, delay: delay.ms, colors: [
+          context.colors.cardBg,
+          context.colors.shimmerHighlight,
+          context.colors.cardBg
+        ]);
 
     return Column(children: [
       shimmer(Container(
           height: 84,
           decoration: BoxDecoration(
-              color: _C.cardBg,
+              color: context.colors.cardBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _C.border, width: 0.5)))),
+              border: Border.all(color: context.colors.border, width: 0.5)))),
       const SizedBox(height: 12),
       shimmer(
           Container(
               height: 50,
               decoration: BoxDecoration(
-                  color: _C.cardBg,
+                  color: context.colors.cardBg,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: _C.border, width: 0.5))),
+                  border:
+                      Border.all(color: context.colors.border, width: 0.5))),
           delay: 80),
       const SizedBox(height: 20),
       ...List.generate(
@@ -1621,9 +1661,10 @@ class _EntrySkeleton extends StatelessWidget {
                     Container(
                         height: 120,
                         decoration: BoxDecoration(
-                            color: _C.cardBg,
+                            color: context.colors.cardBg,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: _C.border, width: 0.5))),
+                            border: Border.all(
+                                color: context.colors.border, width: 0.5))),
                     delay: 120 + i * 60),
               )),
     ]);

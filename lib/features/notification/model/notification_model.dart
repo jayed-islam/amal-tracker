@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 enum NotificationType {
   dailyAmal,
@@ -37,14 +38,14 @@ enum NotificationType {
     }
   }
 
-  Color get color {
+  Color color(BuildContext context) {
     switch (this) {
       case NotificationType.dailyAmal:
         return const Color(0xFF6C63FF);
       case NotificationType.weeklyReview:
         return const Color(0xFF00BFA5);
       case NotificationType.streakAlert:
-        return const Color(0xFFFF6B35);
+        return context.colors.amber2;
       case NotificationType.push:
         return const Color(0xFF2196F3);
       case NotificationType.unknown:

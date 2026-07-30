@@ -5,39 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:amal_tracker/core/theme/app_colors.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
-class _C {
-  static const pageBg = Color(0xFFF4F6F1);
-  static const card = Color(0xFFFFFFFF);
-  static const border = Color(0xFFE0E8E2);
-  static const borderLight = Color(0xFFEEF2EE);
-  static const darkGreen = Color(0xFF0E3D22);
-  static const midGreen = Color(0xFF1B7045);
-  static const greenLight = Color(0xFFE8F5EE);
-  static const greenBorder = Color(0xFFD4E9D9);
-  static const purple = Color(0xFF7C3AED);
-  static const purpleLight = Color(0xFFEDE9FE);
-  static const purpleBorder = Color(0xFFDDD6FE);
-  static const blue = Color(0xFF0369A1);
-  static const blueLight = Color(0xFFE0F2FE);
-  static const blueBorder = Color(0xFFBAE6FD);
-  static const amber = Color(0xFFD97706);
-  static const amberLight = Color(0xFFFEF3C7);
-  static const amberBorder = Color(0xFFFDE68A);
-  static const gold = Color(0xFFD4A843);
-  static const goldBg = Color(0xFFFDFAF3);
-  static const goldBorder = Color(0xFFEDD98A);
-  static const goldText = Color(0xFF8B6914);
-  static const textPri = Color(0xFF0A1A0F);
-  static const textSec = Color(0xFF4A5C50);
-  static const textMuted = Color(0xFF6B7C6E);
-  static const textHint = Color(0xFFABBABE);
-  static const chipBg = Color(0xFFF4F6F1);
-}
-
 String _bnNum(int n) {
   const d = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
   return n.toString().split('').map((c) => d[int.parse(c)]).join();
@@ -49,11 +22,11 @@ String _bnNum(int n) {
 enum _CardType { ayah, hadith, dua, amal }
 
 extension _CardTypeExt on _CardType {
-  Color get gradStart => switch (this) {
-        _CardType.ayah => _C.midGreen,
-        _CardType.hadith => _C.purple,
-        _CardType.dua => _C.blue,
-        _CardType.amal => _C.amber,
+  Color gradStart(BuildContext context) => switch (this) {
+        _CardType.ayah => context.colors.midGreen,
+        _CardType.hadith => context.colors.purple,
+        _CardType.dua => context.colors.blue2,
+        _CardType.amal => context.colors.amber3,
       };
   Color get gradEnd => switch (this) {
         _CardType.ayah => const Color(0xFF4ADE80),
@@ -61,23 +34,23 @@ extension _CardTypeExt on _CardType {
         _CardType.dua => const Color(0xFF38BDF8),
         _CardType.amal => const Color(0xFFFCD34D),
       };
-  Color get badgeBg => switch (this) {
-        _CardType.ayah => _C.greenLight,
-        _CardType.hadith => _C.purpleLight,
-        _CardType.dua => _C.blueLight,
-        _CardType.amal => _C.amberLight,
+  Color badgeBg(BuildContext context) => switch (this) {
+        _CardType.ayah => context.colors.greenLight,
+        _CardType.hadith => context.colors.purpleLight,
+        _CardType.dua => context.colors.blueLight,
+        _CardType.amal => context.colors.amberLight2,
       };
-  Color get accentColor => switch (this) {
-        _CardType.ayah => _C.midGreen,
-        _CardType.hadith => _C.purple,
-        _CardType.dua => _C.blue,
-        _CardType.amal => _C.amber,
+  Color accentColor(BuildContext context) => switch (this) {
+        _CardType.ayah => context.colors.midGreen,
+        _CardType.hadith => context.colors.purple,
+        _CardType.dua => context.colors.blue2,
+        _CardType.amal => context.colors.amber3,
       };
-  Color get accentBorder => switch (this) {
-        _CardType.ayah => _C.greenBorder,
-        _CardType.hadith => _C.purpleBorder,
-        _CardType.dua => _C.blueBorder,
-        _CardType.amal => _C.amberBorder,
+  Color accentBorder(BuildContext context) => switch (this) {
+        _CardType.ayah => context.colors.greenBorder,
+        _CardType.hadith => context.colors.purpleBorder,
+        _CardType.dua => context.colors.blueBorder,
+        _CardType.amal => context.colors.amberBorder,
       };
   String get badgeLabel => switch (this) {
         _CardType.ayah => '📖  আজকের আয়াত',
@@ -322,10 +295,10 @@ class DailyCardsSection extends StatelessWidget {
           child: Row(children: [
             const Text('🌿', style: TextStyle(fontSize: 13)),
             const SizedBox(width: 6),
-            const Text(
+            Text(
               'দৈনিক ইলম',
               style: TextStyle(
-                color: _C.textPri,
+                color: context.colors.textPri,
                 fontWeight: FontWeight.w800,
                 fontSize: 13,
                 letterSpacing: -.1,
@@ -335,13 +308,13 @@ class DailyCardsSection extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: _C.greenLight,
+                color: context.colors.greenLight,
                 borderRadius: BorderRadius.circular(99),
               ),
-              child: const Text(
+              child: Text(
                 'সব দেখুন →',
                 style: TextStyle(
-                  color: _C.darkGreen,
+                  color: context.colors.darkGreen,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                 ),
@@ -405,9 +378,9 @@ class _CardShell extends StatelessWidget {
         width: 272,
         // No height constraint at all — content drives the size naturally
         decoration: BoxDecoration(
-          color: _C.card,
+          color: context.colors.card,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _C.border, width: .5),
+          border: Border.all(color: context.colors.border2, width: .5),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.015),
@@ -428,7 +401,7 @@ class _CardShell extends StatelessWidget {
                 height: 3,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [type.gradStart, type.gradEnd],
+                    colors: [type.gradStart(context), type.gradEnd],
                   ),
                 ),
               ),
@@ -446,30 +419,30 @@ class _CardShell extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
-                          color: type.badgeBg,
+                          color: type.badgeBg(context),
                           borderRadius: BorderRadius.circular(8),
                           border:
-                              Border.all(color: type.accentBorder, width: .5),
+                              Border.all(color: type.accentBorder(context), width: .5),
                         ),
                         child: Text(
                           type.badgeLabel,
                           style: TextStyle(
                             fontSize: 8.5,
                             fontWeight: FontWeight.w700,
-                            color: type.accentColor,
+                            color: type.accentColor(context),
                           ),
                         ),
                       ),
                       const SizedBox(width: 6),
-                      Container(width: 1, height: 11, color: _C.borderLight),
+                      Container(width: 1, height: 11, color: context.colors.borderLight),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           meta,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 8.5,
                             fontWeight: FontWeight.w600,
-                            color: _C.textHint,
+                            color: context.colors.textHint2,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -482,14 +455,14 @@ class _CardShell extends StatelessWidget {
                           width: 24,
                           height: 24,
                           decoration: BoxDecoration(
-                            color: _C.chipBg,
+                            color: context.colors.chipBg,
                             borderRadius: BorderRadius.circular(7),
-                            border: Border.all(color: _C.border, width: .5),
+                            border: Border.all(color: context.colors.border2, width: .5),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.refresh_rounded,
                             size: 13,
-                            color: _C.textMuted,
+                            color: context.colors.textMuted,
                           ),
                         ),
                       ),
@@ -512,7 +485,7 @@ class _CardShell extends StatelessWidget {
               ),
 
               // ── Divider ─────────────────────────────────────────────────────
-              Container(height: .5, color: _C.border.withOpacity(.5)),
+              Container(height: .5, color: context.colors.border2.withOpacity(.5)),
 
               // ── Action bar ──────────────────────────────────────────────────
               Material(
@@ -529,7 +502,7 @@ class _CardShell extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: type.accentColor,
+                            color: type.accentColor(context),
                           ),
                         ),
                         const SizedBox(width: 2),
@@ -540,7 +513,7 @@ class _CardShell extends StatelessWidget {
                           child: Icon(
                             Icons.keyboard_arrow_down_rounded,
                             size: 16,
-                            color: type.accentColor,
+                            color: type.accentColor(context),
                           ),
                         ),
                       ],
@@ -569,9 +542,9 @@ class _CardSkeleton extends StatelessWidget {
       width: 272,
       height: 125,
       decoration: BoxDecoration(
-        color: _C.card,
+        color: context.colors.card,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _C.border, width: .5),
+        border: Border.all(color: context.colors.border2, width: .5),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
@@ -582,7 +555,7 @@ class _CardSkeleton extends StatelessWidget {
               height: 3,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [type.gradStart, type.gradEnd],
+                  colors: [type.gradStart(context), type.gradEnd],
                 ),
               ),
             ),
@@ -596,17 +569,17 @@ class _CardSkeleton extends StatelessWidget {
                       child: Text(
                         type.loadingMessage,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
-                          color: _C.textMuted,
+                          color: context.colors.textMuted,
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const LinearProgressIndicator(
-                      backgroundColor: _C.borderLight,
-                      color: _C.border,
+                    LinearProgressIndicator(
+                      backgroundColor: context.colors.borderLight,
+                      color: context.colors.border2,
                       minHeight: 2,
                     ),
                   ],
@@ -647,10 +620,10 @@ class _PreviewText extends StatelessWidget {
         if (title.isNotEmpty) ...[
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w800,
-              color: _C.textPri,
+              color: context.colors.textPri,
             ),
             overflow: TextOverflow.ellipsis,
           ),
@@ -661,10 +634,10 @@ class _PreviewText extends StatelessWidget {
           // collapsed → 2-3 lines preview; open → full text
           maxLines: isOpen ? null : (title.isNotEmpty ? 2 : 3),
           overflow: isOpen ? TextOverflow.visible : TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: _C.textSec,
+            color: context.colors.textSec,
             height: 1.55,
           ),
         ),
@@ -746,7 +719,7 @@ class _HadithCardWidgetState extends ConsumerState<_HadithCardWidget> {
           _NoteBlock(
             label: 'উৎস ও মান',
             text: '${d.bookName} (${d.grade})',
-            color: _C.purple,
+            color: context.colors.purple,
           ),
         ],
       ),
@@ -779,9 +752,9 @@ class _DuaCardWidgetState extends ConsumerState<_DuaCardWidget> {
         children: [
           _ArabicBlock(text: d.arabic),
           const SizedBox(height: 6),
-          _NoteBlock(label: 'উচ্চারণ', text: d.transliteration, color: _C.blue),
+          _NoteBlock(label: 'উচ্চারণ', text: d.transliteration, color: context.colors.blue2),
           const SizedBox(height: 5),
-          _NoteBlock(label: 'ফজিলত', text: d.fadhilah, color: _C.blue),
+          _NoteBlock(label: 'ফজিলত', text: d.fadhilah, color: context.colors.blue2),
         ],
       ),
     );
@@ -810,7 +783,7 @@ class _AmalCardWidgetState extends ConsumerState<_AmalCardWidget> {
       expandedExtra: _NoteBlock(
         label: 'আমলের ফজিলত',
         text: d.fadhilah,
-        color: _C.amber,
+        color: context.colors.amber3,
       ),
     );
   }
@@ -827,17 +800,17 @@ class _ArabicBlock extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: _C.goldBg,
+          color: context.colors.goldBg,
           borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: _C.goldBorder, width: .5),
+          border: Border.all(color: context.colors.goldBorder, width: .5),
         ),
         child: Text(
           text,
           textDirection: TextDirection.rtl,
           textAlign: TextAlign.right,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
-            color: _C.goldText,
+            color: context.colors.goldText,
             height: 1.8,
             fontWeight: FontWeight.w500,
           ),
@@ -854,25 +827,25 @@ class _MiniChip extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
           decoration: BoxDecoration(
-            color: _C.chipBg,
+            color: context.colors.chipBg,
             borderRadius: BorderRadius.circular(7),
-            border: Border.all(color: _C.border, width: .5),
+            border: Border.all(color: context.colors.border2, width: .5),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Text(
               '$label: ',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 8,
-                color: _C.textMuted,
+                color: context.colors.textMuted,
                 fontWeight: FontWeight.w600,
               ),
             ),
             Flexible(
               child: Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 9,
-                  color: _C.textPri,
+                  color: context.colors.textPri,
                   fontWeight: FontWeight.w700,
                 ),
                 overflow: TextOverflow.ellipsis,
@@ -915,10 +888,10 @@ class _NoteBlock extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               text,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10.5,
                 height: 1.5,
-                color: _C.textSec,
+                color: context.colors.textSec,
               ),
             ),
           ],

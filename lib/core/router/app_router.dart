@@ -501,6 +501,7 @@
 import 'package:amal_tracker/features/auth/providers/auth_provider.dart';
 import 'package:amal_tracker/features/auth/screens/login_screen.dart';
 import 'package:amal_tracker/features/auth/screens/register_screen.dart';
+import 'package:amal_tracker/features/challenge/screens/challenge_list_screen.dart';
 
 import 'package:amal_tracker/features/home/screens/home_screen.dart';
 import 'package:amal_tracker/features/leaderboard/screens/leaderboard_screen.dart';
@@ -541,6 +542,7 @@ class AppRoutes {
   static const legal = '/legal';
   static const jannahGarden = '/jannah-garden';
   static const sadaqah = '/sadaqah';
+  static const challenges = '/challenges';
 }
 
 // ── Navigator keys ─────────────────────────────────────────────────────────
@@ -641,6 +643,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
+      // GoRoute(
+      //   path: AppRoutes.challenges,
+      //   parentNavigatorKey: _rootNavigatorKey,
+      //   pageBuilder: (_, state) => CustomTransitionPage(
+      //     key: state.pageKey,
+      //     child: const ChallengeListScreen(),
+      //     transitionsBuilder: (_, anim, __, child) =>
+      //         FadeTransition(opacity: anim, child: child),
+      //   ),
+      // ),
+
       // ── Shell with tab branches ──────────────────────────────────────
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
@@ -659,6 +672,14 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.tracker,
                 builder: (_, __) => const TrackerScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.challenges,
+                builder: (_, __) => const ChallengeListScreen(),
               ),
             ],
           ),

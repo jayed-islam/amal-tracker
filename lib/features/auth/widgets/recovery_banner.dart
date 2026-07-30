@@ -1,26 +1,27 @@
 // import 'package:amal_tracker/features/auth/providers/auth_provider.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 // import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart';
 // import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // class _C {
-//   static const pageBg = Color(0xFFF4F6F1);
-//   static const cardBg = Color(0xFFFFFFFF);
-//   static const darkGreen = Color(0xFF0E3D22);
-//   static const midGreen = Color(0xFF1B7045);
-//   static const gold = Color(0xFFD4A843);
-//   static const green = Color(0xFF16A34A);
-//   static const greenLight = Color(0xFFE8F5EE);
-//   static const amber = Color(0xFFF59E0B);
-//   static const amberLight = Color(0xFFFFF3E0);
-//   static const red = Color(0xFFEF4444);
-//   static const redLight = Color(0xFFFEF2F2);
-//   static const textPrimary = Color(0xFF0A1A0F);
-//   static const textSecondary = Color(0xFF6B7C6E);
-//   static const textHint = Color(0xFFABBAAE);
-//   static const border = Color(0xFFE4EAE4);
-//   static const borderMid = Color(0xFFD0DAD2);
-//   static const surfaceAlt = Color(0xFFF8FAF8);
+//   static const pageBg = context.colors.bg;
+//   static const cardBg = context.colors.card;
+//   static const darkGreen = context.colors.avatar1;
+//   static const midGreen = context.colors.maafText;
+//   static const gold = context.colors.gold;
+//   static const green = context.colors.green;
+//   static const greenLight = context.colors.greenLight;
+//   static const amber = context.colors.amber;
+//   static const amberLight = context.colors.amberLight;
+//   static const red = context.colors.red;
+//   static const redLight = context.colors.redLight;
+//   static const textPrimary = context.colors.textPri;
+//   static const textSecondary = context.colors.textMuted;
+//   static const textHint = context.colors.textHint;
+//   static const border = context.colors.border;
+//   static const borderMid = context.colors.borderMid;
+//   static const surfaceAlt = context.colors.inputBg;
 // }
 
 // class RecoveryBanner extends ConsumerStatefulWidget {

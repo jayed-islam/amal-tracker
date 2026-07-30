@@ -5,39 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/leaderboard_provider.dart';
 import '../../tracker/models/tracker_model.dart';
 import '../../../core/constants/app_constants.dart';
+import 'package:amal_tracker/core/theme/app_colors.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
-
-class _C {
-  static const bg = Color(0xFFF4F6F1);
-  static const card = Color(0xFFFFFFFF);
-  static const darkGreen = Color(0xFF0E3D22);
-  static const midGreen = Color(0xFF1B7045);
-  static const green = Color(0xFF16A34A);
-  static const greenLight = Color(0xFFE8F5EE);
-  static const gold = Color(0xFFD4A843);
-  static const goldLight = Color(0xFFFFF8E7);
-  static const amber = Color(0xFFF59E0B);
-  static const amberLight = Color(0xFFFFF3E0);
-  static const purple = Color(0xFF7C3AED);
-  static const purpleLight = Color(0xFFEDE9FE);
-  static const red = Color(0xFFDC2626);
-  static const redLight = Color(0xFFFEF2F2);
-  static const pink = Color(0xFFEC4899);
-  static const pinkLight = Color(0xFFFCE7F3);
-  static const blue = Color(0xFF0891B2);
-  static const blueLight = Color(0xFFE0F2FE);
-  static const border = Color(0xFFE4EAE4);
-  static const textPrimary = Color(0xFF0A1A0F);
-  static const textSecondary = Color(0xFF6B7C6E);
-  static const textHint = Color(0xFFABBAAE);
-  static const rankGold = Color(0xFFD4A843);
-  static const rankSilver = Color(0xFF94A3B8);
-  static const rankBronze = Color(0xFFCD7F32);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // ENTRY POINT
 // isMaleUser: male user female profile দেখতে পাবে না — caller এ check হয়
@@ -65,7 +38,7 @@ void showPublicProfileSheet(
                   fontSize: 13,
                   fontWeight: FontWeight.w600)),
         ]),
-        backgroundColor: const Color(0xFF0E3D22),
+        backgroundColor: context.colors.avatar1,
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -118,8 +91,8 @@ class PublicProfileSheet extends ConsumerWidget {
 
     return Container(
       constraints: BoxConstraints(maxHeight: screenH * 0.82),
-      decoration: const BoxDecoration(
-        color: _C.bg,
+      decoration: BoxDecoration(
+        color: context.colors.bg,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -164,7 +137,8 @@ class _DragHandle extends StatelessWidget {
           width: 40,
           height: 4,
           decoration: BoxDecoration(
-              color: _C.border, borderRadius: BorderRadius.circular(99)),
+              color: context.colors.border,
+              borderRadius: BorderRadius.circular(99)),
         ),
       ),
     );
@@ -187,12 +161,12 @@ class _StickyHeader extends StatelessWidget {
     final initial = entry.name.isNotEmpty ? entry.name[0].toUpperCase() : 'U';
     final monthLabel = AppConstants.bengaliMonths[month - 1];
     final rankColor = entry.rank == 1
-        ? _C.rankGold
+        ? context.colors.rankGold
         : entry.rank == 2
-            ? _C.rankSilver
+            ? context.colors.rankSilver
             : entry.rank == 3
-                ? _C.rankBronze
-                : _C.gold;
+                ? context.colors.rankBronze
+                : context.colors.gold;
 
     final pct = entry.completionPercentage.toInt();
     final farz = entry.farzCompletedDays;
@@ -201,9 +175,9 @@ class _StickyHeader extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 15),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
           gradient: LinearGradient(
-              colors: [_C.darkGreen, _C.midGreen],
+              colors: [context.colors.darkGreen, context.colors.midGreen],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight),
           borderRadius: BorderRadius.all(Radius.circular(24))),
@@ -516,16 +490,16 @@ class _StatsGrid extends StatelessWidget {
                 emoji: '✅',
                 value: '$pct%',
                 label: 'ফরজ সম্পন্ন',
-                color: _C.darkGreen,
-                bgColor: _C.greenLight)),
+                color: context.colors.darkGreen,
+                bgColor: context.colors.greenLight)),
         const SizedBox(width: 8),
         Expanded(
             child: _StatCard(
                 emoji: '🕌',
                 value: '$farz দিন',
                 label: 'পূর্ণ ফরজ দিন',
-                color: _C.green,
-                bgColor: _C.greenLight)),
+                color: context.colors.green,
+                bgColor: context.colors.greenLight)),
       ]),
       const SizedBox(height: 8),
       // Row(children: [
@@ -534,16 +508,16 @@ class _StatsGrid extends StatelessWidget {
       //           emoji: '🤝',
       //           value: '$jamaat',
       //           label: 'জামাত',
-      //           color: _C.purple,
-      //           bgColor: _C.purpleLight)),
+      //           color: context.colors.purple,
+      //           bgColor: context.colors.purpleLight)),
       //   const SizedBox(width: 8),
       //   Expanded(
       //       child: _StatCard(
       //           emoji: '🔥',
       //           value: '$streak দিন',
       //           label: 'ধারাবাহিক',
-      //           color: _C.amber,
-      //           bgColor: _C.amberLight)),
+      //           color: context.colors.amber,
+      //           bgColor: context.colors.amberLight)),
       // ]),
       const SizedBox(height: 8),
       Row(children: [
@@ -552,8 +526,8 @@ class _StatsGrid extends StatelessWidget {
                 emoji: '📅',
                 value: '$active দিন',
                 label: 'আমল করা দিন',
-                color: _C.blue,
-                bgColor: _C.blueLight)),
+                color: context.colors.blue,
+                bgColor: context.colors.blueLight)),
         const SizedBox(width: 8),
         if (isFemale && exempt > 0)
           Expanded(
@@ -561,16 +535,16 @@ class _StatsGrid extends StatelessWidget {
                   emoji: '🌸',
                   value: '$exempt দিন',
                   label: 'মাহলির দিন',
-                  color: _C.pink,
-                  bgColor: _C.pinkLight))
+                  color: context.colors.pink,
+                  bgColor: context.colors.pinkLight))
         else
           Expanded(
               child: _StatCard(
                   emoji: '⏳',
                   value: '${tracker.eligibleDays} দিন',
-                  label: 'হিসাবের দিন',
-                  color: _C.textSecondary,
-                  bgColor: const Color(0xFFF4F6F1))),
+                  label: 'হিসাবভুক্ত দিন',
+                  color: context.colors.textSecondary,
+                  bgColor: context.colors.bg)),
       ]),
     ]);
   }
@@ -608,7 +582,8 @@ class _StatCard extends StatelessWidget {
                   height: 1)),
           const SizedBox(height: 2),
           Text(label,
-              style: const TextStyle(color: _C.textSecondary, fontSize: 10.5)),
+              style: TextStyle(
+                  color: context.colors.textSecondary, fontSize: 10.5)),
         ]),
       ]),
     );
@@ -631,9 +606,9 @@ class _FardPerformanceCard extends StatelessWidget {
     // final jamaat = tracker.congregationDaysTotal;
 
     Color barColor() {
-      if (pct >= 90) return _C.green;
-      if (pct >= 70) return _C.amber;
-      return _C.red;
+      if (pct >= 90) return context.colors.green;
+      if (pct >= 70) return context.colors.amber;
+      return context.colors.red2;
     }
 
     String statusLabel() {
@@ -650,16 +625,16 @@ class _FardPerformanceCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-          color: _C.card,
+          color: context.colors.card,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _C.border, width: 0.5)),
+          border: Border.all(color: context.colors.border, width: 0.5)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           const Text('🕌', style: TextStyle(fontSize: 14)),
           const SizedBox(width: 7),
-          const Text('ফরজ পারফরম্যান্স',
+          Text('ফরজ পারফরম্যান্স',
               style: TextStyle(
-                  color: _C.textPrimary,
+                  color: context.colors.textPrimary,
                   fontWeight: FontWeight.w800,
                   fontSize: 13)),
           const Spacer(),
@@ -680,13 +655,13 @@ class _FardPerformanceCard extends StatelessWidget {
         // Completion % bar
         Row(children: [
           Text('${pct.toInt()}% ফরজ পূর্ণ',
-              style: const TextStyle(
-                  color: _C.textPrimary,
+              style: TextStyle(
+                  color: context.colors.textPrimary,
                   fontSize: 12,
                   fontWeight: FontWeight.w600)),
           const Spacer(),
           Text('$farz/$eligible দিন',
-              style: const TextStyle(color: _C.textHint, fontSize: 11)),
+              style: TextStyle(color: context.colors.textHint, fontSize: 11)),
         ]),
         const SizedBox(height: 6),
         ClipRRect(
@@ -694,21 +669,21 @@ class _FardPerformanceCard extends StatelessWidget {
             child: LinearProgressIndicator(
                 value: pct / 100,
                 minHeight: 8,
-                backgroundColor: const Color(0xFFF4F6F1),
+                backgroundColor: context.colors.bg,
                 valueColor: AlwaysStoppedAnimation(barColor()))),
 
         const SizedBox(height: 12),
 
         // Jamaat bar
         Row(children: [
-          const Text('জামাতে নামাজ',
+          Text('জামাতে নামাজ',
               style: TextStyle(
-                  color: _C.textPrimary,
+                  color: context.colors.textPrimary,
                   fontSize: 12,
                   fontWeight: FontWeight.w600)),
           const Spacer(),
           // Text('$jamaat বার',
-          //     style: const TextStyle(color: _C.textHint, fontSize: 11)),
+          //     style: const TextStyle(color: context.colors.textHint, fontSize: 11)),
         ]),
         const SizedBox(height: 6),
         ClipRRect(
@@ -716,8 +691,8 @@ class _FardPerformanceCard extends StatelessWidget {
             child: LinearProgressIndicator(
                 value: jamaatFrac,
                 minHeight: 8,
-                backgroundColor: const Color(0xFFF4F6F1),
-                valueColor: const AlwaysStoppedAnimation(_C.purple))),
+                backgroundColor: context.colors.bg,
+                valueColor: AlwaysStoppedAnimation(context.colors.purple))),
       ]),
     );
   }
@@ -764,19 +739,21 @@ class _DailyCalendar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-          color: _C.card,
+          color: context.colors.card,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _C.border, width: 0.5)),
+          border: Border.all(color: context.colors.border, width: 0.5)),
       padding: const EdgeInsets.all(14),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // Legend
         Wrap(spacing: 10, runSpacing: 4, children: [
-          _LegendItem(color: _C.darkGreen, label: 'বেশি আমল'),
+          _LegendItem(color: context.colors.darkGreen, label: 'বেশি আমল'),
           _LegendItem(color: const Color(0xFFBBF7D0), label: 'কম আমল'),
           if (isFemale)
-            _LegendItem(color: _C.pinkLight, label: 'মাহলি', bordered: true),
-          _LegendItem(
-              color: const Color(0xFFF4F6F1), label: 'নেই', bordered: true),
+            _LegendItem(
+                color: context.colors.pinkLight,
+                label: 'মাহলি',
+                bordered: true),
+          _LegendItem(color: context.colors.bg, label: 'নেই', bordered: true),
         ]),
         const SizedBox(height: 12),
 
@@ -786,8 +763,8 @@ class _DailyCalendar extends StatelessWidget {
                 .map((d) => Expanded(
                     child: Center(
                         child: Text(d,
-                            style: const TextStyle(
-                                color: _C.textHint,
+                            style: TextStyle(
+                                color: context.colors.textHint,
                                 fontSize: 9,
                                 fontWeight: FontWeight.w600)))))
                 .toList()),
@@ -815,22 +792,24 @@ class _DailyCalendar extends StatelessWidget {
             Color fg;
 
             if (isExempt) {
-              bg = _C.pinkLight;
-              fg = _C.pink;
+              bg = context.colors.pinkLight;
+              fg = context.colors.pink;
             } else if (!hasAct || score == 0) {
-              bg = const Color(0xFFF4F6F1);
-              fg = _C.textHint;
+              bg = context.colors.bg;
+              fg = context.colors.textHint;
             } else if (ratio < 0.25) {
               bg = const Color(0xFFDCFCE7);
-              fg = _C.green;
+              fg = context.colors.green;
             } else if (ratio < 0.5) {
-              bg = Color.lerp(const Color(0xFFDCFCE7), _C.green, 0.4)!;
-              fg = _C.green;
+              bg = Color.lerp(
+                  const Color(0xFFDCFCE7), context.colors.green, 0.4)!;
+              fg = context.colors.green;
             } else if (ratio < 0.75) {
-              bg = Color.lerp(_C.green, _C.darkGreen, 0.3)!;
+              bg = Color.lerp(
+                  context.colors.green, context.colors.darkGreen, 0.3)!;
               fg = Colors.white;
             } else {
-              bg = _C.darkGreen;
+              bg = context.colors.darkGreen;
               fg = Colors.white;
             }
 
@@ -876,11 +855,11 @@ class _LegendItem extends StatelessWidget {
         decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(3),
-            border: bordered ? Border.all(color: _C.border) : null),
+            border: bordered ? Border.all(color: context.colors.border) : null),
       ),
       const SizedBox(width: 4),
       Text(label,
-          style: const TextStyle(color: _C.textSecondary, fontSize: 10)),
+          style: TextStyle(color: context.colors.textSecondary, fontSize: 10)),
     ]);
   }
 }
@@ -899,9 +878,9 @@ class _DayList extends StatelessWidget {
     final sorted = [...entries]..sort((a, b) => a.day.compareTo(b.day));
     return Container(
       decoration: BoxDecoration(
-          color: _C.card,
+          color: context.colors.card,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _C.border, width: 0.5)),
+          border: Border.all(color: context.colors.border, width: 0.5)),
       child: Column(
           children: List.generate(
               sorted.length,
@@ -952,23 +931,23 @@ class _DayTile extends StatelessWidget {
             : 0.0;
 
     Color dayBg = isExempt
-        ? _C.pinkLight
+        ? context.colors.pinkLight
         : hasAct
-            ? _C.greenLight
-            : const Color(0xFFF4F6F1);
+            ? context.colors.greenLight
+            : context.colors.bg;
     Color dayFg = isExempt
-        ? _C.pink
+        ? context.colors.pink
         : hasAct
-            ? _C.darkGreen
-            : _C.textHint;
+            ? context.colors.darkGreen
+            : context.colors.textHint;
 
     Color barColor = isExempt
-        ? _C.pink
+        ? context.colors.pink
         : congregation >= 3
-            ? _C.green
+            ? context.colors.green
             : congregation >= 1
-                ? _C.amber
-                : _C.border;
+                ? context.colors.amber
+                : context.colors.border;
 
     String statusText = isExempt
         ? 'মাহলির দিন'
@@ -981,7 +960,8 @@ class _DayTile extends StatelessWidget {
       decoration: BoxDecoration(
         border: isLast
             ? null
-            : const Border(bottom: BorderSide(color: _C.border, width: 0.5)),
+            : Border(
+                bottom: BorderSide(color: context.colors.border, width: 0.5)),
       ),
       child: Row(children: [
         // Day box
@@ -1007,7 +987,9 @@ class _DayTile extends StatelessWidget {
             Flexible(
                 child: Text(statusText,
                     style: TextStyle(
-                        color: isExempt ? _C.pink : _C.textPrimary,
+                        color: isExempt
+                            ? context.colors.pink
+                            : context.colors.textPrimary,
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700),
                     overflow: TextOverflow.ellipsis)),
@@ -1015,16 +997,22 @@ class _DayTile extends StatelessWidget {
               const SizedBox(width: 5),
               _Pill(
                   text: '🕌 $congregation জামাত',
-                  bg: _C.purpleLight,
-                  fg: _C.purple),
+                  bg: context.colors.purpleLight,
+                  fg: context.colors.purple),
             ] else if (solo > 0) ...[
               const SizedBox(width: 5),
-              _Pill(text: '🤲 $solo একাকী', bg: _C.greenLight, fg: _C.green),
+              _Pill(
+                  text: '🤲 $solo একাকী',
+                  bg: context.colors.greenLight,
+                  fg: context.colors.green),
             ],
           ]),
           if (missed > 0) ...[
             const SizedBox(height: 3),
-            _Pill(text: '⚠️ $missed মিস', bg: _C.redLight, fg: _C.red),
+            _Pill(
+                text: '⚠️ $missed মিস',
+                bg: context.colors.redLight,
+                fg: context.colors.red2),
           ],
           if (!isExempt) ...[
             const SizedBox(height: 5),
@@ -1033,7 +1021,7 @@ class _DayTile extends StatelessWidget {
                 child: LinearProgressIndicator(
                     value: progress.clamp(0.0, 1.0),
                     minHeight: 4,
-                    backgroundColor: const Color(0xFFF4F6F1),
+                    backgroundColor: context.colors.bg,
                     valueColor: AlwaysStoppedAnimation(barColor))),
           ],
         ])),
@@ -1045,14 +1033,15 @@ class _DayTile extends StatelessWidget {
           if (isExempt)
             const Text('🌸', style: TextStyle(fontSize: 18))
           else if (congregation >= 4)
-            const Icon(Icons.star_rounded, color: _C.gold, size: 22)
+            Icon(Icons.star_rounded, color: context.colors.gold, size: 22)
           else if (congregation >= 1 || solo >= 1)
-            const Icon(Icons.check_circle_rounded, color: _C.green, size: 22)
+            Icon(Icons.check_circle_rounded,
+                color: context.colors.green, size: 22)
           else if (hasAct)
-            const Icon(Icons.circle_outlined, color: _C.amber, size: 22)
+            Icon(Icons.circle_outlined, color: context.colors.amber, size: 22)
           else
-            const Icon(Icons.remove_circle_outline_rounded,
-                color: _C.border, size: 22),
+            Icon(Icons.remove_circle_outline_rounded,
+                color: context.colors.border, size: 22),
           const SizedBox(height: 2),
           Text(
               isExempt
@@ -1064,8 +1053,8 @@ class _DayTile extends StatelessWidget {
                           : hasAct
                               ? 'কিছু'
                               : 'শূন্য',
-              style: const TextStyle(
-                  color: _C.textHint,
+              style: TextStyle(
+                  color: context.colors.textHint,
                   fontSize: 8.5,
                   fontWeight: FontWeight.w500)),
         ]),
@@ -1108,17 +1097,20 @@ class _InspirationCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: _C.goldLight,
+          color: context.colors.goldLight,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _C.gold.withOpacity(0.25), width: 0.5)),
+          border: Border.all(
+              color: context.colors.gold.withOpacity(0.25), width: 0.5)),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('💡', style: TextStyle(fontSize: 16)),
         const SizedBox(width: 10),
         Expanded(
             child: Text(
                 '${name.split(' ').first} তাঁর আমলের তথ্য শেয়ার করেছেন যাতে অন্যরা অনুপ্রাণিত হতে পারেন। আল্লাহ তাঁর আমল কবুল করুন। আমিন।',
-                style: const TextStyle(
-                    color: Color(0xFF92400E), fontSize: 12, height: 1.6))),
+                style: TextStyle(
+                    color: context.colors.ambalText,
+                    fontSize: 12,
+                    height: 1.6))),
       ]),
     );
   }
@@ -1135,8 +1127,8 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(label.toUpperCase(),
-        style: const TextStyle(
-            color: _C.textHint,
+        style: TextStyle(
+            color: context.colors.textHint,
             fontSize: 10,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.8));
@@ -1155,27 +1147,36 @@ class _SheetSkeleton extends StatelessWidget {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       child: Column(children: [
-        _shimmer(height: 120),
-        const SizedBox(height: 16),
-        _shimmer(height: 100),
-        const SizedBox(height: 16),
-        _shimmer(height: 220),
-        const SizedBox(height: 16),
-        _shimmer(height: 280),
+        _shimmer(height: 120, context: context),
+        const SizedBox(
+          height: 16,
+        ),
+        _shimmer(height: 100, context: context),
+        const SizedBox(
+          height: 16,
+        ),
+        _shimmer(height: 220, context: context),
+        const SizedBox(
+          height: 16,
+        ),
+        _shimmer(height: 280, context: context),
       ]),
     );
   }
 
-  Widget _shimmer({required double height}) {
+  Widget _shimmer({required double height, required BuildContext context}) {
     return Container(
       width: double.infinity,
       height: height,
       decoration: BoxDecoration(
-          color: _C.card,
+          color: context.colors.card,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _C.border, width: 0.5)),
-    ).animate(onPlay: (c) => c.repeat()).shimmer(
-        duration: 1200.ms, colors: const [_C.card, Color(0xFFE8ECE8), _C.card]);
+          border: Border.all(color: context.colors.border, width: 0.5)),
+    ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 1200.ms, colors: [
+      context.colors.card,
+      context.colors.shimmerHighlight,
+      context.colors.card
+    ]);
   }
 }
 
@@ -1197,31 +1198,33 @@ class _SheetError extends StatelessWidget {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-                color: _C.redLight, borderRadius: BorderRadius.circular(18)),
-            child:
-                const Icon(Icons.lock_outline_rounded, color: _C.red, size: 28),
+                color: context.colors.redLight,
+                borderRadius: BorderRadius.circular(18)),
+            child: Icon(Icons.lock_outline_rounded,
+                color: context.colors.red2, size: 28),
           ),
           const SizedBox(height: 16),
-          const Text('প্রোফাইল দেখা যাচ্ছে না',
+          Text('প্রোফাইল দেখা যাচ্ছে না',
               style: TextStyle(
-                  color: _C.textPrimary,
+                  color: context.colors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
-          const Text('এই ব্যবহারকারী তাঁর প্রোফাইল বন্ধ করে দিয়েছেন',
+          Text('এই ব্যবহারকারী তাঁর প্রোফাইল বন্ধ করে দিয়েছেন',
               textAlign: TextAlign.center,
-              style: TextStyle(color: _C.textSecondary, fontSize: 13)),
+              style:
+                  TextStyle(color: context.colors.textSecondary, fontSize: 13)),
           const SizedBox(height: 20),
           GestureDetector(
             onTap: onRetry,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
-                  color: _C.greenLight,
+                  color: context.colors.greenLight,
                   borderRadius: BorderRadius.circular(10)),
-              child: const Text('আবার চেষ্টা করুন',
+              child: Text('আবার চেষ্টা করুন',
                   style: TextStyle(
-                      color: _C.darkGreen,
+                      color: context.colors.darkGreen,
                       fontWeight: FontWeight.w700,
                       fontSize: 13)),
             ),

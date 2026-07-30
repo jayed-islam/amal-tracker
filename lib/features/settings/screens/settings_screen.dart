@@ -8,34 +8,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:amal_tracker/core/theme/app_colors.dart';
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
+import 'package:amal_tracker/core/providers/theme_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
-
-class _C {
-  static const bg = Color(0xFFF4F6F1);
-  static const card = Color(0xFFFFFFFF);
-  static const darkGreen = Color(0xFF0E3D22);
-  static const green = Color(0xFF16A34A);
-  static const greenLight = Color(0xFFE8F5EE);
-  static const amber = Color(0xFFF59E0B);
-  static const amberLight = Color(0xFFFFF3E0);
-  static const amberDark = Color(0xFF92400E);
-  static const blue = Color(0xFF0891B2);
-  static const blueLight = Color(0xFFE0F2FE);
-  static const purple = Color(0xFF7C3AED);
-  static const purpleLight = Color(0xFFEDE9FE);
-  static const teal = Color(0xFF0D9488);
-  static const tealLight = Color(0xFFCCFBF1);
-  static const red = Color(0xFFEF4444);
-  static const redLight = Color(0xFFFEF2F2);
-  static const border = Color(0xFFE4EAE4);
-  static const textPrimary = Color(0xFF0A1A0F);
-  static const textSecondary = Color(0xFF6B7C6E);
-  static const textHint = Color(0xFFABBAAE);
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // DIALOG RESULT
 // ─────────────────────────────────────────────────────────────────────────────
@@ -120,7 +99,7 @@ class _ConfirmDialogState extends State<_ConfirmDialog> {
         insetPadding: const EdgeInsets.symmetric(horizontal: 24),
         child: Container(
           decoration: BoxDecoration(
-            color: _C.card,
+            color: context.colors.card,
             borderRadius: BorderRadius.circular(22),
             boxShadow: [
               BoxShadow(
@@ -155,8 +134,8 @@ class _ConfirmDialogState extends State<_ConfirmDialog> {
                         const SizedBox(width: 14),
                         Expanded(
                           child: Text(widget.title,
-                              style: const TextStyle(
-                                color: _C.textPrimary,
+                              style: TextStyle(
+                                color: context.colors.textPrimary,
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: -0.2,
@@ -166,15 +145,15 @@ class _ConfirmDialogState extends State<_ConfirmDialog> {
                     ),
                     const SizedBox(height: 14),
                     Text(widget.body,
-                        style: const TextStyle(
-                          color: _C.textSecondary,
+                        style: TextStyle(
+                          color: context.colors.textSecondary,
                           fontSize: 13,
                           height: 1.65,
                         )),
                   ],
                 ),
               ),
-              const Divider(height: 0.5, thickness: 0.5, color: _C.border),
+              Divider(height: 0.5, thickness: 0.5, color: context.colors.border),
               SizedBox(
                 height: 52,
                 child: _loading
@@ -218,12 +197,12 @@ class _ConfirmDialogState extends State<_ConfirmDialog> {
       Expanded(
         child: _DialogBtn(
           label: 'বাতিল',
-          color: _C.textSecondary,
+          color: context.colors.textSecondary,
           position: _BtnPos.left,
           onTap: _handleCancel,
         ),
       ),
-      const VerticalDivider(width: 0.5, thickness: 0.5, color: _C.border),
+      VerticalDivider(width: 0.5, thickness: 0.5, color: context.colors.border),
       Expanded(
         child: _DialogBtn(
           label: widget.confirmText,
@@ -356,7 +335,7 @@ void _showSnack(BuildContext context, String message, {bool success = true}) {
               )),
         ),
       ]),
-      backgroundColor: success ? _C.darkGreen : _C.red,
+      backgroundColor: success ? context.colors.darkGreen : context.colors.red,
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -414,7 +393,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final privacy = ref.watch(privacyProvider);
 
     return Scaffold(
-      backgroundColor: _C.bg,
+      backgroundColor: context.colors.bg,
       body: CustomScrollView(
         controller: _scrollController,
         physics: const BouncingScrollPhysics(),
@@ -424,7 +403,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: 'সেটিংস',
             subtitle: 'নোটিফিকেশন ও পছন্দ',
             icon: Icons.settings_outlined,
-            color: _C.darkGreen,
+            color: context.colors.darkGreen,
           ),
           SliverPadding(
             padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 60),
@@ -438,6 +417,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 _NotificationEntryRow(
                   onTap: () => context.push('/notification-settings'),
                 ).animate().fadeIn(delay: 60.ms),
+
+                const SizedBox(height: 24),
+
+                // ── Theme ─────────────────────────────────────────────────────
+                const _GroupLabel(label: 'থিম')
+                    .animate()
+                    .fadeIn(delay: 70.ms),
+                const SizedBox(height: 4),
+                const _SubLabel(label: 'অ্যাপের রঙ কেমন দেখাবে বেছে নিন')
+                    .animate()
+                    .fadeIn(delay: 75.ms),
+                const SizedBox(height: 10),
+                const _ThemeModeSelector().animate().fadeIn(delay: 80.ms),
 
                 const SizedBox(height: 24),
 
@@ -455,28 +447,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   children: [
                     _PrivacyTile(
                       icon: Icons.self_improvement_rounded,
-                      iconColor: _C.purple,
-                      iconBg: _C.purpleLight,
+                      iconColor: context.colors.purple,
+                      iconBg: context.colors.purpleLight,
                       title: 'আমল গোপন রাখুন',
                       subtitle: 'লিডারবোর্ডে আমার কোনো তথ্য দেখাবে না',
                       value: privacy.isPermanent,
-                      activeColor: _C.purple,
-                      activeTrackColor: _C.purpleLight,
+                      activeColor: context.colors.purple,
+                      activeTrackColor: context.colors.purpleLight,
                       onToggle: (val) => _onPermanentToggle(privacy, val),
                     ),
                     _Divider(),
                     _PrivacyTile(
                       icon: Icons.calendar_today_rounded,
-                      iconColor: _C.amber,
-                      iconBg: _C.amberLight,
+                      iconColor: context.colors.amber,
+                      iconBg: context.colors.amberLight,
                       title: 'এই মাস অংশ নেব না',
                       subtitle: privacy.canRejoinThisMonth == false
                           ? 'পরের মাস থেকে স্বয়ংক্রিয় active হবে'
                           : 'শুধু এই মাসের লিডারবোর্ড থেকে বাদ',
                       value: privacy.isHidden,
                       disabled: privacy.isPermanent,
-                      activeColor: _C.amber,
-                      activeTrackColor: _C.amberLight,
+                      activeColor: context.colors.amber,
+                      activeTrackColor: context.colors.amberLight,
                       warningText: privacy.canRejoinThisMonth == false
                           ? '⚠️ এই মাসে আর ফিরতে পারবেন না'
                           : null,
@@ -485,14 +477,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     _Divider(),
                     _PrivacyTile(
                       icon: Icons.person_off_rounded,
-                      iconColor: _C.teal,
-                      iconBg: _C.tealLight,
+                      iconColor: context.colors.teal,
+                      iconBg: context.colors.tealLight,
                       title: 'নাম লুকান',
                       subtitle: 'লিডারবোর্ডে "Anonymous" দেখাবে',
                       value: privacy.showAnonymous,
                       disabled: privacy.isPermanent,
-                      activeColor: _C.teal,
-                      activeTrackColor: _C.tealLight,
+                      activeColor: context.colors.teal,
+                      activeTrackColor: context.colors.tealLight,
                       onToggle: (val) => _onAnonymousToggle(privacy, val),
                     ),
                   ],
@@ -514,15 +506,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   children: [
                     _PrivacyTile(
                       icon: Icons.share_rounded,
-                      iconColor: _C.blue,
-                      iconBg: _C.blueLight,
+                      iconColor: context.colors.blue,
+                      iconBg: context.colors.blueLight,
                       title: 'প্রোফাইল সবার জন্য খুলুন',
                       subtitle: privacy.isPublic
                           ? 'যে কেউ আপনার মাসিক আমল দেখতে পারবে'
                           : 'শুধু আপনি নিজে দেখতে পারবেন',
                       value: privacy.isPublic,
-                      activeColor: _C.blue,
-                      activeTrackColor: _C.blueLight,
+                      activeColor: context.colors.blue,
+                      activeTrackColor: context.colors.blueLight,
                       onToggle: (val) => _onProfileShareToggle(privacy, val),
                     ),
                   ],
@@ -539,16 +531,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   children: [
                     _InfoTile(
                       icon: Icons.info_outline_rounded,
-                      iconBg: _C.blueLight,
-                      iconColor: _C.blue,
+                      iconBg: context.colors.blueLight,
+                      iconColor: context.colors.blue,
                       title: 'সংস্করণ',
                       trailing: 'v1.0.0',
                     ),
                     _Divider(),
                     _InfoTile(
                       icon: Icons.security_rounded,
-                      iconBg: _C.greenLight,
-                      iconColor: _C.green,
+                      iconBg: context.colors.greenLight,
+                      iconColor: context.colors.green,
                       title: 'গোপনীয়তা নীতি ও ব্যবহারের শর্তাবলী',
                       showArrow: true,
                       onTap: () => context.push(AppRoutes.legal),
@@ -580,14 +572,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final result = await _showConfirm(
       context,
       icon: Icons.self_improvement_rounded,
-      iconColor: _C.purple,
-      iconBg: _C.purpleLight,
+      iconColor: context.colors.purple,
+      iconBg: context.colors.purpleLight,
       title: newVal ? 'আমল গোপন রাখবেন?' : 'লিডারবোর্ডে ফিরবেন?',
       body: newVal
           ? 'এই ফিচার চালু করলে আপনি কোনো মাসের লিডারবোর্ডে দেখা যাবেন না। যেকোনো সময় বন্ধ করে আবার অংশ নেওয়া যাবে।'
           : 'এই ফিচার বন্ধ করলে পরের মাস থেকে আপনি আবার লিডারবোর্ডে দেখা যাবেন।',
       confirmText: newVal ? 'গোপন রাখব' : 'ফিরব',
-      confirmColor: _C.purple,
+      confirmColor: context.colors.purple,
       apiCall: () => ref.read(privacyProvider.notifier).updatePrivacy(
             isPermanent: newVal,
             isHidden: privacy.isHidden,
@@ -618,13 +610,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       await _showConfirm(
         context,
         icon: Icons.lock_clock_rounded,
-        iconColor: _C.amber,
-        iconBg: _C.amberLight,
+        iconColor: context.colors.amber,
+        iconBg: context.colors.amberLight,
         title: 'এই মাসে সম্ভব নয়',
         body:
             'আপনি এই মাসে লিডারবোর্ড থেকে বেরিয়ে গেছেন। পরের মাস শুরু হলে স্বয়ংক্রিয়ভাবে ফিরে আসবেন।',
         confirmText: 'বুঝেছি',
-        confirmColor: _C.amber,
+        confirmColor: context.colors.amber,
         showCancel: false,
         apiCall: () async {},
         onSuccess: () {},
@@ -634,14 +626,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final result = await _showConfirm(
       context,
       icon: Icons.calendar_today_rounded,
-      iconColor: _C.amber,
-      iconBg: _C.amberLight,
+      iconColor: context.colors.amber,
+      iconBg: context.colors.amberLight,
       title: newVal ? 'এই মাস বাদ দেবেন?' : 'এই মাসে ফিরবেন?',
       body: newVal
           ? 'এই মাসের লিডারবোর্ড থেকে আপনার নাম সরিয়ে নেওয়া হবে।\n⚠️ একবার বাদ দিলে এই মাসে আর ফিরতে পারবেন না।'
           : 'এই মাসের লিডারবোর্ডে আবার অংশ নিতে চান?',
       confirmText: newVal ? 'বাদ দিন' : 'যোগ দিন',
-      confirmColor: _C.amber,
+      confirmColor: context.colors.amber,
       apiCall: () => ref.read(privacyProvider.notifier).updatePrivacy(
             isPermanent: privacy.isPermanent,
             isHidden: newVal,
@@ -671,14 +663,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final result = await _showConfirm(
       context,
       icon: Icons.person_off_rounded,
-      iconColor: _C.teal,
-      iconBg: _C.tealLight,
+      iconColor: context.colors.teal,
+      iconBg: context.colors.tealLight,
       title: newVal ? 'নাম লুকাবেন?' : 'নাম দেখাবেন?',
       body: newVal
           ? 'লিডারবোর্ডে আপনার নামের জায়গায় "Anonymous" দেখাবে। ID ও জেলা দেখা যাবে। যেকোনো সময় পরিবর্তন করা যাবে।'
           : 'লিডারবোর্ডে আপনার আসল নাম দেখানো হবে।',
       confirmText: newVal ? 'নাম লুকাই' : 'নাম দেখাই',
-      confirmColor: _C.teal,
+      confirmColor: context.colors.teal,
       apiCall: () => ref.read(privacyProvider.notifier).updatePrivacy(
             isPermanent: privacy.isPermanent,
             isHidden: privacy.isHidden,
@@ -705,14 +697,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final result = await _showConfirm(
       context,
       icon: Icons.share_rounded,
-      iconColor: _C.blue,
-      iconBg: _C.blueLight,
+      iconColor: context.colors.blue,
+      iconBg: context.colors.blueLight,
       title: newVal ? 'প্রোফাইল সবার জন্য খুলবেন?' : 'প্রোফাইল বন্ধ করবেন?',
       body: newVal
           ? 'যে কেউ আপনার যেকোনো মাসের আমলের বিস্তারিত দেখতে পারবে। যেকোনো সময় বন্ধ করা যাবে।'
           : 'প্রোফাইল বন্ধ করলে শুধু আপনি নিজে আমলের বিবরণ দেখতে পারবেন।',
       confirmText: newVal ? 'সবার জন্য খুলুন' : 'বন্ধ করুন',
-      confirmColor: _C.blue,
+      confirmColor: context.colors.blue,
       apiCall: () =>
           ref.read(privacyProvider.notifier).toggleProfileShare(newVal),
       onSuccess: () =>
@@ -774,50 +766,50 @@ class _NotificationEntryRow extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: _C.card,
+          color: context.colors.card,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _C.border, width: 0.5),
+          border: Border.all(color: context.colors.border, width: 0.5),
         ),
         child: Row(children: [
           Container(
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-                color: _C.greenLight, borderRadius: BorderRadius.circular(10)),
-            child: const Icon(Icons.notifications_rounded,
-                color: _C.darkGreen, size: 18),
+                color: context.colors.greenLight, borderRadius: BorderRadius.circular(10)),
+            child: Icon(Icons.notifications_rounded,
+                color: context.colors.darkGreen, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('নোটিফিকেশন সেটিংস',
+              Text('নোটিফিকেশন সেটিংস',
                   style: TextStyle(
-                      color: _C.textPrimary,
+                      color: context.colors.textPrimary,
                       fontSize: 13.5,
                       fontWeight: FontWeight.w700)),
               Text(summary,
                   style:
-                      const TextStyle(color: _C.textSecondary, fontSize: 11)),
+                      TextStyle(color: context.colors.textSecondary, fontSize: 11)),
             ]),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
             decoration: BoxDecoration(
-              color: isAllOff ? _C.bg : _C.greenLight,
+              color: isAllOff ? context.colors.bg : context.colors.greenLight,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                  color: isAllOff ? _C.border : _C.green.withOpacity(0.25),
+                  color: isAllOff ? context.colors.border : context.colors.green.withOpacity(0.25),
                   width: 0.5),
             ),
             child: Text(summary,
                 style: TextStyle(
-                    color: isAllOff ? _C.textHint : _C.darkGreen,
+                    color: isAllOff ? context.colors.textHint : context.colors.darkGreen,
                     fontSize: 11,
                     fontWeight: FontWeight.w700)),
           ),
           const SizedBox(width: 4),
-          const Icon(Icons.chevron_right_rounded, color: _C.textHint, size: 18),
+          Icon(Icons.chevron_right_rounded, color: context.colors.textHint, size: 18),
         ]),
       ),
     );
@@ -865,11 +857,11 @@ class _PrivacyTile extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: value ? iconBg : const Color(0xFFF4F6F1),
+                color: value ? iconBg : context.colors.bg,
                 borderRadius: BorderRadius.circular(11),
               ),
               child:
-                  Icon(icon, color: value ? iconColor : _C.textHint, size: 18),
+                  Icon(icon, color: value ? iconColor : context.colors.textHint, size: 18),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -878,19 +870,19 @@ class _PrivacyTile extends StatelessWidget {
                   children: [
                     Text(title,
                         style: TextStyle(
-                            color: value ? _C.textPrimary : _C.textSecondary,
+                            color: value ? context.colors.textPrimary : context.colors.textSecondary,
                             fontSize: 13.5,
                             fontWeight:
                                 value ? FontWeight.w700 : FontWeight.w600)),
                     const SizedBox(height: 2),
                     Text(subtitle,
-                        style: const TextStyle(
-                            color: _C.textSecondary, fontSize: 11)),
+                        style: TextStyle(
+                            color: context.colors.textSecondary, fontSize: 11)),
                     if (warningText != null) ...[
                       const SizedBox(height: 3),
                       Text(warningText!,
-                          style: const TextStyle(
-                              color: _C.amber,
+                          style: TextStyle(
+                              color: context.colors.amber,
                               fontSize: 10.5,
                               fontWeight: FontWeight.w600)),
                     ],
@@ -903,8 +895,8 @@ class _PrivacyTile extends StatelessWidget {
                 onChanged: disabled ? null : (_) {},
                 activeColor: activeColor,
                 activeTrackColor: activeTrackColor,
-                inactiveThumbColor: _C.textHint,
-                inactiveTrackColor: _C.border,
+                inactiveThumbColor: context.colors.textHint,
+                inactiveTrackColor: context.colors.border,
               ),
             ),
           ]),
@@ -925,9 +917,9 @@ class _DangerCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       decoration: BoxDecoration(
-          color: _C.card,
+          color: context.colors.card,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _C.red.withOpacity(0.2), width: 0.5)),
+          border: Border.all(color: context.colors.red.withOpacity(0.2), width: 0.5)),
       child: Column(children: [
         // ── Clear cache ───────────────────────────────────────────────────
         GestureDetector(
@@ -943,35 +935,35 @@ class _DangerCard extends ConsumerWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                    color: _C.amberLight,
+                    color: context.colors.amberLight,
                     borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.cleaning_services_rounded,
-                    color: _C.amber, size: 18),
+                child: Icon(Icons.cleaning_services_rounded,
+                    color: context.colors.amber, size: 18),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('ক্যাশ পরিষ্কার করুন',
                           style: TextStyle(
-                              color: _C.textPrimary,
+                              color: context.colors.textPrimary,
                               fontSize: 13.5,
                               fontWeight: FontWeight.w700)),
                       Text('সাময়িক ডেটা মুছে ফেলবে',
                           style:
-                              TextStyle(color: _C.textSecondary, fontSize: 11)),
+                              TextStyle(color: context.colors.textSecondary, fontSize: 11)),
                     ]),
               ),
-              const Icon(Icons.chevron_right_rounded,
-                  color: _C.textHint, size: 18),
+              Icon(Icons.chevron_right_rounded,
+                  color: context.colors.textHint, size: 18),
             ]),
           ),
         ),
 
-        const Padding(
+        Padding(
           padding: EdgeInsets.only(left: 54),
-          child: Divider(height: 0.5, thickness: 0.5, color: Color(0xFFFEE2E2)),
+          child: Divider(height: 0.5, thickness: 0.5, color: context.colors.redLight2),
         ),
 
         // ── Delete account ────────────────────────────────────────────────
@@ -985,26 +977,26 @@ class _DangerCard extends ConsumerWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                    color: _C.redLight,
+                    color: context.colors.redLight,
                     borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.delete_forever_rounded,
-                    color: _C.red, size: 18),
+                child: Icon(Icons.delete_forever_rounded,
+                    color: context.colors.red, size: 18),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('অ্যাকাউন্ট মুছুন',
                           style: TextStyle(
-                              color: _C.red,
+                              color: context.colors.red,
                               fontSize: 13.5,
                               fontWeight: FontWeight.w700)),
                       Text('সমস্ত ডেটা স্থায়ীভাবে মুছে যাবে',
-                          style: TextStyle(color: _C.red, fontSize: 11)),
+                          style: TextStyle(color: context.colors.red, fontSize: 11)),
                     ]),
               ),
-              const Icon(Icons.chevron_right_rounded, color: _C.red, size: 18),
+              Icon(Icons.chevron_right_rounded, color: context.colors.red, size: 18),
             ]),
           ),
         ),
@@ -1025,15 +1017,15 @@ class _DangerCard extends ConsumerWidget {
     final step1 = await _showConfirm(
       context,
       icon: Icons.delete_forever_rounded,
-      iconColor: _C.red,
-      iconBg: _C.redLight,
+      iconColor: context.colors.red,
+      iconBg: context.colors.redLight,
       title: 'অ্যাকাউন্ট মুছবেন?',
       body: 'আপনার অ্যাকাউন্ট এখনই স্থায়ীভাবে মুছবে না।\n\n'
           '৪৫ দিনের গ্রেস পিরিয়ড থাকবে — এই সময়ে লগইন করে '
           '"অ্যাকাউন্ট ফিরিয়ে আনুন" বাটনে ক্লিক করলে সব ডেটা ফিরে পাবেন। '
           '৪৫ দিন পর সমস্ত তথ্য চিরতরে মুছে যাবে।',
       confirmText: 'পরবর্তী',
-      confirmColor: _C.red,
+      confirmColor: context.colors.red,
       apiCall: () async {}, // no API — just informational
       onSuccess: () {},
     );
@@ -1043,8 +1035,8 @@ class _DangerCard extends ConsumerWidget {
     final step2 = await _showConfirm(
       context,
       icon: Icons.warning_amber_rounded,
-      iconColor: _C.red,
-      iconBg: _C.redLight,
+      iconColor: context.colors.red,
+      iconBg: context.colors.redLight,
       title: 'শেষবারের মতো নিশ্চিত করুন',
       body: 'এখন থেকে ৪৫ দিন গণনা শুরু হবে।\n\n'
           'এই সময়ের মধ্যে:\n'
@@ -1053,7 +1045,7 @@ class _DangerCard extends ConsumerWidget {
           '• গ্রুপ থেকে বাদ পড়বেন\n\n'
           '৪৫ দিন পর আমল, পয়েন্ট, র‍্যাংকিং সব স্থায়ীভাবে মুছে যাবে।',
       confirmText: 'হ্যাঁ, মুছুন',
-      confirmColor: _C.red,
+      confirmColor: context.colors.red,
       // throws on failure → _ConfirmDialog.catch → step2.success = false
       apiCall: () async {
         final info = await ref.read(authProvider.notifier).requestDeletion();
@@ -1106,7 +1098,7 @@ class _DangerCard extends ConsumerWidget {
         child: Container(
           margin: const EdgeInsets.fromLTRB(12, 0, 12, 24),
           decoration: BoxDecoration(
-            color: _C.card,
+            color: context.colors.card,
             borderRadius: BorderRadius.circular(24),
           ),
           padding: const EdgeInsets.fromLTRB(24, 32, 24, 28),
@@ -1118,11 +1110,11 @@ class _DangerCard extends ConsumerWidget {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: _C.amberLight,
+                  color: context.colors.amberLight,
                   borderRadius: BorderRadius.circular(18),
                 ),
-                child: const Icon(Icons.hourglass_top_rounded,
-                    color: _C.amber, size: 32),
+                child: Icon(Icons.hourglass_top_rounded,
+                    color: context.colors.amber, size: 32),
               ).animate().scale(
                     duration: 400.ms,
                     curve: Curves.elasticOut,
@@ -1132,11 +1124,11 @@ class _DangerCard extends ConsumerWidget {
               const SizedBox(height: 20),
 
               // ── Title ─────────────────────────────────────────────────
-              const Text(
+              Text(
                 'অ্যাকাউন্ট মুছে ফেলার প্রক্রিয়া শুরু হয়েছে',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: _C.textPrimary,
+                  color: context.colors.textPrimary,
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
                   height: 1.3,
@@ -1150,20 +1142,20 @@ class _DangerCard extends ConsumerWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                 decoration: BoxDecoration(
-                  color: _C.amberLight,
+                  color: context.colors.amberLight,
                   borderRadius: BorderRadius.circular(20),
                   border:
-                      Border.all(color: _C.amber.withOpacity(0.35), width: 0.5),
+                      Border.all(color: context.colors.amber.withOpacity(0.35), width: 0.5),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.timer_outlined, color: _C.amber, size: 14),
+                    Icon(Icons.timer_outlined, color: context.colors.amber, size: 14),
                     const SizedBox(width: 6),
                     Text(
                       '$daysLeft দিনের মধ্যে ফিরে আসতে পারবেন',
-                      style: const TextStyle(
-                        color: _C.amber,
+                      style: TextStyle(
+                        color: context.colors.amber,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),
@@ -1181,8 +1173,8 @@ class _DangerCard extends ConsumerWidget {
                 'সেখান থেকে যেকোনো সময় বাতিল করা যাবে।\n\n'
                 '$daysLeft দিন পর সমস্ত ডেটা স্থায়ীভাবে মুছে যাবে।',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: _C.textSecondary,
+                style: TextStyle(
+                  color: context.colors.textSecondary,
                   fontSize: 13,
                   height: 1.65,
                 ),
@@ -1197,7 +1189,7 @@ class _DangerCard extends ConsumerWidget {
                 child: ElevatedButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _C.darkGreen,
+                    backgroundColor: context.colors.darkGreen,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -1221,6 +1213,75 @@ class _DangerCard extends ConsumerWidget {
 // SHARED COMPONENTS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// THEME SELECTOR — System / Light / Dark, persisted via themeModeProvider
+// ─────────────────────────────────────────────────────────────────────────────
+class _ThemeModeSelector extends ConsumerWidget {
+  const _ThemeModeSelector();
+
+  static const _options = [
+    (mode: ThemeMode.system, icon: Icons.brightness_auto_rounded, label: 'সিস্টেম'),
+    (mode: ThemeMode.light, icon: Icons.light_mode_rounded, label: 'লাইট'),
+    (mode: ThemeMode.dark, icon: Icons.dark_mode_rounded, label: 'ডার্ক'),
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final current = ref.watch(themeModeProvider);
+    return _SettingsCard(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(10),
+          child: Row(
+            children: _options.map((opt) {
+              final selected = current == opt.mode;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () =>
+                      ref.read(themeModeProvider.notifier).setThemeMode(opt.mode),
+                  behavior: HitTestBehavior.opaque,
+                  child: AnimatedContainer(
+                    duration: 180.ms,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? context.colors.darkGreen
+                          : context.colors.bg,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: selected
+                              ? context.colors.darkGreen
+                              : context.colors.border),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(opt.icon,
+                            size: 20,
+                            color: selected
+                                ? Colors.white
+                                : context.colors.textSecondary),
+                        const SizedBox(height: 5),
+                        Text(opt.label,
+                            style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: selected
+                                    ? Colors.white
+                                    : context.colors.textSecondary)),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _GroupLabel extends StatelessWidget {
   final String label;
   final bool danger;
@@ -1231,7 +1292,7 @@ class _GroupLabel extends StatelessWidget {
         padding: const EdgeInsets.only(left: 4),
         child: Text(label.toUpperCase(),
             style: TextStyle(
-                color: danger ? _C.red.withOpacity(0.7) : _C.textHint,
+                color: danger ? context.colors.red.withOpacity(0.7) : context.colors.textHint,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.7)),
@@ -1246,7 +1307,7 @@ class _SubLabel extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(left: 4),
         child: Text(label,
-            style: const TextStyle(color: _C.textSecondary, fontSize: 11.5)),
+            style: TextStyle(color: context.colors.textSecondary, fontSize: 11.5)),
       );
 }
 
@@ -1257,18 +1318,18 @@ class _SettingsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         decoration: BoxDecoration(
-            color: _C.card,
+            color: context.colors.card,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _C.border, width: 0.5)),
+            border: Border.all(color: context.colors.border, width: 0.5)),
         child: Column(children: children),
       );
 }
 
 class _Divider extends StatelessWidget {
   @override
-  Widget build(BuildContext context) => const Padding(
+  Widget build(BuildContext context) => Padding(
         padding: EdgeInsets.only(left: 54),
-        child: Divider(height: 0.5, thickness: 0.5, color: _C.border),
+        child: Divider(height: 0.5, thickness: 0.5, color: context.colors.border),
       );
 }
 
@@ -1307,20 +1368,20 @@ class _InfoTile extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(title,
-                  style: const TextStyle(
-                      color: _C.textPrimary,
+                  style: TextStyle(
+                      color: context.colors.textPrimary,
                       fontSize: 13.5,
                       fontWeight: FontWeight.w600)),
             ),
             if (trailing != null)
               Text(trailing!,
-                  style: const TextStyle(
-                      color: _C.textHint,
+                  style: TextStyle(
+                      color: context.colors.textHint,
                       fontSize: 12,
                       fontWeight: FontWeight.w500)),
             if (showArrow)
-              const Icon(Icons.chevron_right_rounded,
-                  color: _C.textHint, size: 18),
+              Icon(Icons.chevron_right_rounded,
+                  color: context.colors.textHint, size: 18),
           ]),
         ),
       );
