@@ -204,11 +204,9 @@ class _ChallengeListScreenState extends ConsumerState<ChallengeListScreen> {
 
                 // ── Hero band — overall stats ─────────────────────────────
                 SliverToBoxAdapter(
-                  child: showSkeleton
+                  child: showSkeleton || showError
                       ? const _HeroBandSkeleton()
-                      : showError
-                          ? const SizedBox.shrink()
-                          : _HeroBand(challenges: challengesAsync.value!),
+                      : _HeroBand(challenges: challengesAsync.value!),
                 ),
 
                 // ── Filter chips ───────────────────────────────────────────

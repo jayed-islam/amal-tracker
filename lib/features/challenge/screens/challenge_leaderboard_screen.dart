@@ -125,12 +125,17 @@ class _ChallengeLeaderboardScreenState
     }
 
     if (state.error != null && state.entries.isEmpty) {
-      return Center(
-        child: ChErrorState(
-          onRetry: () => ref
-              .read(leaderboardProvider(widget.challenge.id).notifier)
-              .refresh(),
-        ),
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 20),
+        children: [
+          const _PodiumSkeleton(),
+          const SizedBox(height: 24),
+          ChErrorState(
+            onRetry: () => ref
+                .read(leaderboardProvider(widget.challenge.id).notifier)
+                .refresh(),
+          ),
+        ],
       );
     }
 

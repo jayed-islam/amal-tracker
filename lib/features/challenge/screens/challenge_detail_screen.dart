@@ -120,15 +120,20 @@ class ChallengeDetailScreen extends ConsumerWidget {
           if (showMainSkeleton)
             const _DetailSkeleton()
           else if (hasInitialError)
-            Center(
-              child: ChErrorState(
-                onRetry: () {
-                  ref.invalidate(challengeDetailProvider(challengeId));
-                  if (isJoined) ref.invalidate(myProgressProvider(challengeId));
-                  ref.invalidate(
-                      leaderboardPreviewForChallengeProvider(challengeId));
-                },
-              ),
+            ListView(
+              padding: const EdgeInsets.fromLTRB(14, 6, 14, 30),
+              children: [
+                const _HeroSectionSkeleton(),
+                const SizedBox(height: 24),
+                ChErrorState(
+                  onRetry: () {
+                    ref.invalidate(challengeDetailProvider(challengeId));
+                    if (isJoined) ref.invalidate(myProgressProvider(challengeId));
+                    ref.invalidate(
+                        leaderboardPreviewForChallengeProvider(challengeId));
+                  },
+                ),
+              ],
             )
           else
             RefreshIndicator(

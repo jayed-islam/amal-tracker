@@ -1,5 +1,4 @@
 import 'package:amal_tracker/core/exceptions/network_exceptions.dart';
-import 'package:amal_tracker/features/notification/widgets/notification_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:amal_tracker/core/providers/connectivity_provider.dart';

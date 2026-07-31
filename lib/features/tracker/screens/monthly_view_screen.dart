@@ -191,7 +191,12 @@ class _MonthlyViewScreenState extends ConsumerState<MonthlyViewScreen> {
                 SliverToBoxAdapter(
                   child: progressAsync.when(
                     loading: () => const _HeroBandSkeleton(),
-                    error: (_, __) => const _HeroBandSkeleton(),
+                    error: (_, __) => Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      child: AmolErrorCard(
+                        onRetry: () => ref.invalidate(progressSummaryProvider(params)),
+                      ),
+                    ),
                     data: (p) => _HeroBand(tracker: p.currentMonth),
                   ),
                 ),
@@ -206,14 +211,14 @@ class _MonthlyViewScreenState extends ConsumerState<MonthlyViewScreen> {
                       if (n == 0) return const SizedBox.shrink();
                       return _ExemptBanner(exemptCount: n);
                     },
-                  ),
+                  ) ?? const SizedBox.shrink(),
                 ),
 
                 // ── Stat Strip ─────────────────────────────────────────────────
                 SliverToBoxAdapter(
                   child: progressAsync.when(
                     loading: () => const _StatStripSkeleton(),
-                    error: (_, __) => const _StatStripSkeleton(),
+                    error: (_, __) => const SizedBox.shrink(),
                     data: (p) => _StatStrip(
                       tracker: p.currentMonth,
                       userGender: p.userGender,

@@ -65,6 +65,22 @@ class _TrackerScreenState extends ConsumerState<TrackerScreen> {
     return d.year == t.year && d.month == t.month && d.day == t.day;
   }
 
+  bool _canEdit(DateTime targetDate) {
+    final now = DateTime.now();
+    // Same month/year is always editable
+    if (targetDate.year == now.year && targetDate.month == now.month) {
+      return true;
+    }
+    // Previous month check
+    final prevMonthYear = now.month == 1 ? now.year - 1 : now.year;
+    final prevMonth = now.month == 1 ? 12 : now.month - 1;
+    if (targetDate.year == prevMonthYear && targetDate.month == prevMonth) {
+      return now.day <= 3;
+    }
+    // Older months are never editable
+    return false;
+  }
+
   void _changeDay(DateTime cur, int delta) {
     final next = cur.add(Duration(days: delta));
     if (_isFuture(next)) return;
@@ -337,6 +353,18 @@ class _TrackerScreenState extends ConsumerState<TrackerScreen> {
                         const SizedBox(height: 12),
                       ],
 
+                      // Read-only info banner
+                      if (!isFuture &&
+                          !entryAsync.isLoading &&
+                          !categoriesAsync.isLoading &&
+                          !_canEdit(selectedDate)) ...[
+                        _ReadOnlyBanner(date: selectedDate)
+                            .animate()
+                            .fadeIn(delay: 120.ms)
+                            .slideY(begin: 0.06),
+                        const SizedBox(height: 12),
+                      ],
+
                       // Action buttons
                       if (!entryAsync.isLoading &&
                           !categoriesAsync.isLoading) ...[
@@ -345,6 +373,7 @@ class _TrackerScreenState extends ConsumerState<TrackerScreen> {
                           hasError: hasError,
                           isToday: isToday_,
                           isSaving: entryAsync.isSaving,
+                          canEdit: _canEdit(selectedDate),
                           onAdd: () => _openForm(
                               context, dateStr, catsBySection, entryAsync,
                               isNew: true),
@@ -840,11 +869,63 @@ class _ErrorCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// READ ONLY BANNER
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ReadOnlyBanner extends StatelessWidget {
+  final DateTime date;
+  const _ReadOnlyBanner({required this.date});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: context.colors.goldPale,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+            color: context.colors.gold.withOpacity(0.35), width: 0.5),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline_rounded,
+              color: context.colors.gold, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'আমল পরিবর্তনের সময় শেষ',
+                  style: TextStyle(
+                      color: context.colors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'বিগত মাসের আমল শুধুমাত্র পরবর্তী মাসের ৩ তারিখ পর্যন্ত আপডেট করা সম্ভব। এই দিনের আমল পরিবর্তন করার সময় অতিক্রম হয়ে গেছে।',
+                  style: TextStyle(
+                      color: context.colors.textSecondary,
+                      fontSize: 11.5,
+                      height: 1.5),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ACTION BUTTONS
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _ActionButtons extends StatelessWidget {
-  final bool hasEntry, isToday, isSaving, hasError;
+  final bool hasEntry, isToday, isSaving, hasError, canEdit;
   final VoidCallback onAdd, onEdit, onDelete;
 
   const _ActionButtons({
@@ -852,6 +933,7 @@ class _ActionButtons extends StatelessWidget {
     required this.isToday,
     required this.isSaving,
     required this.hasError,
+    required this.canEdit,
     required this.onAdd,
     required this.onEdit,
     required this.onDelete,
@@ -879,11 +961,11 @@ class _ActionButtons extends StatelessWidget {
 
     if (!hasEntry) {
       return GestureDetector(
-        onTap: isSaving ? null : onAdd,
+        onTap: (isSaving || !canEdit) ? null : onAdd,
         child: Container(
           height: 52,
           decoration: BoxDecoration(
-              color: context.colors.darkGreen,
+              color: canEdit ? context.colors.darkGreen : context.colors.border,
               borderRadius: BorderRadius.circular(14)),
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             if (isSaving)
@@ -893,11 +975,13 @@ class _ActionButtons extends StatelessWidget {
                   child: CircularProgressIndicator(
                       color: Colors.white, strokeWidth: 2))
             else ...[
-              const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+              Icon(Icons.add_rounded,
+                  color: canEdit ? Colors.white : context.colors.textHint,
+                  size: 20),
               const SizedBox(width: 7),
-              const Text('আমল যোগ করুন',
+              Text('আমল যোগ করুন',
                   style: TextStyle(
-                      color: Colors.white,
+                      color: canEdit ? Colors.white : context.colors.textHint,
                       fontWeight: FontWeight.w700,
                       fontSize: 14)),
             ],
@@ -910,20 +994,22 @@ class _ActionButtons extends StatelessWidget {
       Expanded(
           flex: 3,
           child: GestureDetector(
-            onTap: onEdit,
+            onTap: canEdit ? onEdit : null,
             child: Container(
               height: 50,
               decoration: BoxDecoration(
-                  color: context.colors.darkGreen,
+                  color: canEdit ? context.colors.darkGreen : context.colors.border,
                   borderRadius: BorderRadius.circular(14)),
-              child: const Row(
+              child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.edit_rounded, color: Colors.white, size: 16),
-                    SizedBox(width: 7),
+                    Icon(Icons.edit_rounded,
+                        color: canEdit ? Colors.white : context.colors.textHint,
+                        size: 16),
+                    const SizedBox(width: 7),
                     Text('সম্পাদনা করুন',
                         style: TextStyle(
-                            color: Colors.white,
+                            color: canEdit ? Colors.white : context.colors.textHint,
                             fontWeight: FontWeight.w700,
                             fontSize: 13)),
                   ]),
@@ -931,22 +1017,28 @@ class _ActionButtons extends StatelessWidget {
           )),
       const SizedBox(width: 10),
       GestureDetector(
-        onTap: onDelete,
+        onTap: canEdit ? onDelete : null,
         child: Container(
           height: 50,
           width: 96,
           decoration: BoxDecoration(
-              color: context.colors.redLight2,
+              color: canEdit
+                  ? context.colors.redLight2
+                  : context.colors.border.withOpacity(0.5),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                  color: context.colors.red.withOpacity(0.2), width: 0.5)),
+                  color: canEdit
+                      ? context.colors.red.withOpacity(0.2)
+                      : context.colors.border,
+                  width: 0.5)),
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             Icon(Icons.delete_outline_rounded,
-                color: context.colors.red, size: 16),
+                color: canEdit ? context.colors.red : context.colors.textHint,
+                size: 16),
             SizedBox(width: 5),
             Text('মুছুন',
                 style: TextStyle(
-                    color: context.colors.red,
+                    color: canEdit ? context.colors.red : context.colors.textHint,
                     fontWeight: FontWeight.w700,
                     fontSize: 13)),
           ]),
@@ -1625,6 +1717,133 @@ class _DialogBtn extends StatelessWidget {
 class _EntrySkeleton extends StatelessWidget {
   const _EntrySkeleton();
 
+  Widget _buildSectionSkeleton({
+    required BuildContext context,
+    required Widget Function(Widget w, {int delay}) shimmer,
+    required int itemCount,
+    required int baseDelay,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: context.colors.cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.colors.border, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Row (Matches _SectionReadCard header)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+            child: Row(
+              children: [
+                shimmer(
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: context.colors.cardBg,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  delay: baseDelay,
+                ),
+                const SizedBox(width: 9),
+                shimmer(
+                  Container(
+                    width: 100,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: context.colors.cardBg,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  delay: baseDelay + 20,
+                ),
+                const Spacer(),
+                shimmer(
+                  Container(
+                    width: 40,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: context.colors.cardBg,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  delay: baseDelay + 30,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Divider(height: 0.5, thickness: 0.5, color: context.colors.border),
+          // Items list (Matches _ItemRow layout)
+          ...List.generate(itemCount, (index) {
+            final isLast = index == itemCount - 1;
+            final itemDelay = baseDelay + 40 + index * 30;
+            // Use varying organic text widths
+            final textWidths = [120.0, 150.0, 95.0, 130.0];
+            final textWidth = textWidths[index % textWidths.length];
+
+            return Container(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+              decoration: BoxDecoration(
+                border: isLast
+                    ? null
+                    : Border(
+                        bottom: BorderSide(
+                            color: context.colors.border, width: 0.5)),
+                borderRadius: isLast
+                    ? const BorderRadius.vertical(bottom: Radius.circular(16))
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  shimmer(
+                    Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: context.colors.cardBg,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    delay: itemDelay,
+                  ),
+                  const SizedBox(width: 10),
+                  shimmer(
+                    Container(
+                      width: textWidth,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: context.colors.cardBg,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    delay: itemDelay + 10,
+                  ),
+                  const Spacer(),
+                  shimmer(
+                    Container(
+                      width: 50,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: context.colors.cardBg,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    delay: itemDelay + 20,
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget shimmer(Widget w, {int delay = 0}) => w
@@ -1635,38 +1854,73 @@ class _EntrySkeleton extends StatelessWidget {
           context.colors.cardBg
         ]);
 
-    return Column(children: [
-      shimmer(Container(
-          height: 84,
-          decoration: BoxDecoration(
-              color: context.colors.cardBg,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: context.colors.border, width: 0.5)))),
-      const SizedBox(height: 12),
-      shimmer(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Action Button Shimmer (Matches _ActionButtons height & border radius)
+        shimmer(
           Container(
-              height: 50,
-              decoration: BoxDecoration(
+            height: 50,
+            decoration: BoxDecoration(
+              color: context.colors.cardBg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: context.colors.border, width: 0.5),
+            ),
+          ),
+          delay: 40,
+        ),
+        const SizedBox(height: 24),
+
+        // List Title Shimmer: "📋 আজকের আমলের বিবরণ"
+        Row(
+          children: [
+            shimmer(
+              Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
                   color: context.colors.cardBg,
-                  borderRadius: BorderRadius.circular(14),
-                  border:
-                      Border.all(color: context.colors.border, width: 0.5))),
-          delay: 80),
-      const SizedBox(height: 20),
-      ...List.generate(
-          3,
-          (i) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: shimmer(
-                    Container(
-                        height: 120,
-                        decoration: BoxDecoration(
-                            color: context.colors.cardBg,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                                color: context.colors.border, width: 0.5))),
-                    delay: 120 + i * 60),
-              )),
-    ]);
+                  shape: BoxShape.circle,
+                ),
+              ),
+              delay: 60,
+            ),
+            const SizedBox(width: 8),
+            shimmer(
+              Container(
+                width: 140,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: context.colors.cardBg,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              delay: 60,
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Content-wise section cards
+        _buildSectionSkeleton(
+          context: context,
+          shimmer: shimmer,
+          itemCount: 4,
+          baseDelay: 80,
+        ),
+        _buildSectionSkeleton(
+          context: context,
+          shimmer: shimmer,
+          itemCount: 3,
+          baseDelay: 160,
+        ),
+        _buildSectionSkeleton(
+          context: context,
+          shimmer: shimmer,
+          itemCount: 2,
+          baseDelay: 240,
+        ),
+      ],
+    );
   }
 }
