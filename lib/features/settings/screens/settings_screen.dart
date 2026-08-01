@@ -1,6 +1,8 @@
 import 'package:amal_tracker/core/router/app_router.dart';
 import 'package:amal_tracker/features/auth/providers/auth_provider.dart';
 import 'package:amal_tracker/features/auth/providers/privacy_provider.dart';
+import 'package:amal_tracker/features/feedback/provider/feedback_provider.dart';
+import 'package:amal_tracker/features/feedback/widget/feedback_sheet.dart';
 import 'package:amal_tracker/features/notification/provider/notification_provider.dart';
 import 'package:amal_tracker/features/user/widgets/app_silver_bar.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +10,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:amal_tracker/core/theme/app_colors.dart';
 import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 import 'package:amal_tracker/core/providers/theme_provider.dart';
 
@@ -153,7 +154,8 @@ class _ConfirmDialogState extends State<_ConfirmDialog> {
                   ],
                 ),
               ),
-              Divider(height: 0.5, thickness: 0.5, color: context.colors.border),
+              Divider(
+                  height: 0.5, thickness: 0.5, color: context.colors.border),
               SizedBox(
                 height: 52,
                 child: _loading
@@ -421,9 +423,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const SizedBox(height: 24),
 
                 // ── Theme ─────────────────────────────────────────────────────
-                const _GroupLabel(label: 'থিম')
-                    .animate()
-                    .fadeIn(delay: 70.ms),
+                const _GroupLabel(label: 'থিম').animate().fadeIn(delay: 70.ms),
                 const SizedBox(height: 4),
                 const _SubLabel(label: 'অ্যাপের রঙ কেমন দেখাবে বেছে নিন')
                     .animate()
@@ -522,6 +522,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 const SizedBox(height: 24),
 
+// ── Feedback ─────────────────────────────────────────────────
+                const _GroupLabel(label: 'মতামত')
+                    .animate()
+                    .fadeIn(delay: 150.ms),
+                const SizedBox(height: 4),
+                const _SubLabel(
+                        label:
+                            'অ্যাপ নিয়ে আপনার মতামত জানান — শুধু আমাদের টিম দেখবে')
+                    .animate()
+                    .fadeIn(delay: 155.ms),
+                const SizedBox(height: 10),
+                _SettingsCard(
+                  children: [
+                    _InfoTile(
+                      icon: Icons.rate_review_rounded,
+                      iconBg: context.colors.greenLight,
+                      iconColor: context.colors.darkGreen,
+                      title: 'মতামত পাঠান',
+                      showArrow: true,
+                      onTap: () => _openFeedbackSheet(context, ref),
+                    ),
+                  ],
+                ).animate().fadeIn(delay: 160.ms),
+
+                const SizedBox(height: 24),
+
                 // ── App Info ─────────────────────────────────────────────────
                 const _GroupLabel(label: 'অ্যাপ সম্পর্কে')
                     .animate()
@@ -564,6 +590,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _openFeedbackSheet(BuildContext context, WidgetRef ref) async {
+    ref.read(feedbackProvider.notifier).reset();
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const FeedbackSheet(),
+    );
+    if (!context.mounted) return;
+    if (result == true) {
+      _showSnack(context, 'মতামতের জন্য ধন্যবাদ! 🤍');
+    }
   }
 
   // ── Privacy handlers (unchanged from existing) ──────────────────────────────
@@ -775,7 +815,8 @@ class _NotificationEntryRow extends ConsumerWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-                color: context.colors.greenLight, borderRadius: BorderRadius.circular(10)),
+                color: context.colors.greenLight,
+                borderRadius: BorderRadius.circular(10)),
             child: Icon(Icons.notifications_rounded,
                 color: context.colors.darkGreen, size: 18),
           ),
@@ -789,8 +830,8 @@ class _NotificationEntryRow extends ConsumerWidget {
                       fontSize: 13.5,
                       fontWeight: FontWeight.w700)),
               Text(summary,
-                  style:
-                      TextStyle(color: context.colors.textSecondary, fontSize: 11)),
+                  style: TextStyle(
+                      color: context.colors.textSecondary, fontSize: 11)),
             ]),
           ),
           Container(
@@ -799,17 +840,22 @@ class _NotificationEntryRow extends ConsumerWidget {
               color: isAllOff ? context.colors.bg : context.colors.greenLight,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                  color: isAllOff ? context.colors.border : context.colors.green.withOpacity(0.25),
+                  color: isAllOff
+                      ? context.colors.border
+                      : context.colors.green.withOpacity(0.25),
                   width: 0.5),
             ),
             child: Text(summary,
                 style: TextStyle(
-                    color: isAllOff ? context.colors.textHint : context.colors.darkGreen,
+                    color: isAllOff
+                        ? context.colors.textHint
+                        : context.colors.darkGreen,
                     fontSize: 11,
                     fontWeight: FontWeight.w700)),
           ),
           const SizedBox(width: 4),
-          Icon(Icons.chevron_right_rounded, color: context.colors.textHint, size: 18),
+          Icon(Icons.chevron_right_rounded,
+              color: context.colors.textHint, size: 18),
         ]),
       ),
     );
@@ -860,8 +906,8 @@ class _PrivacyTile extends StatelessWidget {
                 color: value ? iconBg : context.colors.bg,
                 borderRadius: BorderRadius.circular(11),
               ),
-              child:
-                  Icon(icon, color: value ? iconColor : context.colors.textHint, size: 18),
+              child: Icon(icon,
+                  color: value ? iconColor : context.colors.textHint, size: 18),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -870,7 +916,9 @@ class _PrivacyTile extends StatelessWidget {
                   children: [
                     Text(title,
                         style: TextStyle(
-                            color: value ? context.colors.textPrimary : context.colors.textSecondary,
+                            color: value
+                                ? context.colors.textPrimary
+                                : context.colors.textSecondary,
                             fontSize: 13.5,
                             fontWeight:
                                 value ? FontWeight.w700 : FontWeight.w600)),
@@ -919,7 +967,8 @@ class _DangerCard extends ConsumerWidget {
       decoration: BoxDecoration(
           color: context.colors.card,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: context.colors.red.withOpacity(0.2), width: 0.5)),
+          border: Border.all(
+              color: context.colors.red.withOpacity(0.2), width: 0.5)),
       child: Column(children: [
         // ── Clear cache ───────────────────────────────────────────────────
         GestureDetector(
@@ -951,8 +1000,9 @@ class _DangerCard extends ConsumerWidget {
                               fontSize: 13.5,
                               fontWeight: FontWeight.w700)),
                       Text('সাময়িক ডেটা মুছে ফেলবে',
-                          style:
-                              TextStyle(color: context.colors.textSecondary, fontSize: 11)),
+                          style: TextStyle(
+                              color: context.colors.textSecondary,
+                              fontSize: 11)),
                     ]),
               ),
               Icon(Icons.chevron_right_rounded,
@@ -963,7 +1013,8 @@ class _DangerCard extends ConsumerWidget {
 
         Padding(
           padding: EdgeInsets.only(left: 54),
-          child: Divider(height: 0.5, thickness: 0.5, color: context.colors.redLight2),
+          child: Divider(
+              height: 0.5, thickness: 0.5, color: context.colors.redLight2),
         ),
 
         // ── Delete account ────────────────────────────────────────────────
@@ -993,10 +1044,12 @@ class _DangerCard extends ConsumerWidget {
                               fontSize: 13.5,
                               fontWeight: FontWeight.w700)),
                       Text('সমস্ত ডেটা স্থায়ীভাবে মুছে যাবে',
-                          style: TextStyle(color: context.colors.red, fontSize: 11)),
+                          style: TextStyle(
+                              color: context.colors.red, fontSize: 11)),
                     ]),
               ),
-              Icon(Icons.chevron_right_rounded, color: context.colors.red, size: 18),
+              Icon(Icons.chevron_right_rounded,
+                  color: context.colors.red, size: 18),
             ]),
           ),
         ),
@@ -1144,13 +1197,15 @@ class _DangerCard extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: context.colors.amberLight,
                   borderRadius: BorderRadius.circular(20),
-                  border:
-                      Border.all(color: context.colors.amber.withOpacity(0.35), width: 0.5),
+                  border: Border.all(
+                      color: context.colors.amber.withOpacity(0.35),
+                      width: 0.5),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.timer_outlined, color: context.colors.amber, size: 14),
+                    Icon(Icons.timer_outlined,
+                        color: context.colors.amber, size: 14),
                     const SizedBox(width: 6),
                     Text(
                       '$daysLeft দিনের মধ্যে ফিরে আসতে পারবেন',
@@ -1220,7 +1275,11 @@ class _ThemeModeSelector extends ConsumerWidget {
   const _ThemeModeSelector();
 
   static const _options = [
-    (mode: ThemeMode.system, icon: Icons.brightness_auto_rounded, label: 'সিস্টেম'),
+    (
+      mode: ThemeMode.system,
+      icon: Icons.brightness_auto_rounded,
+      label: 'সিস্টেম'
+    ),
     (mode: ThemeMode.light, icon: Icons.light_mode_rounded, label: 'লাইট'),
     (mode: ThemeMode.dark, icon: Icons.dark_mode_rounded, label: 'ডার্ক'),
   ];
@@ -1237,8 +1296,9 @@ class _ThemeModeSelector extends ConsumerWidget {
               final selected = current == opt.mode;
               return Expanded(
                 child: GestureDetector(
-                  onTap: () =>
-                      ref.read(themeModeProvider.notifier).setThemeMode(opt.mode),
+                  onTap: () => ref
+                      .read(themeModeProvider.notifier)
+                      .setThemeMode(opt.mode),
                   behavior: HitTestBehavior.opaque,
                   child: AnimatedContainer(
                     duration: 180.ms,
@@ -1292,7 +1352,9 @@ class _GroupLabel extends StatelessWidget {
         padding: const EdgeInsets.only(left: 4),
         child: Text(label.toUpperCase(),
             style: TextStyle(
-                color: danger ? context.colors.red.withOpacity(0.7) : context.colors.textHint,
+                color: danger
+                    ? context.colors.red.withOpacity(0.7)
+                    : context.colors.textHint,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.7)),
@@ -1307,7 +1369,8 @@ class _SubLabel extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(left: 4),
         child: Text(label,
-            style: TextStyle(color: context.colors.textSecondary, fontSize: 11.5)),
+            style:
+                TextStyle(color: context.colors.textSecondary, fontSize: 11.5)),
       );
 }
 
@@ -1329,7 +1392,8 @@ class _Divider extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: EdgeInsets.only(left: 54),
-        child: Divider(height: 0.5, thickness: 0.5, color: context.colors.border),
+        child:
+            Divider(height: 0.5, thickness: 0.5, color: context.colors.border),
       );
 }
 
