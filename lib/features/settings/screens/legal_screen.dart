@@ -1,7 +1,6 @@
 import 'package:amal_tracker/features/settings/constants/legal_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:amal_tracker/core/theme/app_colors.dart';
 import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ── Design Tokens ────────────────────────────────────────────────────────────
@@ -298,7 +297,9 @@ class _LangPill extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          color: active ? context.colors.darkGreen : Colors.white.withOpacity(0.65),
+          color: active
+              ? context.colors.darkGreen
+              : Colors.white.withOpacity(0.65),
           fontSize: 12,
           fontWeight: FontWeight.w700,
         ),

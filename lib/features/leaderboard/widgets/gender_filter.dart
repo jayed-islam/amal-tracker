@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:amal_tracker/core/theme/app_colors.dart';
 import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // GENDER FILTER CHIPS
@@ -81,7 +80,8 @@ class GenderFilterChips extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: context.colors.pageBg,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: context.colors.border, width: 0.5),
+                        border: Border.all(
+                            color: context.colors.border, width: 0.5),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,

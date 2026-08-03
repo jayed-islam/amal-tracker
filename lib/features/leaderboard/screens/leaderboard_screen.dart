@@ -906,9 +906,11 @@ class _PodiumPillar extends StatelessWidget {
               const Icon(Icons.lock_outline_rounded,
                   color: Colors.white, size: 16),
               const SizedBox(width: 8),
-              Text(entry.isProfilePublic
-                  ? 'নিরাপত্তা জনিত কারণে আপনি এই প্রোফাইলটি দেখতে পারবেন না।'
-                  : 'এই ব্যবহারকারীর প্রোফাইলটি ব্যক্তিগত (Private) করা আছে।'),
+              Expanded(
+                child: Text(entry.isProfilePublic
+                    ? 'নিরাপত্তা জনিত কারণে আপনি এই প্রোফাইলটি দেখতে পারবেন না।'
+                    : 'এই ব্যবহারকারীর প্রোফাইলটি ব্যক্তিগত (Private) করা আছে।'),
+              ),
             ]),
             backgroundColor: context.colors.textPrimary,
             behavior: SnackBarBehavior.floating,
@@ -1308,8 +1310,6 @@ class _RankTile extends StatelessWidget {
     final isWinner = entry.isWinner;
     final canView = _canViewProfile(entry, isMaleUser);
     final pct = entry.completionPercentage.toInt();
-    final farz = entry.farzCompletedDays;
-    final jamaat = entry.congregationDaysTotal;
 
     return GestureDetector(
       onTap: () {
@@ -1323,9 +1323,11 @@ class _RankTile extends StatelessWidget {
               const Icon(Icons.lock_outline_rounded,
                   color: Colors.white, size: 16),
               const SizedBox(width: 8),
-              Text(entry.isProfilePublic
-                  ? 'নিরাপত্তা জনিত কারণে আপনি এই প্রোফাইলটি দেখতে পারবেন না।'
-                  : 'এই ব্যবহারকারীর প্রোফাইলটি ব্যক্তিগত (Private) করা আছে।'),
+              Expanded(
+                child: Text(entry.isProfilePublic
+                    ? 'নিরাপত্তা জনিত কারণে আপনি এই প্রোফাইলটি দেখতে পারবেন না।'
+                    : 'এই ব্যবহারকারীর প্রোফাইলটি ব্যক্তিগত (Private) করা আছে।'),
+              ),
             ]),
             backgroundColor: context.colors.textPrimary,
             behavior: SnackBarBehavior.floating,
@@ -1337,7 +1339,7 @@ class _RankTile extends StatelessWidget {
         }
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
           color: isWinner ? context.colors.goldPale : Colors.transparent,
           borderRadius: isLast
@@ -1351,41 +1353,73 @@ class _RankTile extends StatelessWidget {
         child: Row(children: [
           // Rank
           SizedBox(
-            width: 36,
+            width: 32,
             child: Text('#${entry.rank}',
                 style: TextStyle(
                     color: isTop10
                         ? context.colors.darkGreen
                         : context.colors.textHint,
                     fontWeight: FontWeight.w800,
-                    fontSize: isTop10 ? 14 : 12,
+                    fontSize: isTop10 ? 13 : 11.5,
                     height: 1)),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
 
-          // Avatar
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-                color: isTop10
-                    ? _avatarColor(context)
-                    : context.colors.textHint.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(11)),
-            child: Center(
-                child: Text(
-                    entry.name.isNotEmpty ? entry.name[0].toUpperCase() : 'U',
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16))),
-          ),
+          // Avatar — profile visibility now shown as a small corner dot
+          // (same visual language as the podium above) instead of a
+          // separate badge row, so the row doesn't need a 3rd line just
+          // to say "public"/"private".
+          Stack(clipBehavior: Clip.none, children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                  color: isTop10
+                      ? _avatarColor(context)
+                      : context.colors.textHint.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(10)),
+              child: Center(
+                  child: Text(
+                      entry.name.isNotEmpty ? entry.name[0].toUpperCase() : 'U',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14))),
+            ),
+            Positioned(
+              bottom: -2,
+              right: -2,
+              child: Container(
+                width: 13,
+                height: 13,
+                decoration: BoxDecoration(
+                    color: canView
+                        ? context.colors.avatar4
+                        : context.colors.textHint,
+                    shape: BoxShape.circle,
+                    border:
+                        Border.all(color: context.colors.cardBg, width: 1.5)),
+                child: Icon(
+                    canView ? Icons.visibility_rounded : Icons.lock_rounded,
+                    size: 7,
+                    color: canView
+                        ? Colors.white
+                        : (Theme.of(context).brightness == Brightness.dark
+                            ? Colors.black87
+                            : Colors.white)),
+              ),
+            ),
+          ]),
           const SizedBox(width: 10),
 
-          // Name + meta
+          // Name + meta — a single compact 2-line block. Detailed stats
+          // (farz/jamaat/days-active) are one tap away in the profile
+          // sheet rather than spelled out in every row; this list is for
+          // scanning rank order, not a full stat dump.
           Expanded(
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                 Row(children: [
                   Flexible(
@@ -1400,12 +1434,16 @@ class _RankTile extends StatelessWidget {
                     const Text('🏆', style: TextStyle(fontSize: 11)),
                   ],
                 ]),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 _MetaRow(entry: entry),
               ])),
           const SizedBox(width: 8),
 
-          // Completion % + farz + profile badge
+          // Completion % + visibility badge — right column stays 2 lines,
+          // matching the left side's name+meta block, so this doesn't add
+          // any extra row height. The badge text (not just the small
+          // avatar-corner dot) is what makes public/private clearly
+          // readable at a glance again.
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
             Text('$pct%',
                 style: TextStyle(
@@ -1417,14 +1455,7 @@ class _RankTile extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                     fontSize: 16,
                     height: 1)),
-            const SizedBox(height: 2),
-            Text(
-                '$farz  ফরজ · $jamaat  জামাত · ${entry.daysActive}  দিন সক্রিয়',
-                style: TextStyle(
-                    color: context.colors.textHint,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w500)),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             _ProfileBadge(isPublic: canView),
           ]),
         ]),
@@ -1442,31 +1473,65 @@ class _MetaRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasIdOrDistrict = entry.id.isNotEmpty || entry.district.isNotEmpty;
     return Wrap(
-      spacing: 4,
+      spacing: 6,
       runSpacing: 3,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         if (entry.id.isNotEmpty)
           Text('ID: ${entry.id}',
-              style:
-                  TextStyle(color: context.colors.textSecondary, fontSize: 10)),
+              style: TextStyle(
+                  color: context.colors.textSecondary, fontSize: 9.5)),
         if (entry.id.isNotEmpty && entry.district.isNotEmpty)
           Text('·',
-              style: TextStyle(color: context.colors.textHint, fontSize: 10)),
-        if (entry.district.isNotEmpty) _DistrictPill(district: entry.district),
-        if ((entry.id.isNotEmpty || entry.district.isNotEmpty) &&
-            entry.streakDays > 0)
+              style: TextStyle(color: context.colors.textHint, fontSize: 9.5)),
+        if (entry.district.isNotEmpty)
+          _DistrictPill(district: entry.district, compact: true),
+        if (hasIdOrDistrict)
           Text('·',
-              style: TextStyle(color: context.colors.textHint, fontSize: 10)),
+              style: TextStyle(color: context.colors.textHint, fontSize: 9.5)),
+        // Same data that used to be a full sentence on the right side
+        // ("X ফরজ · Y জামাত · Z দিন সক্রিয়") — kept, just compressed into
+        // icon+number chips so it fits without needing its own line.
+        _StatChip(
+            icon: Icons.check_circle_rounded,
+            value: entry.farzCompletedDays,
+            color: context.colors.textSecondary),
+        _StatChip(
+            icon: Icons.people_rounded,
+            value: entry.congregationDaysTotal,
+            color: context.colors.textSecondary),
+        _StatChip(
+            icon: Icons.event_available_rounded,
+            value: entry.daysActive,
+            color: context.colors.textSecondary),
         if (entry.streakDays > 0)
-          Text('🔥 ${entry.streakDays}',
-              style: TextStyle(
-                  color: context.colors.amber2,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600)),
+          _StatChip(
+              icon: Icons.local_fire_department_rounded,
+              value: entry.streakDays,
+              color: context.colors.amber2),
       ],
     );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final int value;
+  final Color color;
+  const _StatChip(
+      {required this.icon, required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      Icon(icon, size: 10, color: color.withOpacity(0.75)),
+      const SizedBox(width: 2),
+      Text('$value',
+          style: TextStyle(
+              color: color, fontSize: 9.5, fontWeight: FontWeight.w700)),
+    ]);
   }
 }
 
@@ -1486,7 +1551,7 @@ class _ProfileBadge extends StatelessWidget {
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(Icons.lock_outline_rounded,
               size: 8, color: context.colors.textHint),
-          SizedBox(width: 2),
+          const SizedBox(width: 2),
           Text('Private',
               style: TextStyle(
                   color: context.colors.textHint,
@@ -1504,7 +1569,7 @@ class _ProfileBadge extends StatelessWidget {
               color: context.colors.avatar4.withOpacity(0.3), width: 0.5)),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(Icons.visibility_outlined, size: 8, color: context.colors.avatar4),
-        SizedBox(width: 2),
+        const SizedBox(width: 2),
         Text('দেখুন',
             style: TextStyle(
                 color: context.colors.avatar4,

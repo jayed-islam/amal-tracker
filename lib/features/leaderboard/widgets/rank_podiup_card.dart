@@ -3,7 +3,6 @@ import 'package:amal_tracker/features/tracker/models/tracker_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:amal_tracker/core/theme/app_colors.dart';
 import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -227,7 +226,8 @@ class _PodiumPillar extends StatelessWidget {
                         color: _rankColor(context), width: isFirst ? 2.5 : 2.0),
                     boxShadow: [
                       BoxShadow(
-                          color: _rankColor(context).withOpacity(isFirst ? 0.30 : 0.15),
+                          color: _rankColor(context)
+                              .withOpacity(isFirst ? 0.30 : 0.15),
                           blurRadius: isFirst ? 14 : 8,
                           spreadRadius: 0)
                     ]),
@@ -251,9 +251,12 @@ class _PodiumPillar extends StatelessWidget {
                   width: 18,
                   height: 18,
                   decoration: BoxDecoration(
-                      color: canView ? context.colors.avatar4 : context.colors.textHint,
+                      color: canView
+                          ? context.colors.avatar4
+                          : context.colors.textHint,
                       shape: BoxShape.circle,
-                      border: Border.all(color: context.colors.cardBg, width: 2)),
+                      border:
+                          Border.all(color: context.colors.cardBg, width: 2)),
                   child: Icon(
                       canView ? Icons.visibility_rounded : Icons.lock_rounded,
                       size: 9,

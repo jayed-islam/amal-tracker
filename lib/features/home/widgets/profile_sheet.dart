@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/provider_reset.dart';
 import '../../../core/router/app_router.dart';
-import 'package:amal_tracker/core/theme/app_colors.dart';
 import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -401,7 +400,8 @@ class _LogoutButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: context.colors.redLight,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: context.colors.red2.withOpacity(0.15), width: 0.5),
+          border: Border.all(
+              color: context.colors.red2.withOpacity(0.15), width: 0.5),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

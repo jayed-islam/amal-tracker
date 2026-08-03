@@ -3,7 +3,6 @@ import 'package:amal_tracker/core/router/app_router.dart';
 import 'package:amal_tracker/features/onboarding/provider/onboarding_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:amal_tracker/core/theme/app_colors.dart';
 import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ══════════════════════════════════════════════════════════════════════════

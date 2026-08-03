@@ -7,7 +7,6 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
-import 'package:amal_tracker/core/theme/app_colors.dart';
 import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -619,7 +618,8 @@ class _GpsDistrictField extends StatelessWidget {
                                 ? Text(
                                     'লোকেশন খোঁজা হচ্ছে...',
                                     style: TextStyle(
-                                      color: context.colors.darkGreen.withOpacity(0.7),
+                                      color: context.colors.darkGreen
+                                          .withOpacity(0.7),
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -652,23 +652,24 @@ class _GpsDistrictField extends StatelessWidget {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: context.colors.darkGreen.withOpacity(0.10),
+                                      color: context.colors.darkGreen
+                                          .withOpacity(0.10),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Row(
                                       children: [
                                         Icon(Icons.refresh_rounded,
                                             size: 11,
-                                            color:
-                                                context.colors.darkGreen.withOpacity(0.75)),
+                                            color: context.colors.darkGreen
+                                                .withOpacity(0.75)),
                                         const SizedBox(width: 3),
                                         Text(
                                           'পরিবর্তন',
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w700,
-                                            color:
-                                                context.colors.darkGreen.withOpacity(0.85),
+                                            color: context.colors.darkGreen
+                                                .withOpacity(0.85),
                                           ),
                                         ),
                                       ],
@@ -679,7 +680,9 @@ class _GpsDistrictField extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: hasErr ? context.colors.red : context.colors.darkGreen,
+                                    color: hasErr
+                                        ? context.colors.red
+                                        : context.colors.darkGreen,
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: const Text(
@@ -836,7 +839,10 @@ class _FieldItemState extends State<_FieldItem> {
               borderRadius: BorderRadius.circular(9),
             ),
             child: Icon(widget.icon,
-                size: 17, color: _focused ? context.colors.darkGreen : context.colors.textHint),
+                size: 17,
+                color: _focused
+                    ? context.colors.darkGreen
+                    : context.colors.textHint),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -855,10 +861,12 @@ class _FieldItemState extends State<_FieldItem> {
                     ),
                     if (widget.required)
                       Text(' *',
-                          style: TextStyle(color: context.colors.red, fontSize: 10)),
+                          style: TextStyle(
+                              color: context.colors.red, fontSize: 10)),
                     if (widget.isPhoneField)
                       Text(' (ঐচ্ছিক)',
-                          style: TextStyle(color: context.colors.textHint, fontSize: 9)),
+                          style: TextStyle(
+                              color: context.colors.textHint, fontSize: 9)),
                   ],
                 ),
                 Focus(
@@ -898,7 +906,8 @@ class _FieldItemState extends State<_FieldItem> {
                         fontWeight: FontWeight.w400,
                       ),
                       errorText: _errorText,
-                      errorStyle: TextStyle(fontSize: 10, color: context.colors.red),
+                      errorStyle:
+                          TextStyle(fontSize: 10, color: context.colors.red),
                     ),
                   ),
                 ),
@@ -1116,7 +1125,8 @@ class _SubmitBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: context.colors.card,
-        border: Border(top: BorderSide(color: context.colors.border, width: 0.5)),
+        border:
+            Border(top: BorderSide(color: context.colors.border, width: 0.5)),
       ),
       padding: EdgeInsets.fromLTRB(
         20,

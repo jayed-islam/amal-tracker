@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/leaderboard_provider.dart';
 import '../../tracker/models/tracker_model.dart';
 import '../../../core/constants/app_constants.dart';
-import 'package:amal_tracker/core/theme/app_colors.dart';
 import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -146,7 +145,18 @@ class _DragHandle extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STICKY HEADER — points বাদ, completion % + farz + jamaat + streak
+// STICKY HEADER
+// Redesigned for one consistent visual language instead of three stacked
+// rows of differently-styled chips:
+//  - Rank moves onto the avatar as a small corner badge (same pattern used
+//    by the leaderboard's podium/rank tiles), instead of a separate boxy
+//    pill competing with the name for attention.
+//  - Identity info (ID, district, month) becomes one Wrap of matching
+//    translucent chips.
+//  - Completion % becomes a single clear highlight bar instead of one of
+//    several same-looking colored boxes. Everything else (farz days,
+//    jamaat, streak) lives once, in the stats grid below — not repeated
+//    here too.
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _StickyHeader extends StatelessWidget {
@@ -167,11 +177,7 @@ class _StickyHeader extends StatelessWidget {
             : entry.rank == 3
                 ? context.colors.rankBronze
                 : context.colors.gold;
-
     final pct = entry.completionPercentage.toInt();
-    final farz = entry.farzCompletedDays;
-    final jamaat = entry.congregationDaysTotal;
-    final streak = entry.streakDays;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 15),
@@ -180,29 +186,53 @@ class _StickyHeader extends StatelessWidget {
               colors: [context.colors.darkGreen, context.colors.midGreen],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight),
-          borderRadius: BorderRadius.all(Radius.circular(24))),
+          borderRadius: const BorderRadius.all(Radius.circular(24))),
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       child: Column(children: [
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // Avatar
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                    color: Colors.white.withOpacity(0.3), width: 1.5)),
-            child: Center(
-                child: Text(initial,
+          // Avatar + rank badge (corner overlay, not a separate pill)
+          Stack(clipBehavior: Clip.none, children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                      color: Colors.white.withOpacity(0.3), width: 1.5)),
+              child: Center(
+                  child: Text(initial,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900))),
+            ),
+            Positioned(
+              bottom: -6,
+              right: -8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                    color: rankColor,
+                    borderRadius: BorderRadius.circular(8),
+                    border:
+                        Border.all(color: context.colors.darkGreen, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                          color: rankColor.withOpacity(0.4), blurRadius: 6)
+                    ]),
+                child: Text('#${entry.rank}',
                     style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900))),
-          ),
-          const SizedBox(width: 14),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 10,
+                        height: 1)),
+              ),
+            ),
+          ]),
+          const SizedBox(width: 16),
 
-          // Name + chips
+          // Name + identity chips
           Expanded(
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,115 +255,64 @@ class _StickyHeader extends StatelessWidget {
                     const Text('🏆', style: TextStyle(fontSize: 12)),
                   ],
                 ]),
-                const SizedBox(height: 6),
+                const SizedBox(height: 7),
                 Wrap(spacing: 5, runSpacing: 4, children: [
                   _HeaderChip(icon: Icons.tag_rounded, label: entry.id),
                   _HeaderChip(
                       icon: Icons.location_on_rounded, label: entry.district),
+                  _HeaderChip(
+                      icon: Icons.calendar_month_rounded,
+                      label: '$monthLabel $year'),
                 ]),
               ])),
-
-          const SizedBox(width: 10),
-
-          // Rank pill
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            decoration: BoxDecoration(
-                color: rankColor,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                      color: rankColor.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2))
-                ]),
-            child: Column(children: [
-              Text('#${entry.rank}',
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 15,
-                      height: 1)),
-              Text('র‍্যাংক',
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.75),
-                      fontSize: 8,
-                      fontWeight: FontWeight.w600)),
-            ]),
-          ),
         ]),
 
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
 
-        // Metrics row — points বাদ
-        Row(children: [
-          // Month
-          Expanded(
-              child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-            decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.white.withOpacity(0.15))),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.calendar_month_rounded,
-                  size: 12, color: Colors.white.withOpacity(0.6)),
-              const SizedBox(width: 5),
-              Text('$monthLabel $year',
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.85),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600)),
-            ]),
-          )),
-          const SizedBox(width: 6),
-          // Completion %
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-            decoration: BoxDecoration(
-                color: rankColor, borderRadius: BorderRadius.circular(10)),
-            child: Row(children: [
-              const Icon(Icons.check_circle_rounded,
-                  size: 12, color: Colors.white),
-              const SizedBox(width: 5),
-              Text('$pct% ফরজ',
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12)),
-            ]),
+        // Single highlight metric — the one number that matters most,
+        // shown once and clearly instead of competing with several other
+        // similarly-styled chips.
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 14),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white.withOpacity(0.18)),
           ),
-          const SizedBox(width: 6),
-          // Farz days
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-            decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.white.withOpacity(0.2))),
-            child: Text('$farz দিন',
+          child: Row(children: [
+            Icon(Icons.check_circle_rounded,
+                color: context.colors.gold, size: 18),
+            const SizedBox(width: 8),
+            Text('$pct%',
                 style: const TextStyle(
                     color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 11)),
-          ),
-        ]),
-
-        const SizedBox(height: 8),
-
-        // Jamaat + streak row
-        Row(children: [
-          _MetricChip(
-              icon: Icons.people_rounded,
-              label: '$jamaat জামাত',
-              color: Colors.white),
-          const SizedBox(width: 6),
-          if (streak > 0)
-            _MetricChip(
-                icon: Icons.local_fire_department_rounded,
-                label: '$streak দিন ধারা',
-                color: Colors.white),
-        ]),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 19,
+                    letterSpacing: -0.4,
+                    height: 1)),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text('ফরজ সম্পন্ন',
+                  style: TextStyle(
+                      color: Colors.white.withOpacity(0.6),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500)),
+            ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(99),
+              child: SizedBox(
+                width: 56,
+                height: 6,
+                child: LinearProgressIndicator(
+                  value: (pct / 100).clamp(0.0, 1.0),
+                  backgroundColor: Colors.white.withOpacity(0.15),
+                  valueColor: AlwaysStoppedAnimation(context.colors.gold),
+                ),
+              ),
+            ),
+          ]),
+        ),
       ]),
     );
   }
@@ -362,33 +341,6 @@ class _HeaderChip extends StatelessWidget {
                 color: Colors.white.withOpacity(0.85),
                 fontSize: 10,
                 fontWeight: FontWeight.w600)),
-      ]),
-    );
-  }
-}
-
-class _MetricChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  const _MetricChip(
-      {required this.icon, required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.10),
-          borderRadius: BorderRadius.circular(20),
-          border:
-              Border.all(color: Colors.white.withOpacity(0.18), width: 0.5)),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 11, color: color.withOpacity(0.75)),
-        const SizedBox(width: 4),
-        Text(label,
-            style: TextStyle(
-                color: color, fontSize: 10.5, fontWeight: FontWeight.w600)),
       ]),
     );
   }
@@ -465,7 +417,9 @@ class _SheetBody extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// STATS GRID — points বাদ, completion + farz + jamaat + streak + daysActive
+// STATS GRID — completion + farz + jamaat + streak + daysActive + eligible/exempt.
+// A full, single source of the detailed numbers (the header above only
+// highlights completion % once, so nothing here duplicates it).
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _StatsGrid extends StatelessWidget {
@@ -478,7 +432,7 @@ class _StatsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final pct = tracker.completionPercentage.toInt();
     final farz = tracker.farzCompletedDays;
-    // final jamaat = tracker.congregationDaysTotal;
+    final jamaat = tracker.congregationDaysSum;
     final streak = tracker.streakDays;
     final active = tracker.daysActive;
     final exempt = tracker.exemptDays;
@@ -487,7 +441,7 @@ class _StatsGrid extends StatelessWidget {
       Row(children: [
         Expanded(
             child: _StatCard(
-                emoji: '✅',
+                icon: Icons.check_circle_rounded,
                 value: '$pct%',
                 label: 'ফরজ সম্পন্ন',
                 color: context.colors.darkGreen,
@@ -495,35 +449,35 @@ class _StatsGrid extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
             child: _StatCard(
-                emoji: '🕌',
+                icon: Icons.mosque_rounded,
                 value: '$farz দিন',
                 label: 'পূর্ণ ফরজ দিন',
                 color: context.colors.green,
                 bgColor: context.colors.greenLight)),
       ]),
       const SizedBox(height: 8),
-      // Row(children: [
-      //   Expanded(
-      //       child: _StatCard(
-      //           emoji: '🤝',
-      //           value: '$jamaat',
-      //           label: 'জামাত',
-      //           color: context.colors.purple,
-      //           bgColor: context.colors.purpleLight)),
-      //   const SizedBox(width: 8),
-      //   Expanded(
-      //       child: _StatCard(
-      //           emoji: '🔥',
-      //           value: '$streak দিন',
-      //           label: 'ধারাবাহিক',
-      //           color: context.colors.amber,
-      //           bgColor: context.colors.amberLight)),
-      // ]),
+      Row(children: [
+        Expanded(
+            child: _StatCard(
+                icon: Icons.people_rounded,
+                value: '$jamaat',
+                label: 'জামাত',
+                color: context.colors.purple,
+                bgColor: context.colors.purpleLight)),
+        const SizedBox(width: 8),
+        Expanded(
+            child: _StatCard(
+                icon: Icons.local_fire_department_rounded,
+                value: '$streak দিন',
+                label: 'ধারাবাহিক',
+                color: context.colors.amber,
+                bgColor: context.colors.amberLight)),
+      ]),
       const SizedBox(height: 8),
       Row(children: [
         Expanded(
             child: _StatCard(
-                emoji: '📅',
+                icon: Icons.event_available_rounded,
                 value: '$active দিন',
                 label: 'আমল করা দিন',
                 color: context.colors.blue,
@@ -540,7 +494,7 @@ class _StatsGrid extends StatelessWidget {
         else
           Expanded(
               child: _StatCard(
-                  emoji: '⏳',
+                  icon: Icons.hourglass_bottom_rounded,
                   value: '${tracker.eligibleDays} দিন',
                   label: 'হিসাবভুক্ত দিন',
                   color: context.colors.textSecondary,
@@ -551,16 +505,20 @@ class _StatsGrid extends StatelessWidget {
 }
 
 class _StatCard extends StatelessWidget {
-  final String emoji, value, label;
+  final IconData? icon;
+  final String? emoji;
+  final String value, label;
   final Color color, bgColor;
 
   const _StatCard({
-    required this.emoji,
+    this.icon,
+    this.emoji,
     required this.value,
     required this.label,
     required this.color,
     required this.bgColor,
-  });
+  }) : assert(icon != null || emoji != null,
+            'Provide either an icon or an emoji');
 
   @override
   Widget build(BuildContext context) {
@@ -571,20 +529,30 @@ class _StatCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: color.withOpacity(0.15))),
       child: Row(children: [
-        Text(emoji, style: const TextStyle(fontSize: 20)),
+        if (icon != null)
+          Icon(icon, color: color, size: 20)
+        else
+          Text(emoji!, style: const TextStyle(fontSize: 20)),
         const SizedBox(width: 10),
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(value,
-              style: TextStyle(
-                  color: color,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  height: 1)),
-          const SizedBox(height: 2),
-          Text(label,
-              style: TextStyle(
-                  color: context.colors.textSecondary, fontSize: 10.5)),
-        ]),
+        Expanded(
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(value,
+                    style: TextStyle(
+                        color: color,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        height: 1)),
+                const SizedBox(height: 2),
+                Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        color: context.colors.textSecondary, fontSize: 10.5)),
+              ]),
+        ),
       ]),
     );
   }
@@ -603,7 +571,7 @@ class _FardPerformanceCard extends StatelessWidget {
     final pct = tracker.completionPercentage.clamp(0.0, 100.0);
     final farz = tracker.farzCompletedDays;
     final eligible = tracker.eligibleDays;
-    // final jamaat = tracker.congregationDaysTotal;
+    final jamaat = tracker.congregationDaysSum;
 
     Color barColor() {
       if (pct >= 90) return context.colors.green;
@@ -618,9 +586,12 @@ class _FardPerformanceCard extends StatelessWidget {
       return 'উন্নতি দরকার';
     }
 
-    // jamaat fraction: out of eligible * 5 prayers
+    // জামাতের ভগ্নাংশ: সম্ভাব্য সর্বোচ্চ জামাত (eligible days × 5 ওয়াক্ত) এর
+    // তুলনায় প্রকৃত জামাত সংখ্যা। আগে এখানে ভুলবশত হার্ডকোড করা `0` ছিল, তাই
+    // bar-টা real data থাকলেও সবসময় খালি দেখাতো — এখন প্রকৃত jamaat কাউন্ট
+    // দিয়ে হিসাব হচ্ছে।
     final jamaatFrac =
-        eligible > 0 ? (0 / (eligible * 5)).clamp(0.0, 1.0) : 0.0;
+        eligible > 0 ? (jamaat / (eligible * 5)).clamp(0.0, 1.0) : 0.0;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -682,8 +653,8 @@ class _FardPerformanceCard extends StatelessWidget {
                   fontSize: 12,
                   fontWeight: FontWeight.w600)),
           const Spacer(),
-          // Text('$jamaat বার',
-          //     style: const TextStyle(color: context.colors.textHint, fontSize: 11)),
+          Text('$jamaat বার',
+              style: TextStyle(color: context.colors.textHint, fontSize: 11)),
         ]),
         const SizedBox(height: 6),
         ClipRRect(

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:amal_tracker/core/theme/app_colors.dart';
 import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -529,7 +528,8 @@ class _AyahCardState extends ConsumerState<_AyahCard>
                     decoration: BoxDecoration(
                       color: context.colors.greenLight,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: context.colors.greenBorder, width: 0.5),
+                      border: Border.all(
+                          color: context.colors.greenBorder, width: 0.5),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -637,7 +637,8 @@ class _ExpandedPanel extends ConsumerWidget {
                     color: context.colors.tafsirBg,
                     borderRadius: BorderRadius.all(Radius.circular(9)),
                     border: Border(
-                      left: BorderSide(color: context.colors.midGreen, width: 2.5),
+                      left: BorderSide(
+                          color: context.colors.midGreen, width: 2.5),
                     ),
                   ),
                   child: Column(
