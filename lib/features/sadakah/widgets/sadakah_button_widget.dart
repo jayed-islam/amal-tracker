@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:amal_tracker/core/theme/app_color_tokens.dart';
-import '../screens/sadakah_screen.dart';
+import 'package:amal_tracker/core/router/app_router.dart';
 
 class SadakahButtonWidget extends StatelessWidget {
   const SadakahButtonWidget({super.key});
@@ -8,7 +9,7 @@ class SadakahButtonWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => showSadaqahSheet(context),
+      onTap: () => context.push(AppRoutes.sadaqah),
       child: Container(
         width: 35,
         height: 35,

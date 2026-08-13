@@ -139,8 +139,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
-    final storage = _ref.read(secureStorageProvider);
-    await storage.deleteAll();
+    try {
+      final storage = _ref.read(secureStorageProvider);
+      await storage.deleteAll();
+    } catch (_) {}
     state = const AuthState(status: AuthStatus.unauthenticated);
     _api.post('/auth/logout', data: {}).ignore();
   }
@@ -236,8 +238,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final info = PendingDeletionInfo.fromJson(response['data']);
 
       // Clear session — user is logged out immediately
-      final storage = _ref.read(secureStorageProvider);
-      await storage.deleteAll();
+      try {
+        final storage = _ref.read(secureStorageProvider);
+        await storage.deleteAll();
+      } catch (_) {}
 
       state = AuthState(
         status: AuthStatus.unauthenticated,
@@ -310,13 +314,29 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> _saveTokens(AuthResponse auth) async {
     final storage = _ref.read(secureStorageProvider);
-    await Future.wait([
-      storage.write(key: AppConstants.accessTokenKey, value: auth.accessToken),
-      storage.write(
-          key: AppConstants.refreshTokenKey, value: auth.refreshToken),
-      storage.write(
-          key: AppConstants.userKey, value: jsonEncode(auth.user.toJson())),
-    ]);
+    try {
+      await Future.wait([
+        storage.write(key: AppConstants.accessTokenKey, value: auth.accessToken),
+        storage.write(
+            key: AppConstants.refreshTokenKey, value: auth.refreshToken),
+        storage.write(
+            key: AppConstants.userKey, value: jsonEncode(auth.user.toJson())),
+      ]);
+    } catch (e) {
+      // If saving fails due to encryption key corruption, try resetting storage and retrying once
+      try {
+        await storage.deleteAll();
+        await Future.wait([
+          storage.write(key: AppConstants.accessTokenKey, value: auth.accessToken),
+          storage.write(
+              key: AppConstants.refreshTokenKey, value: auth.refreshToken),
+          storage.write(
+              key: AppConstants.userKey, value: jsonEncode(auth.user.toJson())),
+        ]);
+      } catch (_) {
+        rethrow;
+      }
+    }
   }
 }
 

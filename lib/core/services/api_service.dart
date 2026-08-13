@@ -5,7 +5,10 @@ import '../constants/app_constants.dart';
 
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
   return const FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+      resetOnError: true,
+    ),
     iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
   );
 });
@@ -41,7 +44,10 @@ class AuthInterceptor extends Interceptor {
   void onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
     final storage = _ref.read(secureStorageProvider);
-    final token = await storage.read(key: AppConstants.accessTokenKey);
+    String? token;
+    try {
+      token = await storage.read(key: AppConstants.accessTokenKey);
+    } catch (_) {}
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
     }
@@ -84,8 +90,10 @@ class AuthInterceptor extends Interceptor {
   }
 
   void _handleAuthFailure() async {
-    final storage = _ref.read(secureStorageProvider);
-    await storage.deleteAll();
+    try {
+      final storage = _ref.read(secureStorageProvider);
+      await storage.deleteAll();
+    } catch (_) {}
     // AuthService will handle navigation
   }
 }

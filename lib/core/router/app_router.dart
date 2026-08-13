@@ -502,6 +502,7 @@ import 'package:amal_tracker/features/auth/providers/auth_provider.dart';
 import 'package:amal_tracker/features/auth/screens/login_screen.dart';
 import 'package:amal_tracker/features/auth/screens/register_screen.dart';
 import 'package:amal_tracker/features/challenge/screens/challenge_list_screen.dart';
+import 'package:amal_tracker/features/sadakah/screens/sadakah_screen.dart';
 
 import 'package:amal_tracker/features/home/screens/home_screen.dart';
 import 'package:amal_tracker/features/leaderboard/screens/leaderboard_screen.dart';
@@ -510,6 +511,7 @@ import 'package:amal_tracker/features/notification/screen/notification_settings_
 import 'package:amal_tracker/features/onboarding/screens/onboarding_screen.dart';
 import 'package:amal_tracker/features/settings/screens/legal_screen.dart';
 import 'package:amal_tracker/features/settings/screens/settings_screen.dart';
+import 'package:amal_tracker/features/settings/screens/about_us_screen.dart';
 import 'package:amal_tracker/features/tracker/screens/monthly_view_screen.dart';
 import 'package:amal_tracker/features/tracker/screens/tracker_screen.dart';
 import 'package:amal_tracker/features/user/screen/how_its_work_screen.dart';
@@ -543,6 +545,7 @@ class AppRoutes {
   static const jannahGarden = '/jannah-garden';
   static const sadaqah = '/sadaqah';
   static const challenges = '/challenges';
+  static const aboutUs = '/about-us';
 }
 
 // ── Navigator keys ─────────────────────────────────────────────────────────
@@ -782,11 +785,31 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: AppRoutes.aboutUs,
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const AboutUsScreen(),
+          transitionsBuilder: (_, anim, __, child) =>
+              FadeTransition(opacity: anim, child: child),
+        ),
+      ),
+      GoRoute(
         path: AppRoutes.howItWorks,
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (_, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const HowItWorksScreen(),
+          transitionsBuilder: (_, anim, __, child) =>
+              FadeTransition(opacity: anim, child: child),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.sadaqah,
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const SadaqahScreen(),
           transitionsBuilder: (_, anim, __, child) =>
               FadeTransition(opacity: anim, child: child),
         ),

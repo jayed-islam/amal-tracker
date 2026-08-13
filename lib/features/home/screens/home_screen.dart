@@ -1,6 +1,7 @@
 import 'package:amal_tracker/features/challenge/provider/challenge_provider.dart';
 import 'package:amal_tracker/features/challenge/widgets/challenge_card.dart';
 import 'package:amal_tracker/features/home/widgets/daily_cards_section.dart';
+import 'package:amal_tracker/features/home/widgets/join_community_section.dart';
 import 'package:amal_tracker/features/monthly_summary/screens/category_progress_screen.dart';
 import 'package:amal_tracker/features/sadakah/screens/sadakah_screen.dart';
 import 'package:amal_tracker/features/sadakah/widgets/sadakah_button_widget.dart';
@@ -509,6 +510,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             const SizedBox(height: 20),
 
                             SadaqahBanner(),
+
+                            // ── 7.5 কমিউনিটিতে যুক্ত হন
+                            //
+                            // ──────────────────────────
+
+                            const SizedBox(height: 20),
+
+                            JoinCommunitySection()
+                                .animate()
+                                .fadeIn(delay: 196.ms),
+
                             const SizedBox(height: 20),
 
                             // ── 7. Community ───────────────────────────────────
