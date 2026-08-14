@@ -358,114 +358,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         _genderErr == null;
   }
 
-  // ── confirmation dialog ────────────────────────────────────────────────────
-
-  Future<bool> _showConfirmDialog() async {
-    return await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => Dialog(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-        child: Container(
-          decoration: BoxDecoration(
-              color: context.colors.cardBg, borderRadius: BorderRadius.circular(20)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(18, 18, 18, 12),
-                child: Row(children: [
-                  Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                          color: context.colors.amberLight,
-                          borderRadius: BorderRadius.circular(9)),
-                      child: Icon(Icons.info_outline_rounded,
-                          color: context.colors.amber, size: 18)),
-                  const SizedBox(width: 10),
-                  Expanded(
-                      child: Text('নিবন্ধনের আগে জানুন',
-                          style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: context.colors.textPrimary))),
-                ]),
-              ),
-              Divider(height: 1, color: context.colors.border),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(18, 14, 18, 6),
-                child: Column(children: [
-                  _DRow(
-                      icon: Icons.lock_reset_rounded,
-                      iconColor: context.colors.amber,
-                      bg: context.colors.amberLight,
-                      text: 'পাসওয়ার্ড রিসেট এখনো নেই — লিখে রাখুন'),
-                  SizedBox(height: 8),
-                  _DRow(
-                      icon: Icons.shield_outlined,
-                      iconColor: context.colors.green,
-                      bg: context.colors.greenLight,
-                      text: 'পাসওয়ার্ড শুধু আপনার — কাউকে জানাবেন না'),
-                  SizedBox(height: 8),
-                  _DRow(
-                      icon: Icons.alternate_email_rounded,
-                      iconColor: context.colors.red,
-                      bg: context.colors.redLight,
-                      text: 'সঠিক ইমেইল দিন — লগইনে দরকার হবে'),
-                ]),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
-                child: Row(children: [
-                  Expanded(
-                      child: OutlinedButton(
-                    onPressed: () => Navigator.of(ctx).pop(false),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: context.colors.textSecondary,
-                      side: BorderSide(color: context.colors.border),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('বাতিল',
-                        style: TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w600)),
-                  )),
-                  const SizedBox(width: 10),
-                  Expanded(
-                      child: ElevatedButton(
-                    onPressed: () => Navigator.of(ctx).pop(true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: context.colors.darkGreen,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('নিবন্ধন করুন',
-                        style: TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w700)),
-                  )),
-                ]),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ).then((v) => v ?? false);
-  }
-
   // ── register ───────────────────────────────────────────────────────────────
 
   Future<void> _register() async {
     if (_isRegistering) return;
     if (!_validate()) return;
-    final confirmed = await _showConfirmDialog();
-    if (!confirmed || !mounted) return;
 
     setState(() => _isRegistering = true);
     ref.read(authProvider.notifier).clearError();
@@ -490,12 +387,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     if (ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('নিবন্ধন সফল হয়েছে!'),
+        content: const Text('নিবন্ধন সফল হয়েছে! ওটিপি কোড যাচাই করুন।'),
         backgroundColor: context.colors.green,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ));
-      context.go(AppRoutes.home);
+      context.go(AppRoutes.verifyOtp);
     } else {
       setState(() => _isRegistering = false);
     }
@@ -1127,37 +1024,7 @@ class _GenderSelector extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DIALOG ROW
-// ─────────────────────────────────────────────────────────────────────────────
 
-class _DRow extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor, bg;
-  final String text;
-  const _DRow(
-      {required this.icon,
-      required this.iconColor,
-      required this.bg,
-      required this.text});
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-        decoration:
-            BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
-        child: Row(children: [
-          Icon(icon, size: 16, color: iconColor),
-          const SizedBox(width: 9),
-          Expanded(
-              child: Text(text,
-                  style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
-                      color: context.colors.textPrimary,
-                      height: 1.35))),
-        ]),
-      );
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TEXT FIELD

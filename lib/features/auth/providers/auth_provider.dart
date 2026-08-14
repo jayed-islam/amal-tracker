@@ -62,6 +62,7 @@ class PendingDeletionInfo {
 class AuthNotifier extends StateNotifier<AuthState> {
   final ApiService _api;
   final Ref _ref;
+  AuthResponse? _pendingAuthResponse;
 
   AuthNotifier(this._api, this._ref) : super(const AuthState()) {
     _loadFromStorage();
@@ -76,6 +77,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (token != null && userJson != null) {
         final user = UserModel.fromJson(jsonDecode(userJson));
         state = AuthState(user: user, status: AuthStatus.authenticated);
+        refreshProfile().ignore();
       } else {
         state = const AuthState(status: AuthStatus.unauthenticated);
       }
@@ -83,26 +85,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = const AuthState(status: AuthStatus.unauthenticated);
     }
   }
-
-  // Future<bool> login(String email, String password) async {
-  //   state = state.copyWith(isLoading: true, error: null);
-  //   try {
-  //     final response = await _api.post<Map<String, dynamic>>(
-  //       '/auth/login',
-  //       data: {'email': email, 'password': password},
-  //     );
-  //     final authResponse = AuthResponse.fromJson(response['data']);
-  //     await _saveTokens(authResponse);
-
-  //     // লগইন সাকসেস -> স্টেটauthenticated
-  //     state =
-  //         AuthState(user: authResponse.user, status: AuthStatus.authenticated);
-  //     return true;
-  //   } on ApiException catch (e) {
-  //     state = state.copyWith(isLoading: false, error: e.message);
-  //     return false;
-  //   }
-  // }
 
   Future<bool> login(String email, String password) async {
     state = state.copyWith(isLoading: true, error: null);
@@ -113,9 +95,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       final authResponse = AuthResponse.fromJson(response['data']);
       await _saveTokens(authResponse);
+      _pendingAuthResponse = null;
       state = AuthState(
         user: authResponse.user,
         status: AuthStatus.authenticated,
+        isLoading: false,
       );
       return true;
     } on ApiException catch (e) {
@@ -139,12 +123,30 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
+    if (state.status == AuthStatus.unauthenticated) return;
+
+    _pendingAuthResponse = null;
+
+    // Send logout request to backend while tokens are still present
+    try {
+      await _api.post('/auth/logout', data: {});
+    } catch (_) {}
+
+    try {
+      final storage = _ref.read(secureStorageProvider);
+      await storage.deleteAll();
+    } catch (_) {}
+
+    state = const AuthState(status: AuthStatus.unauthenticated);
+  }
+
+  void clearLocalSessionOnly() async {
+    _pendingAuthResponse = null;
     try {
       final storage = _ref.read(secureStorageProvider);
       await storage.deleteAll();
     } catch (_) {}
     state = const AuthState(status: AuthStatus.unauthenticated);
-    _api.post('/auth/logout', data: {}).ignore();
   }
 
   Future<bool> register({
@@ -179,24 +181,42 @@ class AuthNotifier extends StateNotifier<AuthState> {
           if (gender != null && gender.isNotEmpty) 'gender': gender,
         },
       );
-      final authResponse = AuthResponse.fromJson(response['data']);
-      await _saveTokens(authResponse);
-      state =
-          AuthState(user: authResponse.user, status: AuthStatus.authenticated);
-      // state = AuthState(user: authResponse.user, isAuthenticated: true);
+      
+      final responseData = response['data'] is Map<String, dynamic>
+          ? response['data'] as Map<String, dynamic>
+          : <String, dynamic>{};
+      final returnedEmail = responseData['email']?.toString() ?? email;
+
+      final draftUser = UserModel(
+        id: '',
+        name: name,
+        email: returnedEmail,
+        district: district,
+        department: department,
+        designation: designation,
+        phone: phone,
+        photoUrl: photoUrl,
+        gender: gender,
+        role: 'user',
+        isActive: true,
+        isVerified: false,
+        isEmailVerified: false,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      _pendingAuthResponse = null;
+      state = AuthState(
+        user: draftUser,
+        isLoading: false,
+        status: AuthStatus.unauthenticated,
+      );
       return true;
     } on ApiException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
       return false;
     }
   }
-
-  // Future<void> logout() async {
-  //   final storage = _ref.read(secureStorageProvider);
-  //   await storage.deleteAll();
-  //   state = const AuthState(); // রিসেট স্টেট -> ইনস্ট্যান্ট লগআউট রিডাইরেক্ট
-  //   _api.post('/auth/logout', data: {}).ignore();
-  // }
 
   Future<void> refreshProfile() async {
     try {
@@ -211,6 +231,125 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (_) {}
   }
 
+  Future<void> markEmailAsVerified() async {
+    final currentUser = state.user;
+    if (currentUser == null) return;
+
+    final updatedUser = currentUser.copyWith(
+      isEmailVerified: true,
+      isVerified: true,
+    );
+
+    if (_pendingAuthResponse != null) {
+      final fullAuth = AuthResponse(
+        accessToken: _pendingAuthResponse!.accessToken,
+        refreshToken: _pendingAuthResponse!.refreshToken,
+        user: updatedUser,
+      );
+      await _saveTokens(fullAuth);
+      _pendingAuthResponse = null;
+    } else {
+      try {
+        final storage = _ref.read(secureStorageProvider);
+        await storage.write(
+          key: AppConstants.userKey,
+          value: jsonEncode(updatedUser.toJson()),
+        );
+      } catch (_) {}
+    }
+
+    state = state.copyWith(user: updatedUser);
+  }
+
+  Future<bool> verifyOtp(String otp) async {
+    final email = state.user?.email ?? '';
+    if (email.isEmpty) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'ইমেইল এড্রেস পাওয়া যায়নি',
+      );
+      throw const ApiException(message: 'ইমেইল এড্রেস পাওয়া যায়নি');
+    }
+
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final response = await _api.post<Map<String, dynamic>>(
+        '/auth/verify-otp',
+        data: {
+          'email': email,
+          'otp': otp,
+        },
+      );
+
+      final data = response['data'] as Map<String, dynamic>;
+      final authResponse = AuthResponse.fromJson(data);
+
+      await _saveTokens(authResponse);
+      _pendingAuthResponse = null;
+
+      state = AuthState(
+        user: authResponse.user,
+        status: AuthStatus.authenticated,
+        isLoading: false,
+      );
+      return true;
+    } on ApiException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+      rethrow;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'ওটিপি যাচাই করতে ব্যর্থ হয়েছে',
+      );
+      throw const ApiException(
+        message: 'ওটিপি যাচাই করতে ব্যর্থ হয়েছে',
+      );
+    }
+  }
+
+  Future<int> resendOtp() async {
+    final email = state.user?.email ?? '';
+    if (email.isEmpty) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'ইমেইল এড্রেস পাওয়া যায়নি',
+      );
+      throw const ApiException(message: 'ইমেইল এড্রেস পাওয়া যায়নি');
+    }
+
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final response = await _api.post<Map<String, dynamic>>(
+        '/auth/resend-otp',
+        data: {
+          'email': email,
+        },
+      );
+
+      int cooldown = 60;
+      if (response['cooldownSeconds'] is num) {
+        cooldown = (response['cooldownSeconds'] as num).toInt();
+      } else if (response['data'] != null &&
+          response['data']['cooldownSeconds'] is num) {
+        cooldown = (response['data']['cooldownSeconds'] as num).toInt();
+      }
+
+      state = state.copyWith(isLoading: false);
+      return cooldown;
+    } on ApiException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+      rethrow;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'ওটিপি কোড পুনরায় পাঠাতে সমস্যা হয়েছে',
+      );
+      throw const ApiException(
+        message: 'ওটিপি কোড পুনরায় পাঠাতে সমস্যা হয়েছে',
+      );
+    }
+  }
+
   Future<bool> changePassword(String current, String newPassword) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
@@ -222,6 +361,84 @@ class AuthNotifier extends StateNotifier<AuthState> {
       return true;
     } on ApiException catch (e) {
       state = state.copyWith(isLoading: false, error: e.message);
+      return false;
+    }
+  }
+
+  Future<bool> forgotPassword(String email) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _api.post('/auth/forgot-password', data: {'email': email});
+      state = state.copyWith(isLoading: false);
+      return true;
+    } on ApiException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+      rethrow;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'ওটিপি পাঠাতে ব্যর্থ হয়েছে। ইমেইল চেক করুন।',
+      );
+      throw const ApiException(
+        message: 'ওটিপি পাঠাতে ব্যর্থ হয়েছে। ইমেইল চেক করুন।',
+      );
+    }
+  }
+
+  Future<String?> verifyResetOtp(String email, String otp) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final response = await _api.post<Map<String, dynamic>>(
+        '/auth/verify-reset-otp',
+        data: {
+          'email': email,
+          'otp': otp,
+        },
+      );
+      state = state.copyWith(isLoading: false);
+      final data = response['data'] is Map<String, dynamic>
+          ? response['data'] as Map<String, dynamic>
+          : null;
+      return data?['resetToken']?.toString();
+    } on ApiException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+      rethrow;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'ওটিপি কোড যাচাই করা যায়নি',
+      );
+      throw const ApiException(
+        message: 'ওটিপি কোড যাচাই করা যায়নি',
+      );
+    }
+  }
+
+  Future<bool> resetPassword({
+    String? email,
+    String? otp,
+    String? resetToken,
+    required String newPassword,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _api.post('/auth/reset-password', data: {
+        if (email != null && email.isNotEmpty) 'email': email,
+        if (otp != null && otp.isNotEmpty) 'otp': otp,
+        if (resetToken != null && resetToken.isNotEmpty)
+          'resetToken': resetToken,
+        'newPassword': newPassword,
+      });
+      state = state.copyWith(isLoading: false);
+      return true;
+    } on ApiException catch (e) {
+      state = state.copyWith(isLoading: false, error: e.message);
+      return false;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'পাসওয়ার্ড পরিবর্তন ব্যর্থ হয়েছে',
+      );
       return false;
     }
   }
@@ -360,4 +577,9 @@ final pendingDeletionProvider = Provider<PendingDeletionInfo?>(
 
 final hasPendingDeletionProvider = Provider<bool>((ref) {
   return ref.watch(authProvider).pendingDeletion != null;
+});
+
+final isEmailVerifiedProvider = Provider<bool>((ref) {
+  final user = ref.watch(currentUserProvider);
+  return user?.isEmailVerified ?? false;
 });

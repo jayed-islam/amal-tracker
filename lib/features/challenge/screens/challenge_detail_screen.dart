@@ -128,7 +128,8 @@ class ChallengeDetailScreen extends ConsumerWidget {
                 ChErrorState(
                   onRetry: () {
                     ref.invalidate(challengeDetailProvider(challengeId));
-                    if (isJoined) ref.invalidate(myProgressProvider(challengeId));
+                    if (isJoined)
+                      ref.invalidate(myProgressProvider(challengeId));
                     ref.invalidate(
                         leaderboardPreviewForChallengeProvider(challengeId));
                   },
@@ -930,6 +931,7 @@ class _JoinConfirmDialogState extends State<_JoinConfirmDialog> {
 
   Future<void> _handleConfirm() async {
     if (_loading) return;
+
     setState(() {
       _loading = true;
       _error = null;

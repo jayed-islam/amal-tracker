@@ -284,6 +284,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         if (pendingDeletion != null) ...[
                           RecoveryBanner(info: pendingDeletion),
                           const SizedBox(height: 20),
+                        ] else if (auth.error != null) ...[
+                          _ErrorBanner(auth.error!),
+                          const SizedBox(height: 20),
                         ],
                         IgnorePointer(
                           ignoring: isLoading,
@@ -298,9 +301,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 hint: 'example@email.com',
                                 keyboardType: TextInputType.emailAddress,
                                 error: _emailError,
-                                apiError: (pendingDeletion == null)
-                                    ? auth.error
-                                    : null,
                                 onChanged: _validateEmail,
                                 onSubmit: () => _passFocus.requestFocus(),
                               ),
@@ -313,6 +313,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 error: _passError,
                                 onChanged: _validatePass,
                                 onSubmit: _login,
+                              ),
+                              const SizedBox(height: 10),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: GestureDetector(
+                                  onTap: isLoading
+                                      ? null
+                                      : () {
+                                          ref
+                                              .read(authProvider.notifier)
+                                              .clearError();
+                                          context.push(AppRoutes.forgotPassword);
+                                        },
+                                  child: Text(
+                                    'পাসওয়ার্ড ভুলে গেছেন?',
+                                    style: TextStyle(
+                                      color: AppColors.primary,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ]),
                           ),
@@ -681,6 +703,42 @@ class _RecoveryField extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ERROR BANNER
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ErrorBanner extends StatelessWidget {
+  final String message;
+  const _ErrorBanner(this.message);
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.error.withOpacity(0.08),
+          borderRadius: AppRadius.md_,
+          border: Border.all(color: AppColors.error.withOpacity(0.25)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.error_outline_rounded,
+                color: AppColors.error, size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  color: AppColors.error,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // LOGIN FIELD
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -692,7 +750,6 @@ class _LoginField extends StatefulWidget {
   final String hint;
   final TextInputType keyboardType;
   final String? error;
-  final String? apiError;
   final void Function(String) onChanged;
   final VoidCallback onSubmit;
 
@@ -704,7 +761,6 @@ class _LoginField extends StatefulWidget {
     required this.hint,
     required this.keyboardType,
     this.error,
-    this.apiError,
     required this.onChanged,
     required this.onSubmit,
   });
@@ -727,9 +783,7 @@ class _LoginFieldState extends State<_LoginField> {
   Widget build(BuildContext context) {
     final displayError = (widget.error != null && widget.error!.isNotEmpty)
         ? widget.error
-        : (widget.apiError != null && widget.apiError!.isNotEmpty)
-            ? widget.apiError
-            : null;
+        : null;
     final hasErr = displayError != null;
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -812,7 +866,7 @@ class _LoginFieldState extends State<_LoginField> {
                   Icon(Icons.error_rounded, size: 13, color: AppColors.error),
                   const SizedBox(width: 5),
                   Expanded(
-                    child: Text(displayError!,
+                    child: Text(displayError,
                         style: const TextStyle(
                             color: AppColors.error,
                             fontSize: 12,

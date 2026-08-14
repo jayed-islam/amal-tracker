@@ -1,4 +1,5 @@
 import 'package:amal_tracker/core/router/app_router.dart';
+import 'package:amal_tracker/core/services/api_service.dart';
 import 'package:amal_tracker/features/auth/providers/auth_provider.dart';
 import 'package:amal_tracker/features/auth/providers/privacy_provider.dart';
 import 'package:amal_tracker/features/feedback/provider/feedback_provider.dart';

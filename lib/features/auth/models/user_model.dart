@@ -12,6 +12,7 @@ class UserModel {
   final String role;
   final bool isActive;
   final bool isVerified;
+  final bool isEmailVerified;
   final LeaderboardPrivacy? leaderboardPrivacy;
   final LeaderboardOptOut? leaderboardOptOut;
   final ShareProfile? shareProfile;
@@ -35,6 +36,7 @@ class UserModel {
     required this.role,
     required this.isActive,
     required this.isVerified,
+    this.isEmailVerified = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -42,6 +44,9 @@ class UserModel {
   factory UserModel.fromJson(Map<String, dynamic> json) {
     print('fromJson - id from json: ${json['id']}');
     print('fromJson - _id from json: ${json['_id']}');
+
+    final emailVerified =
+        json['isEmailVerified'] ?? json['isVerified'] ?? false;
 
     return UserModel(
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
@@ -56,7 +61,8 @@ class UserModel {
       avatar: json['avatar'],
       role: json['role'] ?? 'user',
       isActive: json['isActive'] ?? true,
-      isVerified: json['isVerified'] ?? false,
+      isVerified: emailVerified,
+      isEmailVerified: emailVerified,
       leaderboardPrivacy: json['leaderboardPrivacy'] != null
           ? LeaderboardPrivacy.fromJson(json['leaderboardPrivacy'])
           : null,
@@ -95,9 +101,54 @@ class UserModel {
       'role': role,
       'isActive': isActive,
       'isVerified': isVerified,
+      'isEmailVerified': isEmailVerified,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
+  }
+
+  UserModel copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? department,
+    String? designation,
+    String? district,
+    String? phone,
+    String? photoUrl,
+    String? gender,
+    String? avatar,
+    String? role,
+    bool? isActive,
+    bool? isVerified,
+    bool? isEmailVerified,
+    LeaderboardPrivacy? leaderboardPrivacy,
+    LeaderboardOptOut? leaderboardOptOut,
+    ShareProfile? shareProfile,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      department: department ?? this.department,
+      designation: designation ?? this.designation,
+      district: district ?? this.district,
+      phone: phone ?? this.phone,
+      photoUrl: photoUrl ?? this.photoUrl,
+      gender: gender ?? this.gender,
+      avatar: avatar ?? this.avatar,
+      role: role ?? this.role,
+      isActive: isActive ?? this.isActive,
+      isVerified: isVerified ?? (isEmailVerified ?? this.isEmailVerified),
+      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
+      leaderboardPrivacy: leaderboardPrivacy ?? this.leaderboardPrivacy,
+      leaderboardOptOut: leaderboardOptOut ?? this.leaderboardOptOut,
+      shareProfile: shareProfile ?? this.shareProfile,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
   }
 }
 

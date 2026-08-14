@@ -1,9 +1,10 @@
+import 'package:amal_tracker/core/theme/app_color_tokens.dart';
+import 'package:amal_tracker/features/auth/providers/auth_provider.dart';
 import 'package:amal_tracker/features/feedback/provider/feedback_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FEEDBACK SHEET
@@ -64,6 +65,7 @@ class _FeedbackSheetState extends ConsumerState<FeedbackSheet> {
       setState(() => _localError = 'কমপক্ষে ৩ অক্ষর লিখুন');
       return;
     }
+
     setState(() => _localError = null);
     HapticFeedback.selectionClick();
 

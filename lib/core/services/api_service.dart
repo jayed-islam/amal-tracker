@@ -1,3 +1,4 @@
+import 'package:amal_tracker/features/auth/providers/auth_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -56,7 +57,16 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (err.response?.statusCode == 401 && !_isRefreshing) {
+    final path = err.requestOptions.path;
+    final isAuthEndpoint = path.contains('/auth/logout') ||
+        path.contains('/auth/login') ||
+        path.contains('/auth/register') ||
+        path.contains('/auth/refresh') ||
+        path.contains('/auth/verify-otp') ||
+        path.contains('/auth/forgot-password') ||
+        path.contains('/auth/reset-password');
+
+    if (err.response?.statusCode == 401 && !_isRefreshing && !isAuthEndpoint) {
       _isRefreshing = true;
       try {
         final storage = _ref.read(secureStorageProvider);
@@ -94,24 +104,63 @@ class AuthInterceptor extends Interceptor {
       final storage = _ref.read(secureStorageProvider);
       await storage.deleteAll();
     } catch (_) {}
-    // AuthService will handle navigation
+    try {
+      _ref.read(authProvider.notifier).clearLocalSessionOnly();
+    } catch (_) {}
   }
 }
 
 class ApiException implements Exception {
   final String message;
   final int? statusCode;
+  final String? code;
+  final dynamic rawData;
 
-  // Make this a const constructor
-  const ApiException({required this.message, this.statusCode});
+  const ApiException({
+    required this.message,
+    this.statusCode,
+    this.code,
+    this.rawData,
+  });
+
+  bool get isEmailVerificationRequired {
+    if (statusCode != 403) return false;
+    final c = code?.toUpperCase() ?? '';
+    final msg = message.toLowerCase();
+    return c == 'EMAIL_VERIFICATION_REQUIRED' ||
+        c == 'EMAIL_NOT_VERIFIED' ||
+        c == 'VERIFY_EMAIL_REQUIRED' ||
+        msg.contains('email verification') ||
+        msg.contains('verify email') ||
+        msg.contains('ইমেইল যাচাই');
+  }
+
+  int? get attemptsRemaining {
+    if (rawData is Map<String, dynamic>) {
+      final val = rawData['attemptsRemaining'] ??
+          rawData['remainingAttempts'] ??
+          rawData['attemptsLeft'];
+      if (val is num) return val.toInt();
+    }
+    return null;
+  }
+
+  int? get cooldownSeconds {
+    if (rawData is Map<String, dynamic>) {
+      final val = rawData['cooldownSeconds'] ?? rawData['retryAfter'];
+      if (val is num) return val.toInt();
+    }
+    return null;
+  }
 
   @override
   String toString() => message;
 
-  // This factory method cannot be const, but that's fine
   factory ApiException.fromDioException(DioException e) {
     final statusCode = e.response?.statusCode;
     String message = 'Something went wrong. Please try again.';
+    String? code;
+    dynamic rawData;
 
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
@@ -120,10 +169,21 @@ class ApiException implements Exception {
     } else if (e.type == DioExceptionType.connectionError) {
       message = 'No internet connection.';
     } else if (e.response?.data != null) {
-      message = e.response?.data['message'] ?? message;
+      rawData = e.response?.data;
+      if (rawData is Map<String, dynamic>) {
+        message = rawData['message'] ?? message;
+        code = rawData['code']?.toString() ?? rawData['error']?.toString();
+      } else if (rawData is String) {
+        message = rawData;
+      }
     }
 
-    return ApiException(message: message, statusCode: statusCode);
+    return ApiException(
+      message: message,
+      statusCode: statusCode,
+      code: code,
+      rawData: rawData,
+    );
   }
 }
 

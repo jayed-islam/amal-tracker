@@ -12,17 +12,9 @@
 // import 'package:go_router/go_router.dart';
 // import 'package:amal_tracker/features/auth/screens/login_screen.dart';
 // import 'package:amal_tracker/features/auth/screens/register_screen.dart';
+import 'package:amal_tracker/features/auth/screens/otp_verification_screen.dart';
 // import 'package:amal_tracker/shared/widgets/main_shell.dart';
 
-// // ── Route path constants ───────────────────────────────────────────────────
-// class AppRoutes {
-//   static const login = '/login';
-//   static const register = '/register';
-//   static const home = '/home';
-//   static const tracker = '/tracker';
-//   static const monthlyView = '/monthly';
-//   static const leaderboard = '/leaderboard';
-//   static const profileEdit = '/profile/edit';
 //   static const howItWorks = '/how-it-works';
 //   static const settings = '/settings';
 //   static const changePassword = '/change-password';
@@ -499,6 +491,7 @@
 // lib/core/router/app_router.dart
 
 import 'package:amal_tracker/features/auth/providers/auth_provider.dart';
+import 'package:amal_tracker/features/auth/screens/forgot_password_screen.dart';
 import 'package:amal_tracker/features/auth/screens/login_screen.dart';
 import 'package:amal_tracker/features/auth/screens/register_screen.dart';
 import 'package:amal_tracker/features/challenge/screens/challenge_list_screen.dart';
@@ -527,6 +520,8 @@ class AppRoutes {
   static const onboarding = '/onboarding';
   static const login = '/login';
   static const register = '/register';
+  static const forgotPassword = '/forgot-password';
+  static const verifyOtp = '/verify-otp';
 
   // Shell tabs
   static const home = '/home';
@@ -551,40 +546,29 @@ class AppRoutes {
 // ── Navigator keys ─────────────────────────────────────────────────────────
 final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
-// ── Two separate notifiers so router can refresh on either change ──────────
-final _routerStatusController = ValueNotifier<AuthStatus>(AuthStatus.unknown);
-
 /// Set this from main() before runApp so the very first redirect is correct.
 /// Then call router.refresh() (via the notifier) when onboarding completes.
 final onboardingSeenNotifier = ValueNotifier<bool>(false);
 
-// A single listenable that fires when either notifier changes
-class _MultiListenable extends ChangeNotifier {
-  _MultiListenable(List<Listenable> listenables) {
-    for (final l in listenables) {
-      l.addListener(notifyListeners);
-    }
+// A single listenable that fires when authState or onboarding status changes
+class _AuthRouterNotifier extends ChangeNotifier {
+  _AuthRouterNotifier(Ref ref) {
+    ref.listen(authProvider, (_, __) {
+      notifyListeners();
+    });
+    onboardingSeenNotifier.addListener(notifyListeners);
   }
 }
 
 // ── Router provider ────────────────────────────────────────────────────────
 final routerProvider = Provider<GoRouter>((ref) {
-  ref.listen(
-    authProvider.select((s) => s.status),
-    (_, next) => _routerStatusController.value = next,
-  );
-
-  final refreshListenable = _MultiListenable([
-    _routerStatusController,
-    onboardingSeenNotifier,
-  ]);
+  final refreshListenable = _AuthRouterNotifier(ref);
 
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: AppRoutes.home,
     refreshListenable: refreshListenable,
     redirect: (context, state) {
-      final status = _routerStatusController.value;
       final hasSeen = onboardingSeenNotifier.value;
       final loc = state.matchedLocation;
 
@@ -594,14 +578,38 @@ final routerProvider = Provider<GoRouter>((ref) {
         return loc == AppRoutes.onboarding ? null : AppRoutes.onboarding;
       }
 
-      // ── Step 2: Auth gate (onboarding already done) ───────────────────
+      // ── Step 2: Auth & Email Verification gate ────────────────────────
+      final authState = ref.read(authProvider);
+      final status = authState.status;
+
       if (status == AuthStatus.unknown) return null; // still initialising
 
       final isAuth = status == AuthStatus.authenticated;
-      final isAuthPage = loc == AppRoutes.login || loc == AppRoutes.register;
+      final user = authState.user;
+      final isEmailVerified =
+          user?.isEmailVerified ?? user?.isVerified ?? false;
 
-      if (!isAuth && !isAuthPage) return AppRoutes.login;
-      if (isAuth && isAuthPage) return AppRoutes.home;
+      final isAuthPage = loc == AppRoutes.login ||
+          loc == AppRoutes.register ||
+          loc == AppRoutes.forgotPassword;
+      final isOtpPage = loc == AppRoutes.verifyOtp;
+
+      // Case A: Unauthenticated user -> can access login, register, forgot-password, or verify-otp
+      if (!isAuth) {
+        if (!isAuthPage && !isOtpPage) return AppRoutes.login;
+        return null;
+      }
+
+      // Case B: Authenticated user with UNVERIFIED email -> MUST go to verify-otp page
+      if (!isEmailVerified) {
+        if (!isOtpPage) return AppRoutes.verifyOtp;
+        return null;
+      }
+
+      // Case C: Authenticated user with VERIFIED email -> cannot stay on auth/otp/onboarding pages
+      if (isAuthPage || isOtpPage || loc == AppRoutes.onboarding) {
+        return AppRoutes.home;
+      }
 
       return null;
     },
@@ -643,6 +651,35 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
             child: child,
           ),
+        ),
+      ),
+
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const ForgotPasswordScreen(),
+          transitionsBuilder: (_, anim, __, child) => SlideTransition(
+            position: Tween(
+              begin: const Offset(1, 0),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: anim, curve: Curves.easeInOutCubic),
+            ),
+            child: child,
+          ),
+        ),
+      ),
+
+      GoRoute(
+        path: AppRoutes.verifyOtp,
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const OtpVerificationScreen(),
+          transitionsBuilder: (_, anim, __, child) =>
+              FadeTransition(opacity: anim, child: child),
         ),
       ),
 
