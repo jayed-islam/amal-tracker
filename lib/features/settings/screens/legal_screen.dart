@@ -1,12 +1,10 @@
-import 'package:amal_tracker/features/settings/constants/legal_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
-// ── Design Tokens ────────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────────────────────
-// UNIFIED LEGAL SCREEN (Privacy Policy & Terms of Use on One Page)
-// ─────────────────────────────────────────────────────────────────────────────
+// ── LEGAL SCREEN (Privacy Policy via Webview) ──────────────────────────────
 
 class LegalScreen extends StatefulWidget {
   const LegalScreen({super.key});
@@ -16,22 +14,91 @@ class LegalScreen extends StatefulWidget {
 }
 
 class _LegalScreenState extends State<LegalScreen> {
-  Lang _lang = Lang.bn;
+  static const String _privacyUrl = 'https://sabeqapp.vercel.app/privacy-policy';
+  WebViewController? _controller;
+  bool _isLoading = true;
+  bool _hasError = false;
+  int _loadingProgress = 0;
 
-  bool get _isBn => _lang == Lang.bn;
+  @override
+  void initState() {
+    super.initState();
+    _initWebView();
+  }
 
-  String get _screenTitle => _isBn ? 'আইনি তথ্যাবলী' : 'Legal Information';
+  void _initWebView() {
+    try {
+      final controller = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setBackgroundColor(Colors.transparent)
+        ..setNavigationDelegate(
+          NavigationDelegate(
+            onProgress: (int progress) {
+              if (mounted) {
+                setState(() {
+                  _loadingProgress = progress;
+                });
+              }
+            },
+            onPageStarted: (String url) {
+              if (mounted) {
+                setState(() {
+                  _isLoading = true;
+                  _hasError = false;
+                });
+              }
+            },
+            onPageFinished: (String url) {
+              if (mounted) {
+                setState(() {
+                  _isLoading = false;
+                });
+              }
+            },
+            onWebResourceError: (WebResourceError error) {
+              if (mounted) {
+                setState(() {
+                  _isLoading = false;
+                  _hasError = true;
+                });
+              }
+            },
+          ),
+        );
 
-  String get _privacyTitle => _isBn ? '১. গোপনীয়তা নীতি' : '1. Privacy Policy';
-  String get _termsTitle => _isBn ? '২. ব্যবহারের শর্তাবলী' : '2. Terms of Use';
+      controller.loadRequest(Uri.parse(_privacyUrl)).catchError((_) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _hasError = true;
+          });
+        }
+      });
 
-  void _toggleLang() {
-    HapticFeedback.selectionClick();
-    setState(() => _lang = _isBn ? Lang.en : Lang.bn);
+      setState(() {
+        _controller = controller;
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
+      }
+    }
+  }
+
+  Future<void> _openInExternalBrowser() async {
+    final uri = Uri.parse(_privacyUrl);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final showWebView = _controller != null && !_hasError;
+
     return Scaffold(
       backgroundColor: context.colors.bg,
       appBar: AppBar(
@@ -54,255 +121,130 @@ class _LegalScreenState extends State<LegalScreen> {
             ),
           ),
         ),
-        title: Text(
-          _screenTitle,
-          style: const TextStyle(
+        title: const Text(
+          'গোপনীয়তা নীতি',
+          style: TextStyle(
             color: Colors.white,
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
         ),
         actions: [
-          GestureDetector(
-            onTap: _toggleLang,
-            child: Container(
-              margin: const EdgeInsets.only(right: 16),
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.18),
-                  width: 0.5,
+          IconButton(
+            icon: const Icon(Icons.open_in_browser_rounded, color: Colors.white),
+            tooltip: 'ব্রাউজারে খুলুন',
+            onPressed: _openInExternalBrowser,
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+            tooltip: 'পুনরায় লোড করুন',
+            onPressed: () {
+              if (_controller != null) {
+                setState(() {
+                  _isLoading = true;
+                  _hasError = false;
+                });
+                _controller!.reload();
+              } else {
+                _initWebView();
+              }
+            },
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          if (showWebView) WebViewWidget(controller: _controller!),
+          if (_isLoading && showWebView)
+            Column(
+              children: [
+                LinearProgressIndicator(
+                  value: _loadingProgress / 100,
+                  backgroundColor: context.colors.inputBg,
+                  color: context.colors.darkGreen,
+                  minHeight: 3,
                 ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _LangPill(label: 'বাং', active: _isBn),
-                  const SizedBox(width: 2),
-                  _LangPill(label: 'EN', active: !_isBn),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        children: [
-          // ── Metadata Header ────────────────────────────────────────────────
-          Text(
-            kLegalLastUpdated[_lang]!,
-            style: TextStyle(
-              color: context.colors.textHint,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // ── Segment 1: Privacy Policy ──────────────────────────────────────
-          Text(
-            _privacyTitle,
-            style: TextStyle(
-              color: context.colors.darkGreen,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            kPrivacyIntro[_lang]!,
-            style: TextStyle(
-              color: context.colors.textBody,
-              fontSize: 14,
-              height: 1.7,
-            ),
-          ),
-          const SizedBox(height: 20),
-          ...kPrivacySections.map((section) => _SectionBlock(
-                section: section,
-                lang: _lang,
-              )),
-
-          const SizedBox(height: 16),
-          Divider(color: context.colors.divider, thickness: 1.5, height: 1),
-          const SizedBox(height: 32),
-
-          // ── Segment 2: Terms of Use ────────────────────────────────────────
-          Text(
-            _termsTitle,
-            style: TextStyle(
-              color: context.colors.darkGreen,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            kTermsIntro[_lang]!,
-            style: TextStyle(
-              color: context.colors.textBody,
-              fontSize: 14,
-              height: 1.7,
-            ),
-          ),
-          const SizedBox(height: 20),
-          ...kTermsSections.map((section) => _SectionBlock(
-                section: section,
-                lang: _lang,
-              )),
-
-          // ── Footer ─────────────────────────────────────────────────────────
-          const SizedBox(height: 16),
-          Divider(color: context.colors.divider, height: 1),
-          const SizedBox(height: 24),
-          Text(
-            _isBn
-                ? 'প্রশ্ন বা মতামতের জন্য যোগাযোগ করুন:'
-                : 'For questions or feedback, contact us:',
-            style: TextStyle(
-              color: context.colors.textMuted,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'support@amaltracker.app',
-            style: TextStyle(
-              color: context.colors.darkGreen,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.2,
-            ),
-          ),
-          const SizedBox(height: 48),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION BLOCK
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _SectionBlock extends StatelessWidget {
-  final LegalSection section;
-  final Lang lang;
-
-  const _SectionBlock({required this.section, required this.lang});
-
-  @override
-  Widget build(BuildContext context) {
-    final points = section.points[lang]!;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            section.title[lang]!,
-            style: TextStyle(
-              color: context.colors.textPrimary,
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ...points.map((p) => _PointRow(point: p)),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// POINT ROW
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _PointRow extends StatelessWidget {
-  final LegalPoint point;
-  const _PointRow({required this.point});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Container(
-              width: 5,
-              height: 5,
-              decoration: BoxDecoration(
-                color: context.colors.green,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: RichText(
-              text: TextSpan(
-                style: TextStyle(
-                  color: context.colors.textBody,
-                  fontSize: 13.5,
-                  height: 1.65,
+                Expanded(
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: context.colors.darkGreen,
+                    ),
+                  ),
                 ),
-                children: [
-                  if (point.heading != null) ...[
-                    TextSpan(
-                      text: '${point.heading} ',
+              ],
+            ),
+          if (!showWebView && !_isLoading)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.language_rounded,
+                      size: 64,
+                      color: context.colors.darkGreen,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'গোপনীয়তা নীতি (Sabeq App)',
                       style: TextStyle(
+                        fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: context.colors.textPrimary,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'অ্যাপটি নতুন রি-বিল্ড সম্পূর্ণ হওয়ার পর ইন-অ্যাপ স্ক্রিনে সম্পূর্ণ পেজ দেখতে পাবেন। আপাতত আপনার ডিভাইসের ব্রাউজারে দেখতে নিচে ক্লিক করুন।',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        color: context.colors.textBody,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: _openInExternalBrowser,
+                          icon: const Icon(Icons.open_in_browser_rounded),
+                          label: const Text('ব্রাউজারে খুলুন'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: context.colors.darkGreen,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            _initWebView();
+                          },
+                          icon: const Icon(Icons.refresh_rounded),
+                          label: const Text('পুনরায় চেষ্টা করুন'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: context.colors.darkGreen,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
-                  TextSpan(text: point.body),
-                ],
+                ),
               ),
             ),
-          ),
         ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// LANGUAGE PILL
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _LangPill extends StatelessWidget {
-  final String label;
-  final bool active;
-  const _LangPill({required this.label, required this.active});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-      decoration: BoxDecoration(
-        color: active ? Colors.white : Colors.transparent,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: active
-              ? context.colors.darkGreen
-              : Colors.white.withOpacity(0.65),
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
       ),
     );
   }

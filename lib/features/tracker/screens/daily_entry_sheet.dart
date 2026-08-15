@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/tracker_provider.dart';
 import '../models/tracker_model.dart';
 import '../../../core/constants/app_constants.dart';
-import 'package:amal_tracker/core/theme/app_colors.dart';
 import 'package:amal_tracker/core/theme/app_color_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -323,7 +322,8 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline_rounded, color: context.colors.red, size: 40),
+              Icon(Icons.error_outline_rounded,
+                  color: context.colors.red, size: 40),
               const SizedBox(height: 12),
               Text(
                 'কোনো আমল ক্যাটাগরি পাওয়া যায়নি',
@@ -682,7 +682,9 @@ class _SectionTabBar extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: active ? context.colors.darkGreen : context.colors.pageBg,
+                    color: active
+                        ? context.colors.darkGreen
+                        : context.colors.pageBg,
                     borderRadius: BorderRadius.circular(99),
                     border: Border.all(
                       color: active
@@ -797,7 +799,9 @@ class _ExemptDayBanner extends StatelessWidget {
                 Text(
                   isExemptDay ? 'আজ মাহলির দিন' : 'আজ কি মাহলি আছেন?',
                   style: TextStyle(
-                      color: isExemptDay ? context.colors.darkGreen : context.colors.textPrimary,
+                      color: isExemptDay
+                          ? context.colors.darkGreen
+                          : context.colors.textPrimary,
                       fontWeight: FontWeight.w700,
                       fontSize: 13),
                 ),
@@ -807,7 +811,9 @@ class _ExemptDayBanner extends StatelessWidget {
                       ? 'ফরজ আমলগুলো মাফ হিসেবে চিহ্নিত হয়েছে'
                       : 'চালু করলে ফরজ আমলগুলো মাফ ধরা হবে',
                   style: TextStyle(
-                      color: isExemptDay ? context.colors.midGreen : context.colors.textSecondary,
+                      color: isExemptDay
+                          ? context.colors.midGreen
+                          : context.colors.textSecondary,
                       fontSize: 11),
                 ),
               ])),
@@ -1000,7 +1006,8 @@ class _SectionForm extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color(0xFFF1F0EB),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: context.colors.border, width: 0.5),
+                    border:
+                        Border.all(color: context.colors.border, width: 0.5),
                   ),
                   child: Text(notApplicableLabel,
                       style: TextStyle(
@@ -1065,15 +1072,17 @@ class _ExemptedCard extends StatelessWidget {
                           decoration: TextDecoration.lineThrough,
                           decorationColor: context.colors.textHint)),
                   Text(cat.nameEn,
-                      style: TextStyle(color: context.colors.textHint, fontSize: 11)),
+                      style: TextStyle(
+                          color: context.colors.textHint, fontSize: 11)),
                 ])),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                   color: context.colors.maafBg,
                   borderRadius: BorderRadius.circular(20),
-                  border:
-                      Border.all(color: context.colors.green.withOpacity(0.3), width: 0.5)),
+                  border: Border.all(
+                      color: context.colors.green.withOpacity(0.3),
+                      width: 0.5)),
               child: Text('মাফ আছে',
                   style: TextStyle(
                       fontSize: 10.5,
@@ -1185,7 +1194,9 @@ class _ModeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (mode == PrayerMode.missed) return const SizedBox.shrink();
-    final color = mode == PrayerMode.congregation ? context.colors.green : context.colors.amber2;
+    final color = mode == PrayerMode.congregation
+        ? context.colors.green
+        : context.colors.amber2;
     final bg = color.withOpacity(0.1);
     final label = mode == PrayerMode.congregation ? 'জামাতে ✓' : 'একাকী ✓';
     return Container(
@@ -1228,13 +1239,16 @@ class _ModeBtn extends StatelessWidget {
                 color: isSelected ? activeColor : context.colors.border,
                 width: isSelected ? 1.5 : 0.5)),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 18, color: isSelected ? activeColor : context.colors.textHint),
+          Icon(icon,
+              size: 18,
+              color: isSelected ? activeColor : context.colors.textHint),
           const SizedBox(height: 4),
           Text(label,
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: isSelected ? activeColor : context.colors.textSecondary)),
+                  color:
+                      isSelected ? activeColor : context.colors.textSecondary)),
         ]),
       ),
     );
@@ -1266,7 +1280,9 @@ class _RakaatCounterCard extends StatelessWidget {
           color: context.colors.cardBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-              color: count > 0 ? context.colors.green.withOpacity(0.4) : context.colors.border,
+              color: count > 0
+                  ? context.colors.green.withOpacity(0.4)
+                  : context.colors.border,
               width: count > 0 ? 1.5 : 0.5)),
       child: Column(children: [
         Padding(
@@ -1378,10 +1394,15 @@ class _SunnahToggleCard extends StatelessWidget {
             color: done ? context.colors.greenLight : context.colors.cardBg,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-                color: done ? context.colors.green.withOpacity(0.4) : context.colors.border,
+                color: done
+                    ? context.colors.green.withOpacity(0.4)
+                    : context.colors.border,
                 width: done ? 1.5 : 0.5)),
         child: Row(children: [
-          _IconBadge(icon: Icons.mosque_rounded, active: done, color: context.colors.green),
+          _IconBadge(
+              icon: Icons.mosque_rounded,
+              active: done,
+              color: context.colors.green),
           const SizedBox(width: 13),
           Expanded(
               child: Column(
@@ -1389,7 +1410,9 @@ class _SunnahToggleCard extends StatelessWidget {
                   children: [
                 Text(cat.nameBn,
                     style: TextStyle(
-                        color: done ? context.colors.darkGreen : context.colors.textPrimary,
+                        color: done
+                            ? context.colors.darkGreen
+                            : context.colors.textPrimary,
                         fontWeight: FontWeight.w600,
                         fontSize: 13)),
                 if (cat.description != null) ...[
@@ -1408,7 +1431,10 @@ class _SunnahToggleCard extends StatelessWidget {
                 color: done ? context.colors.darkGreen : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                    color: done ? context.colors.darkGreen : context.colors.borderMid, width: 1.5)),
+                    color: done
+                        ? context.colors.darkGreen
+                        : context.colors.borderMid,
+                    width: 1.5)),
             child: done
                 ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
                 : null,
@@ -1421,8 +1447,7 @@ class _SunnahToggleCard extends StatelessWidget {
                   color: const Color(0xFFFFF8EE),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                      color: context.colors.gold.withOpacity(0.5),
-                      width: 0.5)),
+                      color: context.colors.gold.withOpacity(0.5), width: 0.5)),
               child: Text(badgeLabel!,
                   style: TextStyle(
                       fontSize: 9.5,
@@ -1458,7 +1483,9 @@ class _GenericCounterCard extends StatelessWidget {
           color: context.colors.cardBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-              color: count > 0 ? context.colors.green.withOpacity(0.4) : context.colors.border,
+              color: count > 0
+                  ? context.colors.green.withOpacity(0.4)
+                  : context.colors.border,
               width: count > 0 ? 1.5 : 0.5)),
       child: Column(children: [
         Padding(
@@ -1554,7 +1581,9 @@ class _GenericToggleCard extends StatelessWidget {
             color: done ? context.colors.greenLight : context.colors.cardBg,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-                color: done ? context.colors.green.withOpacity(0.4) : context.colors.border,
+                color: done
+                    ? context.colors.green.withOpacity(0.4)
+                    : context.colors.border,
                 width: done ? 1.5 : 0.5)),
         child: Row(children: [
           AnimatedContainer(
@@ -1565,7 +1594,10 @@ class _GenericToggleCard extends StatelessWidget {
                 color: done ? context.colors.darkGreen : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                    color: done ? context.colors.darkGreen : context.colors.borderMid, width: 1.5)),
+                    color: done
+                        ? context.colors.darkGreen
+                        : context.colors.borderMid,
+                    width: 1.5)),
             child: done
                 ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
                 : null,
@@ -1577,7 +1609,9 @@ class _GenericToggleCard extends StatelessWidget {
                   children: [
                 Text(cat.nameBn,
                     style: TextStyle(
-                        color: done ? context.colors.darkGreen : context.colors.textPrimary,
+                        color: done
+                            ? context.colors.darkGreen
+                            : context.colors.textPrimary,
                         fontWeight: FontWeight.w600,
                         fontSize: 13)),
                 if (cat.description != null) ...[
@@ -1632,7 +1666,8 @@ class _BottomSaveBar extends StatelessWidget {
           16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
       decoration: BoxDecoration(
           color: context.colors.cardBg,
-          border: Border(top: BorderSide(color: context.colors.border, width: 0.5))),
+          border: Border(
+              top: BorderSide(color: context.colors.border, width: 0.5))),
       child: Row(children: [
         GestureDetector(
           onTap: onCancel,
@@ -1655,7 +1690,9 @@ class _BottomSaveBar extends StatelessWidget {
               duration: 160.ms,
               height: 52,
               decoration: BoxDecoration(
-                  color: saving ? context.colors.darkGreen.withOpacity(0.7) : context.colors.darkGreen,
+                  color: saving
+                      ? context.colors.darkGreen.withOpacity(0.7)
+                      : context.colors.darkGreen,
                   borderRadius: BorderRadius.circular(14)),
               child:
                   Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -1708,8 +1745,10 @@ class _IconBadge extends StatelessWidget {
           color: active ? color.withOpacity(0.1) : context.colors.pageBg,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-              color: active ? color.withOpacity(0.25) : context.colors.border, width: 0.5)),
-      child: Icon(icon, size: 18, color: active ? color : context.colors.textHint),
+              color: active ? color.withOpacity(0.25) : context.colors.border,
+              width: 0.5)),
+      child:
+          Icon(icon, size: 18, color: active ? color : context.colors.textHint),
     );
   }
 }
@@ -1731,7 +1770,9 @@ class _CounterDisplay extends StatelessWidget {
           color: active ? context.colors.greenLight : context.colors.pageBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-              color: active ? context.colors.green.withOpacity(0.3) : context.colors.border,
+              color: active
+                  ? context.colors.green.withOpacity(0.3)
+                  : context.colors.border,
               width: 0.5)),
       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
         Text('$count',
@@ -1739,11 +1780,16 @@ class _CounterDisplay extends StatelessWidget {
                 fontSize: 34,
                 fontWeight: FontWeight.w900,
                 height: 1,
-                color: active ? context.colors.darkGreen : context.colors.textHint)),
+                color: active
+                    ? context.colors.darkGreen
+                    : context.colors.textHint)),
         const SizedBox(height: 3),
         Text(max != null ? '/ $max $unit' : unit,
             style: TextStyle(
-                fontSize: 10, color: active ? context.colors.textSecondary : context.colors.textHint)),
+                fontSize: 10,
+                color: active
+                    ? context.colors.textSecondary
+                    : context.colors.textHint)),
       ]),
     );
   }
@@ -1767,10 +1813,13 @@ class _StepBtn extends StatelessWidget {
             color: enabled ? context.colors.greenLight : context.colors.pageBg,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-                color: enabled ? context.colors.green.withOpacity(0.3) : context.colors.border,
+                color: enabled
+                    ? context.colors.green.withOpacity(0.3)
+                    : context.colors.border,
                 width: 0.5)),
-        child:
-            Icon(icon, color: enabled ? context.colors.darkGreen : context.colors.textHint, size: 24),
+        child: Icon(icon,
+            color: enabled ? context.colors.darkGreen : context.colors.textHint,
+            size: 24),
       ),
     );
   }
@@ -1851,7 +1900,9 @@ class _BoundedProgress extends StatelessWidget {
                 height: 7,
                 margin: const EdgeInsets.symmetric(horizontal: 2),
                 decoration: BoxDecoration(
-                    color: i < count ? context.colors.darkGreen : context.colors.border,
+                    color: i < count
+                        ? context.colors.darkGreen
+                        : context.colors.border,
                     borderRadius: BorderRadius.circular(99)),
               )),
     );
@@ -1867,12 +1918,15 @@ class _UnboundedProgress extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
       Icon(Icons.trending_up_rounded,
-          color: count > 0 ? context.colors.darkGreen : context.colors.textHint, size: 16),
+          color: count > 0 ? context.colors.darkGreen : context.colors.textHint,
+          size: 16),
       const SizedBox(width: 6),
       Text(
           count > 0 ? '$count $unitBn যোগ করা হয়েছে' : 'যত বেশি, তত বেশি বরকত',
           style: TextStyle(
-              color: count > 0 ? context.colors.darkGreen : context.colors.textHint,
+              color: count > 0
+                  ? context.colors.darkGreen
+                  : context.colors.textHint,
               fontSize: 11,
               fontWeight: FontWeight.w500)),
     ]);
