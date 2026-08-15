@@ -1,5 +1,6 @@
 import 'package:amal_tracker/features/auth/providers/auth_provider.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/app_constants.dart';
@@ -24,12 +25,14 @@ final dioProvider = Provider<Dio>((ref) {
   ));
 
   dio.interceptors.add(AuthInterceptor(dio, ref));
-  dio.interceptors.add(LogInterceptor(
-    requestBody: true,
-    responseBody: true,
-    error: true,
-    logPrint: (object) => print('[DIO] $object'),
-  ));
+  if (kDebugMode) {
+    dio.interceptors.add(LogInterceptor(
+      requestBody: true,
+      responseBody: true,
+      error: true,
+      logPrint: (object) => debugPrint('[DIO] $object'),
+    ));
+  }
 
   return dio;
 });
@@ -81,15 +84,39 @@ class AuthInterceptor extends Interceptor {
 
         final response = await _dio
             .post('/auth/refresh', data: {'refreshToken': refreshToken});
-        final newToken = response.data['data']['accessToken'];
-        await storage.write(key: AppConstants.accessTokenKey, value: newToken);
+        final data = response.data['data'] as Map<String, dynamic>?;
+        final newToken = data?['accessToken'] ?? data?['token'];
+        final newRefreshToken = data?['refreshToken'];
+
+        if (newToken != null) {
+          await storage.write(
+              key: AppConstants.accessTokenKey, value: newToken.toString());
+        }
+        if (newRefreshToken != null && newRefreshToken.toString().isNotEmpty) {
+          await storage.write(
+              key: AppConstants.refreshTokenKey,
+              value: newRefreshToken.toString());
+        }
 
         final opts = err.requestOptions;
         opts.headers['Authorization'] = 'Bearer $newToken';
         final retryResponse = await _dio.fetch(opts);
         handler.resolve(retryResponse);
-      } catch (_) {
-        _handleAuthFailure();
+      } catch (refreshErr) {
+        String? reasonMsg;
+        if (refreshErr is DioException) {
+          final resData = refreshErr.response?.data;
+          final code = resData is Map ? resData['code']?.toString() : null;
+          final upperCode = code?.toUpperCase() ?? '';
+          if (upperCode == 'SESSION_REVOKED_SECURITY' ||
+              upperCode == 'SESSION_REVOKED' ||
+              upperCode == 'REFRESH_TOKEN_REUSED' ||
+              upperCode == 'INVALID_REFRESH_TOKEN') {
+            reasonMsg =
+                'নিরাপত্তার কারণে আপনাকে লগ আউট করা হয়েছে, দয়া করে আবার লগইন করুন';
+          }
+        }
+        _handleAuthFailure(reasonMessage: reasonMsg);
         handler.next(err);
       } finally {
         _isRefreshing = false;
@@ -99,13 +126,15 @@ class AuthInterceptor extends Interceptor {
     }
   }
 
-  void _handleAuthFailure() async {
+  void _handleAuthFailure({String? reasonMessage}) async {
     try {
       final storage = _ref.read(secureStorageProvider);
       await storage.deleteAll();
     } catch (_) {}
     try {
-      _ref.read(authProvider.notifier).clearLocalSessionOnly();
+      _ref
+          .read(authProvider.notifier)
+          .clearLocalSessionOnly(reasonMessage: reasonMessage);
     } catch (_) {}
   }
 }
@@ -176,6 +205,24 @@ class ApiException implements Exception {
       } else if (rawData is String) {
         message = rawData;
       }
+
+      final upperCode = code?.toUpperCase() ?? '';
+      if (statusCode == 429 ||
+          upperCode == 'TOO_MANY_ATTEMPTS' ||
+          upperCode == 'ACCOUNT_LOCKED' ||
+          upperCode == 'ACCOUNT_TEMPORARILY_LOCKED' ||
+          upperCode == 'TOO_MANY_REQUESTS') {
+        int? cooldown;
+        if (rawData is Map<String, dynamic>) {
+          final val = rawData['cooldownSeconds'] ?? rawData['retryAfter'];
+          if (val is num) cooldown = val.toInt();
+        }
+        if (cooldown != null && cooldown > 0) {
+          message = 'অনেকবার ভুল চেষ্টা করা হয়েছে। $cooldown সেকেন্ড পর আবার চেষ্টা করুন।';
+        } else {
+          message = 'অনেকবার ভুল চেষ্টা করা হয়েছে, কিছুক্ষণ পর আবার চেষ্টা করুন।';
+        }
+      }
     }
 
     return ApiException(
@@ -186,33 +233,6 @@ class ApiException implements Exception {
     );
   }
 }
-
-// class ApiException implements Exception {
-//   final String message;
-//   final int? statusCode;
-
-//   ApiException({required this.message, this.statusCode});
-
-//   @override
-//   String toString() => message;
-
-//   factory ApiException.fromDioException(DioException e) {
-//     final statusCode = e.response?.statusCode;
-//     String message = 'Something went wrong. Please try again.';
-
-//     if (e.type == DioExceptionType.connectionTimeout ||
-//         e.type == DioExceptionType.receiveTimeout ||
-//         e.type == DioExceptionType.sendTimeout) {
-//       message = 'Connection timed out. Please check your internet.';
-//     } else if (e.type == DioExceptionType.connectionError) {
-//       message = 'No internet connection.';
-//     } else if (e.response?.data != null) {
-//       message = e.response?.data['message'] ?? message;
-//     }
-
-//     return ApiException(message: message, statusCode: statusCode);
-//   }
-// }
 
 class ApiService {
   final Dio _dio;

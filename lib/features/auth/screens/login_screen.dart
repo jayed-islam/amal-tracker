@@ -136,6 +136,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (ok) {
       invalidateUserProviders(ref);
       context.go(AppRoutes.home);
+    } else {
+      final pendingInfo = ref.read(pendingDeletionProvider);
+      if (pendingInfo != null) {
+        _showPendingDeletionModal(pendingInfo);
+      }
+    }
+  }
+
+  Future<void> _showPendingDeletionModal(PendingDeletionInfo info) async {
+    final email = _emailCtrl.text.trim();
+    final pass = _passCtrl.text;
+
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _RestoreAccountModal(
+        email: email,
+        password: pass,
+        daysLeft: info.daysLeft,
+      ),
+    );
+
+    if (!mounted) return;
+    if (result == true) {
+      invalidateUserProviders(ref);
+      context.go(AppRoutes.home);
+    } else {
+      ref.read(authProvider.notifier).clearPendingDeletion();
     }
   }
 
@@ -1041,4 +1072,172 @@ class _PatternPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_) => false;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RESTORE ACCOUNT MODAL (FOR PENDING DELETION)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _RestoreAccountModal extends ConsumerStatefulWidget {
+  final String email;
+  final String password;
+  final int daysLeft;
+
+  const _RestoreAccountModal({
+    required this.email,
+    required this.password,
+    required this.daysLeft,
+  });
+
+  @override
+  ConsumerState<_RestoreAccountModal> createState() =>
+      __RestoreAccountModalState();
+}
+
+class __RestoreAccountModalState
+    extends ConsumerState<_RestoreAccountModal> {
+  bool _loading = false;
+  String? _error;
+
+  Future<void> _handleRestore() async {
+    if (_loading) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    final ok = await ref
+        .read(authProvider.notifier)
+        .cancelDeletionWithCredentials(widget.email, widget.password);
+
+    if (!mounted) return;
+    setState(() => _loading = false);
+
+    if (ok) {
+      Navigator.of(context).pop(true);
+    } else {
+      setState(() {
+        _error = ref.read(authProvider).error ??
+            'অ্যাকাউন্ট পুনরুদ্ধার করা যায়নি। আবার চেষ্টা করুন।';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 24),
+      decoration: BoxDecoration(
+        color: context.colors.cardBg,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: context.colors.amberLight,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Icon(Icons.hourglass_top_rounded,
+                color: context.colors.amber, size: 30),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'অ্যাকাউন্ট মুছে ফেলার প্রক্রিয়াধীন',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: context.colors.textPri,
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: context.colors.amberLight,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '${widget.daysLeft} দিনের মধ্যে ফিরে আসতে পারবেন',
+              style: TextStyle(
+                color: context.colors.amber,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'আপনার অ্যাকাউন্ট মুছে ফেলার অনুরোধ প্রক্রিয়াধীন রয়েছে। আপনি কি অ্যাকাউন্টটি পুনরায় সক্রিয় করে স্বাভাবিকভাবে ব্যবহার চালিয়ে যেতে চান?',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: context.colors.textSec,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              _error!,
+              style: TextStyle(
+                color: context.colors.red,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              onPressed: _loading ? null : _handleRestore,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: context.colors.darkGreen,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 0,
+              ),
+              child: _loading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text(
+                      'অ্যাকাউন্ট ফিরিয়ে আনুন',
+                      style:
+                          TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: _loading
+                ? null
+                : () => Navigator.of(context).pop(false),
+            child: Text(
+              'এখন নয়',
+              style: TextStyle(
+                color: context.colors.textMuted,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

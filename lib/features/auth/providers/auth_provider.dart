@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/constants/app_constants.dart';
@@ -51,11 +52,14 @@ class PendingDeletionInfo {
   const PendingDeletionInfo(
       {required this.daysLeft, required this.scheduledAt});
 
-  factory PendingDeletionInfo.fromJson(Map<String, dynamic> json) =>
-      PendingDeletionInfo(
-        daysLeft: json['daysLeft'] ?? 45,
-        scheduledAt: DateTime.parse(json['scheduledAt']),
-      );
+  factory PendingDeletionInfo.fromJson(Map<String, dynamic> json) {
+    final days = (json['daysLeft'] as num?)?.toInt() ?? 45;
+    final sched = json['scheduledAt'] != null
+        ? DateTime.tryParse(json['scheduledAt'].toString()) ??
+            DateTime.now().add(Duration(days: days))
+        : DateTime.now().add(Duration(days: days));
+    return PendingDeletionInfo(daysLeft: days, scheduledAt: sched);
+  }
 }
 
 // ─── Auth Notifier ────────────────────────────────────────────────────────────
@@ -103,18 +107,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       return true;
     } on ApiException catch (e) {
-      if (e.statusCode == 403) {
+      final code = e.code ?? (e.rawData is Map ? e.rawData['code']?.toString() : null);
+      if (e.statusCode == 403 && code == 'ACCOUNT_PENDING_DELETION') {
         try {
-          final parsed = jsonDecode(e.message) as Map<String, dynamic>;
-          if (parsed['code'] == 'ACCOUNT_PENDING_DELETION') {
-            // Not an error — show recovery UI
-            state = state.copyWith(
-              isLoading: false,
-              status: AuthStatus.unauthenticated,
-              pendingDeletion: PendingDeletionInfo.fromJson(parsed),
-            );
-            return false;
-          }
+          final dataMap = e.rawData is Map<String, dynamic>
+              ? e.rawData as Map<String, dynamic>
+              : <String, dynamic>{};
+          state = state.copyWith(
+            isLoading: false,
+            status: AuthStatus.unauthenticated,
+            pendingDeletion: PendingDeletionInfo.fromJson(dataMap),
+          );
+          return false;
         } catch (_) {}
       }
       state = state.copyWith(isLoading: false, error: e.message);
@@ -137,16 +141,32 @@ class AuthNotifier extends StateNotifier<AuthState> {
       await storage.deleteAll();
     } catch (_) {}
 
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('fcm_token');
+      await prefs.remove('fcm_token_updated_at');
+      await prefs.remove('push_history');
+    } catch (_) {}
+
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 
-  void clearLocalSessionOnly() async {
+  void clearLocalSessionOnly({String? reasonMessage}) async {
     _pendingAuthResponse = null;
     try {
       final storage = _ref.read(secureStorageProvider);
       await storage.deleteAll();
     } catch (_) {}
-    state = const AuthState(status: AuthStatus.unauthenticated);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('fcm_token');
+      await prefs.remove('fcm_token_updated_at');
+      await prefs.remove('push_history');
+    } catch (_) {}
+    state = AuthState(
+      status: AuthStatus.unauthenticated,
+      error: reasonMessage,
+    );
   }
 
   Future<bool> register({
@@ -450,7 +470,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final response = await _api.post<Map<String, dynamic>>(
-        '/api/account-deletion/request',
+        '/account-deletion/request',
       );
       final info = PendingDeletionInfo.fromJson(response['data']);
 
@@ -477,7 +497,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final response = await _api.post<Map<String, dynamic>>(
-        '/api/account-deletion/cancel-with-credentials',
+        '/account-deletion/cancel-with-credentials',
         data: {'email': email, 'password': password},
       );
       final authResponse = AuthResponse.fromJson(response['data']);

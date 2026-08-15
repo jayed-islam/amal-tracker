@@ -135,13 +135,18 @@ class _State extends ConsumerState<ChangePasswordScreen> {
         content: const Row(children: [
           Icon(Icons.check_circle_rounded, color: Colors.white, size: 16),
           SizedBox(width: 8),
-          Text('পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!'),
+          Expanded(
+            child: Text(
+              'পাসওয়ার্ড পরিবর্তন সফল হয়েছে! নিরাপত্তার জন্য অন্যান্য ডিভাইস থেকে লগআউট করা হয়েছে।',
+              style: TextStyle(fontSize: 12.5),
+            ),
+          ),
         ]),
         backgroundColor: context.colors.darkGreen,
         margin: const EdgeInsets.all(16),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 2),
+        duration: const Duration(seconds: 3),
       ));
       context.pop();
     } else {

@@ -3,6 +3,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'api_service.dart';
 import 'notification_service.dart';
 
 // ─── Background message handler (top-level, required by FCM) ─
@@ -152,10 +153,23 @@ class PushNotificationService {
     }
   }
 
+  // Callback: FCM token refreshed
+  void Function(String token)? onTokenRefreshed;
+
   void _onTokenRefresh(String token) {
     _saveToken(token);
-    debugPrint('[PushService] Token refreshed');
-    // TODO: Send new token to your backend API here
+    debugPrint('[PushService] Token refreshed: $token');
+    onTokenRefreshed?.call(token);
+  }
+
+  /// Sync refreshed FCM token with backend when user is logged in
+  Future<void> syncTokenWithBackend(ApiService api, String token) async {
+    try {
+      await api.post('/auth/fcm-token', data: {'fcmToken': token});
+      debugPrint('[PushService] FCM token synced with backend successfully');
+    } catch (e) {
+      debugPrint('[PushService] FCM token backend sync skipped/failed: $e');
+    }
   }
 
   Future<void> _saveToken(String token) async {

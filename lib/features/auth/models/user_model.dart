@@ -42,9 +42,6 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    print('fromJson - id from json: ${json['id']}');
-    print('fromJson - _id from json: ${json['_id']}');
-
     final emailVerified =
         json['isEmailVerified'] ?? json['isVerified'] ?? false;
 

@@ -41,7 +41,10 @@ class AppConstants {
   AppConstants._();
 
   // ── API ───────────────────────────────────────────────────────────────────
-  static const String baseUrl = 'https://amal-tracker-backend.vercel.app/api';
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://amal-tracker-backend.vercel.app/api',
+  );
   // static const String baseUrl = 'http://10.0.2.2:5000/api'; // Android emulator
   // static const String baseUrl = 'http://localhost:5000/api'; // iOS simulator
 

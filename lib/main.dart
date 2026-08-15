@@ -16,6 +16,7 @@ import 'core/providers/theme_provider.dart';
 import 'core/router/app_router.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 // Top-level FCM background handler — MUST be top-level
 @pragma('vm:entry-point')
@@ -57,6 +58,11 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    WidgetsBinding.instance.platformDispatcher.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
     // ব্যাকগ্রাউন্ড মেসেজ হ্যান্ডলার রেজিস্ট্রেশন
     FirebaseMessaging.onBackgroundMessage(_fbBgHandler);
   } catch (e) {
@@ -112,8 +118,8 @@ class _AmalTrackerAppState extends ConsumerState<AmalTrackerApp> {
     PushNotificationService.instance.onMessageOpenedApp = (message) {
       _addPushToHistory(message);
       final route = message.data['route'] as String?;
-      if (route != null) {
-        navigatorKey.currentState?.pushNamed(route);
+      if (route != null && route.isNotEmpty) {
+        ref.read(routerProvider).push(route);
       }
     };
 
@@ -147,7 +153,9 @@ class _AmalTrackerAppState extends ConsumerState<AmalTrackerApp> {
         route: payload.route,
       );
       ref.read(notificationHistoryProvider.notifier).add(notif);
-      navigatorKey.currentState?.pushNamed(payload.route);
+      if (payload.route.isNotEmpty) {
+        ref.read(routerProvider).push(payload.route);
+      }
     };
   }
 
