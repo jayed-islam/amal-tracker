@@ -47,5 +47,9 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>আপনার অবস্থান থেকে সঠিক জেলা ও নামাজের সময় নির্ধারণের জন্য লোকেশন পারমিশন দিন।</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>আপনার অবস্থান থেকে সঠিক জেলা ও নামাজের সময় নির্ধারণের জন্য লোকেশন পারমিশন দিন।</string>
 	</dict>
 </plist>

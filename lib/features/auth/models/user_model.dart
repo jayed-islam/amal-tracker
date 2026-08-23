@@ -2,9 +2,10 @@ class UserModel {
   final String id;
   final String name;
   final String email;
-  final String? department;
-  final String? designation;
   final String district;
+  final String? fullLocation;
+  final double? latitude;
+  final double? longitude;
   final String? phone;
   final String? photoUrl;
   final String? gender;
@@ -19,13 +20,16 @@ class UserModel {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  String? get fullAddress => fullLocation;
+
   UserModel({
     required this.id,
     required this.name,
     required this.email,
-    this.department,
-    this.designation,
     required this.district,
+    this.fullLocation,
+    this.latitude,
+    this.longitude,
     this.phone,
     this.photoUrl,
     this.gender,
@@ -49,9 +53,10 @@ class UserModel {
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
-      department: json['department'],
-      designation: json['designation'],
       district: json['district'] ?? '',
+      fullLocation: json['fullLocation'] ?? json['fullAddress'],
+      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
+      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
       phone: json['phone'],
       photoUrl: json['photo_url'],
       gender: json['gender'],
@@ -80,12 +85,13 @@ class UserModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id, // ← শুধু id ফিল্ড সেভ করুন
+      'id': id,
       'name': name,
       'email': email,
-      'department': department,
-      'designation': designation,
       'district': district,
+      if (fullLocation != null) 'fullLocation': fullLocation,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
       'phone': phone,
       'photo_url': photoUrl,
       if (leaderboardPrivacy != null)
@@ -108,9 +114,10 @@ class UserModel {
     String? id,
     String? name,
     String? email,
-    String? department,
-    String? designation,
     String? district,
+    String? fullLocation,
+    double? latitude,
+    double? longitude,
     String? phone,
     String? photoUrl,
     String? gender,
@@ -129,9 +136,10 @@ class UserModel {
       id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
-      department: department ?? this.department,
-      designation: designation ?? this.designation,
       district: district ?? this.district,
+      fullLocation: fullLocation ?? this.fullLocation,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
       phone: phone ?? this.phone,
       photoUrl: photoUrl ?? this.photoUrl,
       gender: gender ?? this.gender,

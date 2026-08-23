@@ -839,7 +839,7 @@ class _ErrorCard extends StatelessWidget {
                       fontSize: 13)),
               const SizedBox(height: 3),
               Text(
-                message.length > 80 ? '${message.substring(0, 80)}…' : message,
+                message,
                 style: TextStyle(
                     color: context.colors.textSecondary,
                     fontSize: 11,

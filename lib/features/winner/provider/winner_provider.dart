@@ -10,7 +10,6 @@ class WinnerEntry {
   final String userId;
   final int rank;
   final String name;
-  final String? department;
   final double completionPercentage;
   final int farzCompletedDays;
   final int? congregationDaysSum; // female এর জন্য null থাকতে পারে
@@ -21,7 +20,6 @@ class WinnerEntry {
     required this.userId,
     required this.rank,
     required this.name,
-    this.department,
     required this.completionPercentage,
     required this.farzCompletedDays,
     this.congregationDaysSum,
@@ -33,7 +31,6 @@ class WinnerEntry {
         userId: json['userId']?.toString() ?? '',
         rank: (json['rank'] as num?)?.toInt() ?? 0,
         name: json['name'] ?? 'ব্যবহারকারী',
-        department: json['department'],
         completionPercentage:
             (json['completionPercentage'] as num?)?.toDouble() ?? 0,
         farzCompletedDays: (json['farzCompletedDays'] as num?)?.toInt() ?? 0,

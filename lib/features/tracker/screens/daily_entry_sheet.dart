@@ -8,6 +8,7 @@ import '../providers/tracker_provider.dart';
 import '../models/tracker_model.dart';
 import '../../../core/constants/app_constants.dart';
 import 'package:amal_tracker/core/theme/app_color_tokens.dart';
+import 'package:amal_tracker/core/services/prayer_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -130,6 +131,7 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
   int _activeSection = 0;
   bool _isExemptDay = false;
   bool _isFemale = false;
+  String? _validationError;
 
   List<String> get _activeSections => AppConstants.sections
       .map((s) => s.key)
@@ -180,6 +182,7 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
   // ── Exempt day toggle ─────────────────────────────────────────────────────
   void _toggleExemptDay(bool val) {
     setState(() {
+      _validationError = null;
       _isExemptDay = val;
       for (final item in _items.values) {
         if (!item.cat.isExemptDuringPeriod) continue;
@@ -197,6 +200,7 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
   // ── Callbacks ─────────────────────────────────────────────────────────────
   void _toggleBinary(String id, bool value) {
     setState(() {
+      _validationError = null;
       final item = _items[id]!;
       if (item.isExempted) return;
       item.completed = value;
@@ -206,6 +210,7 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
 
   void _setPrayerMode(String id, PrayerMode mode) {
     setState(() {
+      _validationError = null;
       final item = _items[id]!;
       if (item.isExempted) return;
       item.prayerMode = mode;
@@ -216,6 +221,7 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
 
   void _setCount(String id, int rawCount) {
     setState(() {
+      _validationError = null;
       final item = _items[id]!;
       if (item.isExempted) return;
       final cat = item.cat;
@@ -254,13 +260,51 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
 
   // ── Save ──────────────────────────────────────────────────────────────────
   Future<void> _save() async {
-    setState(() => _saving = true);
+    setState(() {
+      _saving = true;
+      _validationError = null;
+    });
+
+    final now = DateTime.now();
+    final todayStr =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final isToday = widget.dateStr == todayStr;
+
+    if (isToday) {
+      final user = ref.read(currentUserProvider);
+      final itemList = _items.values
+          .map((item) => {
+                'key': item.cat.key,
+                'nameBn': item.cat.nameBn,
+                'isFard': item.cat.isFard,
+                'isPrayer': item.cat.isPrayer,
+                'isSelected': item.isDone,
+              })
+          .toList();
+
+      final preCheckError = PrayerService.checkUnstartedPrayer(
+        items: itemList,
+        latitude: user?.latitude,
+        longitude: user?.longitude,
+        district: user?.district,
+      );
+
+      if (preCheckError != null) {
+        setState(() {
+          _saving = false;
+          _validationError = preCheckError;
+        });
+        HapticFeedback.vibrate();
+        return;
+      }
+    }
 
     final updates = _items.values
         .map((item) => EntryUpdate(
               categoryId: item.cat.id,
               completed: item.isExempted ? false : item.completed,
-              prayerMode: item.isExempted ? PrayerMode.missed : item.prayerMode,
+              prayerMode:
+                  item.isExempted ? PrayerMode.missed : item.prayerMode,
               count: item.isExempted ? 0 : item.count,
             ))
         .toList();
@@ -268,6 +312,8 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
     final ok = await ref
         .read(dailyEntryProvider(widget.dateStr).notifier)
         .saveEntryFromUpdates(updates, isExemptDay: _isExemptDay);
+
+    final errMessage = ref.read(dailyEntryProvider(widget.dateStr)).error;
 
     if (ok && mounted) {
       final parts = widget.dateStr.split('-');
@@ -277,31 +323,34 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
         month: int.parse(parts[1]),
         specificDateStr: widget.dateStr,
       );
-    }
+      setState(() => _saving = false);
+      Navigator.pop(context);
 
-    setState(() => _saving = false);
-    if (!mounted) return;
-    Navigator.pop(context);
-
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(children: [
-        Icon(
-          ok ? Icons.check_circle_rounded : Icons.error_outline_rounded,
-          color: Colors.white,
-        ),
-        const SizedBox(width: 10),
-        Text(ok
-            ? (widget.isNew
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Row(children: [
+          const Icon(Icons.check_circle_rounded, color: Colors.white),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(widget.isNew
                 ? 'আমল সফলভাবে সেভ হয়েছে! 🌟'
-                : 'আমল আপডেট হয়েছে! ✨')
-            : 'সেভ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।'),
-      ]),
-      backgroundColor: ok ? context.colors.success : context.colors.red,
-      margin: const EdgeInsets.all(16),
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      duration: const Duration(seconds: 2),
-    ));
+                : 'আমল আপডেট হয়েছে! ✨'),
+          ),
+        ]),
+        backgroundColor: context.colors.darkGreen,
+        margin: const EdgeInsets.all(16),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 3),
+      ));
+    } else if (mounted) {
+      setState(() {
+        _saving = false;
+        _validationError = (errMessage != null && errMessage.isNotEmpty)
+            ? errMessage
+            : 'সেভ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।';
+      });
+      HapticFeedback.vibrate();
+    }
   }
 
   @override
@@ -312,11 +361,12 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
     final fard = _fardSummary;
 
     if (sections.isEmpty) {
+      final errorMsg = widget.existingState.error;
       return Container(
         height: size.height * 0.96,
         decoration: BoxDecoration(
           color: context.colors.pageBg,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: Center(
           child: Column(
@@ -326,7 +376,9 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
                   color: context.colors.red, size: 40),
               const SizedBox(height: 12),
               Text(
-                'কোনো আমল ক্যাটাগরি পাওয়া যায়নি',
+                (errorMsg != null && errorMsg.isNotEmpty)
+                    ? 'আমল লোড করতে সমস্যা হয়েছে'
+                    : 'কোনো আমল ক্যাটাগরি পাওয়া যায়নি',
                 style: TextStyle(
                   color: context.colors.textPrimary,
                   fontWeight: FontWeight.w700,
@@ -334,11 +386,17 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                'দয়া করে ইন্টারনেট সংযোগ চেক করে আবার চেষ্টা করুন।',
-                style: TextStyle(
-                  color: context.colors.textSecondary,
-                  fontSize: 12,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  (errorMsg != null && errorMsg.isNotEmpty)
+                      ? errorMsg
+                      : 'দয়া করে ইন্টারনেট সংযোগ চেক করে আবার চেষ্টা করুন।',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: context.colors.textSecondary,
+                    fontSize: 12,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -410,6 +468,11 @@ class _DailyEntrySheetState extends ConsumerState<DailyEntrySheet> {
             ),
           ),
         ),
+        if (_validationError != null)
+          _InlineErrorBanner(
+            message: _validationError!,
+            onDismiss: () => setState(() => _validationError = null),
+          ),
         _BottomSaveBar(
           isNew: widget.isNew,
           saving: _saving,
@@ -1932,3 +1995,72 @@ class _UnboundedProgress extends StatelessWidget {
     ]);
   }
 }
+
+class _InlineErrorBanner extends StatelessWidget {
+  final String message;
+  final VoidCallback onDismiss;
+
+  const _InlineErrorBanner({
+    required this.message,
+    required this.onDismiss,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: context.colors.redLight2,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: context.colors.red.withOpacity(0.35),
+          width: 0.8,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(
+              Icons.warning_amber_rounded,
+              color: context.colors.red,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: context.colors.red,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                height: 1.4,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: onDismiss,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: context.colors.red.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.close_rounded,
+                size: 14,
+                color: context.colors.red,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

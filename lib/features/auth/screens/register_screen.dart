@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../../../core/router/app_router.dart';
 import 'package:amal_tracker/core/theme/app_colors.dart';
 import 'package:amal_tracker/core/theme/app_color_tokens.dart';
+import 'package:amal_tracker/core/constants/location_data.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -140,9 +141,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _isRegistering = false;
   bool _isLocating = false;
 
-  // GPS — only these two matter now
+  // GPS
   String? _district; // value sent to backend (Bangla or raw foreign)
   String? _fullAddress; // stored internally, NOT shown to user
+  double? _latitude;
+  double? _longitude;
 
   String? _selectedGender;
   String? _nameErr, _emailErr, _passErr, _cfPassErr, _districtErr, _genderErr;
@@ -185,30 +188,91 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
-  // ── GPS ────────────────────────────────────────────────────────────────────
+  // ── GPS LOCATION (Production Fail-Safe) ───────────────────────────────────
 
   Future<void> _pickLocation() async {
     if (_isLocating) return;
     setState(() => _isLocating = true);
+
     try {
+      // 1. Check if Location Services (GPS toggle) are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        final shouldOpenSettings = await _showPermissionDialog(
+          title: 'লোকেশন সার্ভিস বন্ধ আছে',
+          message:
+              'ফোনের GPS/Location ফিচারটি বন্ধ রয়েছে। অনুগ্রহ করে ডিভাইস সেটিংস থেকে লোকেশন চালু করুন।',
+          buttonText: 'GPS সেটিংস খুলুন',
+        );
+        if (shouldOpenSettings == true) {
+          await Geolocator.openLocationSettings();
+        }
+        return;
+      }
+
+      // 2. Check & Request Permissions
       LocationPermission perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
         perm = await Geolocator.requestPermission();
       }
-      if (perm == LocationPermission.denied ||
-          perm == LocationPermission.deniedForever) {
-        _toast('লোকেশন অনুমতি দিন', err: true);
+
+      if (perm == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        final shouldOpenAppSettings = await _showPermissionDialog(
+          title: 'লোকেশন অনুমতি প্রয়োজন',
+          message:
+              'আপনার অবস্থানের সঠিক জেলা ও নামাজের সময় নির্ধারণের জন্য অ্যাপ সেটিংসে গিয়ে লোকেশন অনুমতি প্রদান করুন।',
+          buttonText: 'অ্যাপ সেটিংস খুলুন',
+        );
+        if (shouldOpenAppSettings == true) {
+          await Geolocator.openAppSettings();
+        }
         return;
       }
 
-      final pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 12),
-      );
+      if (perm == LocationPermission.denied) {
+        _toast('লোকেশন অনুমতি ছাড়া এলাকা নির্ধারণ সম্ভব নয়', err: true);
+        return;
+      }
 
-      final marks = await placemarkFromCoordinates(pos.latitude, pos.longitude);
+      // 3. Multi-tier Position Retrieval (Fastest to Fallback)
+      // Tier 1: Last Known Position (Instant < 100ms)
+      Position? pos = await Geolocator.getLastKnownPosition();
+
+      // Tier 2: Medium Accuracy (Fast fix via Cell/WiFi/GPS within 6 seconds)
+      if (pos == null) {
+        try {
+          pos = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.medium,
+            timeLimit: const Duration(seconds: 6),
+          );
+        } catch (_) {
+          // Tier 3: Low Accuracy Fallback (Instant Cell Tower fix within 5 seconds)
+          try {
+            pos = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.low,
+              timeLimit: const Duration(seconds: 5),
+            );
+          } catch (_) {
+            pos = null;
+          }
+        }
+      }
+
+      if (pos == null) {
+        _toast('ডিভাইসের লোকেশন পাওয়া যায়নি। কিছুক্ষণ পর আবার চেষ্টা করুন', err: true);
+        return;
+      }
+
+      // 4. Reverse Geocoding
+      List<Placemark> marks = [];
+      try {
+        marks = await placemarkFromCoordinates(pos.latitude, pos.longitude);
+      } catch (_) {}
+
       if (marks.isEmpty) {
-        _toast('লোকেশন পাওয়া যায়নি', err: true);
+        _toast('স্থানাঙ্ক পাওয়া গেলেও ঠিকানা চেনা যায়নি', err: true);
         return;
       }
 
@@ -216,7 +280,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       final isBD = (p.country ?? '').toLowerCase().contains('bangladesh') ||
           (p.isoCountryCode ?? '').toUpperCase() == 'BD';
 
-      // Full address — stored internally only
       final full = [
         p.street,
         p.subLocality,
@@ -236,14 +299,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           p.subAdministrativeArea ?? '',
           p.locality ?? '',
           p.administrativeArea ?? '',
+          p.subLocality ?? '',
+          p.name ?? '',
         ]) {
           district = _matchBangla(c);
           if (district != null) break;
         }
-        if (district == null)
+        if (district == null) {
           _toast('জেলা চেনা যায়নি, আবার চেষ্টা করুন', err: true);
+        }
       } else {
-        // foreign — use raw name
         district = p.subAdministrativeArea?.trim().isNotEmpty == true
             ? p.subAdministrativeArea!.trim()
             : p.locality?.trim().isNotEmpty == true
@@ -254,16 +319,77 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
       setState(() {
         _fullAddress = full;
+        _latitude = pos!.latitude;
+        _longitude = pos.longitude;
         if (district != null) {
           _district = district;
           if (_submitted) _districtErr = null;
         }
       });
+
+      if (district != null) {
+        _toast('GPS দিয়ে $district নির্ধারিত হয়েছে');
+      }
     } catch (_) {
-      _toast('লোকেশন নিতে সমস্যা হয়েছে', err: true);
+      _toast('লোকেশন নির্ধারণে সমস্যা হয়েছে', err: true);
     } finally {
       if (mounted) setState(() => _isLocating = false);
     }
+  }
+
+  Future<bool?> _showPermissionDialog({
+    required String title,
+    required String message,
+    required String buttonText,
+  }) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.location_on_rounded, color: context.colors.darkGreen),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: context.colors.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          style: TextStyle(fontSize: 13.5, color: context.colors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(
+              'বাতিল',
+              style: TextStyle(color: context.colors.textHint),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: context.colors.darkGreen,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(
+              buttonText,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _toast(String msg, {bool err = false}) {
@@ -344,7 +470,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               : null;
       _cfPassErr = cf != pass ? 'পাসওয়ার্ড মিলছে না' : null;
       _districtErr = (_district == null || _district!.isEmpty)
-          ? 'GPS বাটন চেপে জেলা নির্ধারণ করুন'
+          ? 'জেলা বা লোকেশন নির্ধারণ করুন'
           : null;
       _genderErr = (_selectedGender == null || _selectedGender!.isEmpty)
           ? 'লিঙ্গ নির্বাচন করুন'
@@ -373,8 +499,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           password: _passCtrl.text,
           district: _district!,
           fullLocation: _fullAddress,
-          department: null,
-          designation: null,
+          latitude: _latitude,
+          longitude: _longitude,
           phone: null,
           photoUrl: null,
           gender: _selectedGender,
@@ -560,7 +686,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                               const SizedBox(height: 18),
 
-                              // GPS District field
+                              // Location field with GPS auto-detection
                               _GpsDistrictField(
                                 district: _district,
                                 error: _districtErr,
@@ -569,9 +695,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 onClear: () => setState(() {
                                   _district = null;
                                   _fullAddress = null;
-                                  if (_submitted)
+                                  _latitude = null;
+                                  _longitude = null;
+                                  if (_submitted) {
                                     _districtErr =
                                         'GPS বাটন চেপে জেলা নির্ধারণ করুন';
+                                  }
                                 }),
                               )
                                   .animate(delay: 280.ms)
@@ -683,7 +812,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GPS DISTRICT FIELD  — read-only, tap to detect, shows matched district
+// GPS DISTRICT FIELD
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _GpsDistrictField extends StatelessWidget {
@@ -761,11 +890,9 @@ class _GpsDistrictField extends StatelessWidget {
               // Left icon / spinner
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
-                // alignment: Alignment.centerLeft,
-
                 child: isLocating
                     ? SizedBox(
-                        key: ValueKey('spin'),
+                        key: const ValueKey('spin'),
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
@@ -789,7 +916,6 @@ class _GpsDistrictField extends StatelessWidget {
               Expanded(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),
-                  // alignment: Alignment.centerLeft,
                   child: isLocating
                       ? SizedBox(
                           key: const ValueKey('locating'),
@@ -826,7 +952,6 @@ class _GpsDistrictField extends StatelessWidget {
               // Right action
               if (!isLocating)
                 hasDist
-                    // পরিবর্তন button — re-detect
                     ? GestureDetector(
                         onTap: onClear,
                         behavior: HitTestBehavior.opaque,
@@ -854,7 +979,6 @@ class _GpsDistrictField extends StatelessWidget {
                           ),
                         ),
                       )
-                    // GPS pill badge
                     : Padding(
                         padding: const EdgeInsets.only(right: 14),
                         child: Container(

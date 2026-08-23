@@ -726,7 +726,6 @@ class LeaderboardEntry {
   final String name;
   final String id; // display ID
   final String district;
-  final String? department;
   final String? avatar;
   final String? gender;
 
@@ -751,7 +750,6 @@ class LeaderboardEntry {
     required this.name,
     required this.id,
     required this.district,
-    this.department,
     this.avatar,
     this.gender,
     required this.completionPercentage,
@@ -774,7 +772,6 @@ class LeaderboardEntry {
       name: user['name'] ?? '',
       id: user['id'] ?? '',
       district: user['district'] ?? '',
-      department: user['department'],
       avatar: user['avatar'],
       gender: user['gender'],
       completionPercentage:

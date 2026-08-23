@@ -342,7 +342,7 @@ class _SadaqahScreenState extends State<SadaqahScreen> {
                       icon: '🏦',
                       label: 'ইসলামী ব্যাংক',
                       sublabel: 'ট্যাপ করুন',
-                      value: '2070168010100', // ← আপনার আসল নম্বর দিন
+                      value: '20#############',
                       copiedKey: _copiedKey,
                       copyKey: 'islamic',
                       onCopy: _copy,

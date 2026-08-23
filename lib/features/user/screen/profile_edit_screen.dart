@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import 'package:amal_tracker/core/theme/app_color_tokens.dart';
+import 'package:amal_tracker/core/constants/location_data.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -123,6 +124,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   bool _isLocating = false;
   String? _district;
   String? _fullAddress;
+  double? _latitude;
+  double? _longitude;
   String? _originalDistrict;
   String? _districtErr;
 
@@ -136,6 +139,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
     _district = user?.district;
     _originalDistrict = user?.district;
+    _latitude = user?.latitude;
+    _longitude = user?.longitude;
 
     _nameCtrl.addListener(_checkForChanges);
     _phoneCtrl.addListener(_checkForChanges);
@@ -160,30 +165,91 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     });
   }
 
-  // ── GPS ───────────────────────────────────────────────────────────────────
+  // ── GPS LOCATION (Production Fail-Safe) ───────────────────────────────────
 
   Future<void> _pickLocation() async {
     if (_isLocating) return;
     setState(() => _isLocating = true);
+
     try {
+      // 1. Check if Location Services (GPS toggle) are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        final shouldOpenSettings = await _showPermissionDialog(
+          title: 'লোকেশন সার্ভিস বন্ধ আছে',
+          message:
+              'ফোনের GPS/Location ফিচারটি বন্ধ রয়েছে। অনুগ্রহ করে ডিভাইস সেটিংস থেকে লোকেশন চালু করুন।',
+          buttonText: 'GPS সেটিংস খুলুন',
+        );
+        if (shouldOpenSettings == true) {
+          await Geolocator.openLocationSettings();
+        }
+        return;
+      }
+
+      // 2. Check & Request Permissions
       LocationPermission perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
         perm = await Geolocator.requestPermission();
       }
-      if (perm == LocationPermission.denied ||
-          perm == LocationPermission.deniedForever) {
-        _toast('লোকেশন অনুমতি দিন', err: true);
+
+      if (perm == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        final shouldOpenAppSettings = await _showPermissionDialog(
+          title: 'লোকেশন অনুমতি প্রয়োজন',
+          message:
+              'আপনার অবস্থানের সঠিক জেলা ও নামাজের সময় নির্ধারণের জন্য অ্যাপ সেটিংসে গিয়ে লোকেশন অনুমতি প্রদান করুন।',
+          buttonText: 'অ্যাপ সেটিংস খুলুন',
+        );
+        if (shouldOpenAppSettings == true) {
+          await Geolocator.openAppSettings();
+        }
         return;
       }
 
-      final pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 12),
-      );
+      if (perm == LocationPermission.denied) {
+        _toast('লোকেশন অনুমতি ছাড়া এলাকা নির্ধারণ সম্ভব নয়', err: true);
+        return;
+      }
 
-      final marks = await placemarkFromCoordinates(pos.latitude, pos.longitude);
+      // 3. Multi-tier Position Retrieval (Fastest to Fallback)
+      // Tier 1: Last Known Position (Instant < 100ms)
+      Position? pos = await Geolocator.getLastKnownPosition();
+
+      // Tier 2: Medium Accuracy (Fast fix via Cell/WiFi/GPS within 6 seconds)
+      if (pos == null) {
+        try {
+          pos = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.medium,
+            timeLimit: const Duration(seconds: 6),
+          );
+        } catch (_) {
+          // Tier 3: Low Accuracy Fallback (Instant Cell Tower fix within 5 seconds)
+          try {
+            pos = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.low,
+              timeLimit: const Duration(seconds: 5),
+            );
+          } catch (_) {
+            pos = null;
+          }
+        }
+      }
+
+      if (pos == null) {
+        _toast('ডিভাইসের লোকেশন পাওয়া যায়নি। কিছুক্ষণ পর আবার চেষ্টা করুন', err: true);
+        return;
+      }
+
+      // 4. Reverse Geocoding
+      List<Placemark> marks = [];
+      try {
+        marks = await placemarkFromCoordinates(pos.latitude, pos.longitude);
+      } catch (_) {}
+
       if (marks.isEmpty) {
-        _toast('লোকেশন পাওয়া যায়নি', err: true);
+        _toast('স্থানাঙ্ক পাওয়া গেলেও ঠিকানা চেনা যায়নি', err: true);
         return;
       }
 
@@ -197,7 +263,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         p.locality,
         p.subAdministrativeArea,
         p.administrativeArea,
-        p.country,
+        p.country
       ]
           .where((s) => s != null && s.trim().isNotEmpty)
           .map((s) => s!.trim())
@@ -210,6 +276,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           p.subAdministrativeArea ?? '',
           p.locality ?? '',
           p.administrativeArea ?? '',
+          p.subLocality ?? '',
+          p.name ?? '',
         ]) {
           district = _matchBangla(c);
           if (district != null) break;
@@ -228,17 +296,78 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
       setState(() {
         _fullAddress = full;
+        _latitude = pos!.latitude;
+        _longitude = pos.longitude;
         if (district != null) {
           _district = district;
           _districtErr = null;
         }
       });
       _checkForChanges();
+
+      if (district != null) {
+        _toast('GPS দিয়ে $district নির্ধারিত হয়েছে');
+      }
     } catch (_) {
-      _toast('লোকেশন নিতে সমস্যা হয়েছে', err: true);
+      _toast('লোকেশন নির্ধারণে সমস্যা হয়েছে', err: true);
     } finally {
       if (mounted) setState(() => _isLocating = false);
     }
+  }
+
+  Future<bool?> _showPermissionDialog({
+    required String title,
+    required String message,
+    required String buttonText,
+  }) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.location_on_rounded, color: context.colors.darkGreen),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: context.colors.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          style: TextStyle(fontSize: 13.5, color: context.colors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(
+              'বাতিল',
+              style: TextStyle(color: context.colors.textHint),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: context.colors.darkGreen,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(
+              buttonText,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _toast(String msg, {bool err = false}) {
@@ -257,7 +386,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_district == null || _district!.isEmpty) {
-      _showErrorSnackBar('GPS বাটন চেপে লোকেশন নির্ধারণ করুন');
+      _showErrorSnackBar('জেলা বা লোকেশন নির্ধারণ করুন');
       return;
     }
     if (!_hasChanges) {
@@ -273,6 +402,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         'name': _nameCtrl.text.trim(),
         if (_district != null && _district!.isNotEmpty) 'district': _district,
         if (_fullAddress != null) 'fullLocation': _fullAddress,
+        if (_latitude != null) 'latitude': _latitude,
+        if (_longitude != null) 'longitude': _longitude,
       };
 
       final phoneValue = _phoneCtrl.text.trim();
@@ -441,8 +572,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                                 setState(() {
                                   _district = null;
                                   _fullAddress = null;
-                                  _districtErr =
-                                      'GPS বাটন চেপে লোকেশন নির্ধারণ করুন';
+                                  _latitude = null;
+                                  _longitude = null;
                                 });
                                 _checkForChanges();
                               },
@@ -576,7 +707,7 @@ class _GpsDistrictField extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      'জেলা',
+                      'জেলা / লোকেশন',
                       style: TextStyle(
                         color: context.colors.textSecondary,
                         fontSize: 10.5,

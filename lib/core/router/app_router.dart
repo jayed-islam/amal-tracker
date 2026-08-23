@@ -495,6 +495,7 @@ import 'package:amal_tracker/features/auth/screens/forgot_password_screen.dart';
 import 'package:amal_tracker/features/auth/screens/login_screen.dart';
 import 'package:amal_tracker/features/auth/screens/register_screen.dart';
 import 'package:amal_tracker/features/challenge/screens/challenge_list_screen.dart';
+import 'package:amal_tracker/features/daily_knowledge/screens/daily_knowledge_screen.dart';
 import 'package:amal_tracker/features/sadakah/screens/sadakah_screen.dart';
 
 import 'package:amal_tracker/features/home/screens/home_screen.dart';
@@ -541,6 +542,7 @@ class AppRoutes {
   static const sadaqah = '/sadaqah';
   static const challenges = '/challenges';
   static const aboutUs = '/about-us';
+  static const dailyKnowledge = '/daily-knowledge';
 }
 
 // ── Navigator keys ─────────────────────────────────────────────────────────
@@ -847,6 +849,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (_, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const SadaqahScreen(),
+          transitionsBuilder: (_, anim, __, child) =>
+              FadeTransition(opacity: anim, child: child),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.dailyKnowledge,
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const DailyKnowledgeScreen(),
           transitionsBuilder: (_, anim, __, child) =>
               FadeTransition(opacity: anim, child: child),
         ),
